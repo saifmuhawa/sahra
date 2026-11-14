@@ -70,28 +70,30 @@ async function postJSON(url, body, headers = {}) {
   if (!r.ok) throw new Error(url.split("/")[2] + " " + r.status + " " + t.slice(0, 200));
   return JSON.parse(t);
 }
-async function askAI(story) {
+async function askAI(story, errs = []) {
   const p = PROMPT(story);
+  const ok = (source, text) => (parseCandidates(text).length ? { source, text } : (errs.push(source + ": no json"), null));
   if (process.env.GROQ_API_KEY) {
     for (const model of [process.env.GROQ_MODEL, "openai/gpt-oss-120b", "llama-3.3-70b-versatile"].filter(Boolean)) {
       try {
         const j = await postJSON("https://api.groq.com/openai/v1/chat/completions", { model, temperature: 0.2, messages: [{ role: "user", content: p }] }, { authorization: "Bearer " + process.env.GROQ_API_KEY });
-        return { source: "groq", text: j.choices?.[0]?.message?.content || "" };
-      } catch (e) { console.warn(String(e)); }
+        const r = ok("groq", j.choices?.[0]?.message?.content || ""); if (r) return r;
+      } catch (e) { errs.push(String(e.message || e)); console.warn(String(e)); }
     }
   }
   if (process.env.GEMINI_API_KEY) {
-    const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-    try {
-      const j = await postJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`, { contents: [{ parts: [{ text: p }] }], generationConfig: { temperature: 0.2 } });
-      return { source: "gemini", text: j.candidates?.[0]?.content?.parts?.map(x => x.text).join("") || "" };
-    } catch (e) { console.warn(String(e)); }
+    for (const model of [...new Set([process.env.GEMINI_MODEL, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-flash-lite-latest"].filter(Boolean))]) {
+      try {
+        const j = await postJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { contents: [{ parts: [{ text: p }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" } }, { "x-goog-api-key": process.env.GEMINI_API_KEY });
+        const r = ok("gemini", j.candidates?.[0]?.content?.parts?.map(x => x.text || "").join("") || ""); if (r) return r;
+      } catch (e) { errs.push(model + " " + String(e.message || e)); console.warn(model, String(e)); }
+    }
   }
   if (process.env.ANTHROPIC_API_KEY) {
     try {
       const j = await postJSON("https://api.anthropic.com/v1/messages", { model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5", max_tokens: 500, messages: [{ role: "user", content: p }] }, { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" });
-      return { source: "claude", text: j.content?.map(x => x.text || "").join("") || "" };
-    } catch (e) { console.warn(String(e)); }
+      const r = ok("claude", j.content?.map(x => x.text || "").join("") || ""); if (r) return r;
+    } catch (e) { errs.push(String(e.message || e)); console.warn(String(e)); }
   }
   return null;
 }
@@ -144,12 +146,13 @@ http.createServer(async (req, res) => {
       const story = (u.searchParams.get("story") || "").trim().slice(0, 800);
       if (story.length < 8) return send(res, 400, { error: "story is too short" });
       let source = "wikipedia", cands = [];
-      const ai = await askAI(story).catch(() => null);
+      const errs = [];
+      const ai = await askAI(story, errs).catch(e => (errs.push(String(e)), null));
       if (ai) { source = ai.source; cands = parseCandidates(ai.text); }
       if (!cands.length) { source = "wikipedia"; cands = await wikiGuess(story).catch(() => []); }
       const seen = new Set(), results = [];
       for (const c of cands) { const f = await resolve(c).catch(() => null); if (f && !seen.has(f.id)) { seen.add(f.id); results.push(f); } }
-      return send(res, 200, { source, results });
+      return send(res, 200, errs.length && source === "wikipedia" ? { source, results, aiError: errs.join(" | ").slice(0, 600) } : { source, results });
     }
     const m = u.pathname.match(/^\/movie\/(\d+)$/);
     if (m) {
