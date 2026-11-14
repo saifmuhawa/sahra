@@ -83,6 +83,8 @@
 <script src="common.js"></script>
 <script>
 let current = null;
+const API = "https://sahra-api-kxww.onrender.com";
+fetch(API + "/health").catch(() => {});
 const ST_CACHE = "st:";
 const bad = /unofficial|piano|cover|tribute|karaoke|lullaby|8-bit|inspired|music box|remix/i;
 const nn = s => (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -144,6 +146,7 @@ function trackList(f, tracks, start) {
 let showToken = 0;
 async function showFilm(f) {
   const token = ++showToken;
+  if (f.ext && !f.full) { try { const r = await fetch(API + "/movie/" + f.id); if (r.ok) Object.assign(f, (await r.json()).film, {full: true}); } catch (e) {} if (token !== showToken) return; }
   const box = $("#m-result");
   const curated = MUSIC[keyOf(f)] || [];
   box.innerHTML = `<div class="film-head"><h3>${esc(titleAr(f))}</h3><div class="en">${esc(f.en)} · ${f.y || ""} ${badges(f)}</div></div>`;
@@ -166,8 +169,12 @@ async function showFilm(f) {
     `<span class="note">بدك تسمع كل موسيقى الفيلم على يوتيوب؟</span>
      <div><a class="btn btn-gold" href="${ytSearch(f.en + " " + (f.y || "") + " soundtrack")}" target="_blank" rel="noopener">كل أغاني الفيلم على يوتيوب ↗</a></div>`));
 }
-function search(q) {
-  const list = searchFilms(q, 8);
+async function search(q) {
+  let list = searchFilms(q, 8);
+  if (list.length < 3) {
+    $("#m-matches").innerHTML = `<p class="note">عم ندوّر بكل الأفلام…</p>`;
+    try { const r = await fetch(API + "/search?q=" + encodeURIComponent(q)); if (r.ok) { const more = (await r.json()).results || []; list = list.concat(more.filter(m => !list.some(f => f.id === m.id))).slice(0, 8); } } catch (e) {}
+  }
   if (!list.length) {
     $("#m-matches").innerHTML = `<div class="empty"><b>ما لقينا "${esc(q)}" بالقائمة.</b><div><a class="btn btn-gold" href="${ytSearch(q + " soundtrack")}" target="_blank" rel="noopener">دوّر على يوتيوب ↗</a></div></div>`;
     $("#m-result").innerHTML = ""; return;

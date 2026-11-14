@@ -126,6 +126,8 @@
 <script src="common.js"></script>
 <script>
 const RAW_D = "https://raw.githubusercontent.com/saifmuhawa/sahra/main/data/d/";
+const API = "https://sahra-api-kxww.onrender.com";
+fetch(API + "/health").catch(() => {});
 const regionAr = (() => { try { const d = new Intl.DisplayNames(["ar"], {type:"region"}); return c => { try { return d.of(c); } catch (e) { return c; } }; } catch (e) { return c => c; } })();
 const flag = c => "";
 function money(n) {
@@ -189,15 +191,24 @@ function suggest(list) {
     box.appendChild(b);
   });
 }
-$("#pick-form").addEventListener("submit", e => {
+$("#pick-form").addEventListener("submit", async e => {
   e.preventDefault(); if (needPlayers()) return;
   const q = $("#pick-in").value.trim(); if (!q) return;
   const n = norm(q);
   const exact = FILMS.filter(f => norm(f.en) === n || norm(f.ar) === n);
-  const list = exact.length ? exact.concat(searchFilms(q, 6).filter(f => !exact.includes(f))).slice(0, 6) : searchFilms(q, 6);
+  let list = exact.length ? exact.concat(searchFilms(q, 6).filter(f => !exact.includes(f))).slice(0, 6) : searchFilms(q, 6);
+  if (exact.length !== 1) {
+    $("#sugg").innerHTML = `<p class="note">عم ندوّر بكل الأفلام… (أول مرة ممكن تاخذ لحد دقيقة)</p>`;
+    const more = await apiSearch(q);
+    list = list.concat(more.filter(m => !list.some(f => f.id === m.id))).slice(0, 8);
+  }
   if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما لقينا فيلم بهالاسم. جرّب تكتبه بطريقة ثانية.</p>`; return; }
   if (list.length === 1) { $("#sugg").innerHTML = ""; chooseFilm(list[0]); } else suggest(list);
 });
+async function apiSearch(q) {
+  try { const r = await fetch(API + "/search?q=" + encodeURIComponent(q)); if (r.ok) return (await r.json()).results || []; } catch (e) {}
+  return [];
+}
 $("#random-btn").addEventListener("click", () => {
   if (needPlayers()) return;
   const pool = FILMS.filter(f => (f.iv || 0) > 150000 && (f.ir || 0) >= 7);
@@ -213,7 +224,8 @@ async function chooseFilm(f) {
   $("#judge-tools").hidden = false;
   $("#det").innerHTML = `<p class="note">عم نجيب معلومات ${esc(f.en)}…</p>`;
   let d = null;
-  if (f.id) { try { const r = await fetch(RAW_D + f.id + ".json?h=" + Math.floor(Date.now() / 3600000)); if (r.ok) d = await r.json(); } catch (e) {} }
+  if (f.id && !f.ext) { try { const r = await fetch(RAW_D + f.id + ".json?h=" + Math.floor(Date.now() / 3600000)); if (r.ok) d = await r.json(); } catch (e) {} }
+  if (!d && f.id) { try { const r = await fetch(API + "/movie/" + f.id); if (r.ok) { const j = await r.json(); d = j.det; f = Object.assign({}, f, j.film, {ir: f.ir, iv: f.iv}); } } catch (e) {} }
   renderDetails(f, d);
 }
 function people(title, arr) { return arr && arr.length ? `<div class="fact"><span>${title}</span><b style="font-size:15px;direction:ltr;text-align:right">${arr.map(esc).join("، ")}</b></div>` : ""; }
@@ -236,6 +248,7 @@ function renderDetails(f, d) {
       ${d?.countries?.length ? `<div class="fact"><span>بلد الإنتاج</span><b style="font-size:15px">${d.countries.map(c => flag(c) + " " + regionAr(c)).join("، ")}</b></div>` : ""}
       ${d?.col ? `<div class="fact"><span>من سلسلة</span><b style="font-size:15px;direction:ltr;text-align:right">${esc(d.col)}</b></div>` : ""}
       ${f.ir ? `<div class="fact"><span>تقييم IMDb</span><b>${f.ir.toFixed(1)} <small style="font-size:12px;color:var(--muted)">(${(f.iv || 0).toLocaleString("en")} صوت)</small></b></div>` : ""}
+      ${!f.ir && f.tv ? `<div class="fact"><span>تقييم TMDB</span><b>${f.tv}</b></div>` : ""}
     </div>`;
   if (d) {
     h += `<div class="sec"><h4>مين أنتجه</h4>
