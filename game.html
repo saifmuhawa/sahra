@@ -257,16 +257,17 @@ async function loadOscars(imdb) {
     const lab = (id, l) => L[id]?.labels?.[l]?.value;
     const cats = new Map();
     for (const r of rows.filter(r => /^Academy Award/.test(lab(r.aw, "en") || ""))) {
-      const c = cats.get(r.aw) || {name: lab(r.aw, "ar") || lab(r.aw, "en"), won: false, who: new Set(), year: r.year};
+      const c = cats.get(r.aw) || {name: lab(r.aw, "ar") || lab(r.aw, "en"), en: lab(r.aw, "en") || "", won: false, who: new Set(), year: r.year};
       if (r.kind === "won") c.won = true;
       r.who.forEach(w => c.who.add(lab(w, "en") || lab(w, "ar")));
       c.year = c.year || r.year; cats.set(r.aw, c);
     }
     const list = [...cats.values()].sort((a, b) => b.won - a.won);
     const won = list.filter(c => c.won).length;
+    const noms = list.reduce((n, c) => n + (/Actor|Actress/.test(c.en) ? Math.max(1, c.who.size) : 1), 0);
     if (box.dataset.k !== imdb) return;
     box.innerHTML = `<h4>الأوسكار</h4>` + (list.length
-      ? `<p class="osc-sum">ترشّح لـ <b>${list.length}</b> ${list.length === 1 ? "جائزة" : "جوائز"} أوسكار، وفاز بـ <b>${won}</b>${list[0].year ? ` · حفل ${list[0].year}` : ""}</p><ul class="osc">${list.map(c => `<li class="${c.won ? "won" : ""}"><span>${c.won ? "🏆 فاز" : "ترشّح"}</span><b>${esc((c.name || "").replace(/^جائزة الأوسكار ل/, "").replace(/^Academy Award for /, ""))}</b>${c.who.size ? `<small>${esc([...c.who].filter(Boolean).join(", "))}</small>` : ""}</li>`).join("")}</ul>`
+      ? `<p class="osc-sum">ترشّح لـ <b>${noms}</b> ${noms >= 3 && noms <= 10 ? "جوائز" : "جائزة"} أوسكار، وفاز بـ <b>${won}</b>${list[0].year ? ` · حفل ${list[0].year}` : ""}</p><ul class="osc">${list.map(c => `<li class="${c.won ? "won" : ""}"><span>${c.won ? "🏆 فاز" : "ترشّح"}</span><b>${esc((c.name || "").replace(/^جائزة الأوسكار ل/, "").replace(/^Academy Award for /, ""))}</b>${c.who.size ? `<small>${esc([...c.who].filter(Boolean).join(", "))}</small>` : ""}</li>`).join("")}</ul>`
       : `<p class="note">ما في ترشيحات أوسكار مسجّلة لهالفيلم.</p>`);
   } catch (e) { if (box.dataset.k === imdb) box.innerHTML = `<h4>الأوسكار</h4><p class="note">ما قدرنا نجيب معلومات الأوسكار هلأ.</p>`; }
 }
