@@ -20,6 +20,14 @@
     </div>
   </div>
 </nav>
+<style>
+.pv{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}
+.pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(18px) brightness(.45);transform:scale(1.15)}
+.pv-in{position:relative;display:grid;justify-items:center;gap:8px;text-align:center;padding:16px}
+.pv-in b{font-family:var(--display);font-size:clamp(20px,3vw,30px);font-weight:400;direction:ltr}
+.pv-in small{color:var(--muted)}
+.pv-in audio{width:min(360px,80vw)}
+</style>
 <main class="wrap">
   <header class="page-head">
     <h1>أغاني الأفلام</h1>
@@ -75,38 +83,87 @@
 <script src="common.js"></script>
 <script>
 let current = null;
-function tracksOf(f) {
-  const list = [...(MUSIC[keyOf(f)] || [])];
-  if (f.tr) list.push({t:"التريلر الرسمي", by:f.en, yt:f.tr, trailer:true});
-  return list;
+const ST_CACHE = "st:";
+const bad = /unofficial|piano|cover|tribute|karaoke|lullaby|8-bit|inspired|music box|remix/i;
+const nn = s => (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+// ساوندتراك أي فيلم من كتالوج Apple Music (مجاني، بدون مفتاح)
+async function soundtrackOf(f) {
+  const ck = ST_CACHE + (f.id || keyOf(f));
+  try { const c = JSON.parse(localStorage.getItem(ck) || "null"); if (c && Date.now() - c.t < 7 * 864e5) return c.v; } catch (e) {}
+  let best = null;
+  for (const country of ["us", "ae"]) {
+    const r = await fetch("https://itunes.apple.com/search?entity=album&limit=25&country=" + country + "&term=" + encodeURIComponent(f.en + " soundtrack"));
+    if (!r.ok) continue;
+    const j = await r.json();
+    for (const x of j.results || []) {
+      const cn = nn(x.collectionName), t = nn(f.en);
+      if (!t || !cn.includes(t)) continue;
+      if (!/soundtrack|original score|music from|motion picture|ost/i.test(x.collectionName)) continue;
+      const y = +(x.releaseDate || "").slice(0, 4);
+      const s = Math.abs(y - (f.y || y)) + (cn.startsWith(t) ? 0 : 3) + (x.trackCount < 4 ? 6 : 0) + (bad.test(x.collectionName + " " + x.artistName) ? 20 : 0);
+      if (!best || s < best.s) best = {s, x, country};
+    }
+    if (best && best.s < 4) break;
+  }
+  let v = null;
+  if (best && best.s < 12) {
+    const l = await (await fetch("https://itunes.apple.com/lookup?entity=song&country=" + best.country + "&id=" + best.x.collectionId)).json();
+    const songs = (l.results || []).filter(s => s.wrapperType === "track" && s.kind === "song");
+    v = {
+      album: best.x.collectionName, artist: best.x.artistName, url: best.x.collectionViewUrl,
+      art: (best.x.artworkUrl100 || "").replace("100x100bb", "600x600bb"),
+      tracks: songs.map(s => ({t: s.trackName, by: s.artistName, pv: s.previewUrl, ms: s.trackTimeMillis}))
+    };
+  }
+  try { localStorage.setItem(ck, JSON.stringify({t: Date.now(), v})); } catch (e) {}
+  return v;
 }
 function showMatches(list) {
   const box = $("#m-matches");
   box.innerHTML = "";
   list.forEach(f => {
     const b = el("button", {type:"button", class:"result"});
-    b.innerHTML = `${posterBox(f, "w92")}<span><b>${esc(titleAr(f))}</b><small>${esc(f.en)} · ${f.y || ""}</small></span>${MUSIC[keyOf(f)] ? `<span class="tag-tr">أغاني</span>` : f.tr ? `<span class="tag-tr">تريلر</span>` : ""}`;
+    b.innerHTML = `${posterBox(f, "w92")}<span><b>${esc(titleAr(f))}</b><small>${esc(f.en)} · ${f.y || ""}</small></span>`;
     b.addEventListener("click", () => { box.querySelectorAll(".result").forEach(x => x.setAttribute("aria-pressed", "false")); b.setAttribute("aria-pressed", "true"); showFilm(f); });
     box.appendChild(b);
   });
 }
-function showFilm(f) {
+const mmss = ms => ms ? Math.floor(ms / 60000) + ":" + String(Math.floor(ms / 1000) % 60).padStart(2, "0") : "";
+function trackList(f, tracks, start) {
+  const ul = el("ul", {class:"tracks", style:"margin-top:10px"});
+  tracks.forEach((t, i) => {
+    const li = el("li");
+    const b = el("button", {type:"button", class:"track" + (current && current.t === t.t && current.by === t.by ? " playing" : "")});
+    b.innerHTML = `<span class="n">${t.trailer ? "🎬" : start + i + 1}</span><span class="tt"><b>${esc(t.t)}</b><small>${esc(t.by)}${t.ms ? " · " + mmss(t.ms) : ""}${t.note ? ` · <span dir="rtl">${esc(t.note)}</span>` : ""}</small></span><span class="play" aria-hidden="true">▶</span>`;
+    b.addEventListener("click", () => openChoice(f, t));
+    li.appendChild(b); ul.appendChild(li);
+  });
+  return ul;
+}
+let showToken = 0;
+async function showFilm(f) {
+  const token = ++showToken;
   const box = $("#m-result");
-  const tracks = tracksOf(f);
+  const curated = MUSIC[keyOf(f)] || [];
   box.innerHTML = `<div class="film-head"><h3>${esc(titleAr(f))}</h3><div class="en">${esc(f.en)} · ${f.y || ""} ${badges(f)}</div></div>`;
-  if (tracks.length) {
-    const ul = el("ul", {class:"tracks", style:"margin-top:10px"});
-    tracks.forEach((t, i) => {
-      const li = el("li");
-      const b = el("button", {type:"button", class:"track" + (current && current.yt === t.yt ? " playing" : "")});
-      b.innerHTML = `<span class="n">${t.trailer ? "🎬" : i + 1}</span><span class="tt"><b>${esc(t.t)}</b><small>${esc(t.by)}${t.note ? ` · <span dir="rtl">${esc(t.note)}</span>` : ""}</small></span><span class="play" aria-hidden="true">▶</span>`;
-      b.addEventListener("click", () => openChoice(f, t));
-      li.appendChild(b); ul.appendChild(li);
-    });
-    box.appendChild(ul);
+  if (curated.length) { box.appendChild(el("p", {class:"note", style:"margin:10px 0 0"}, "أغاني مختارة · بتشتغل كاملة هون")); box.appendChild(trackList(f, curated, 0)); }
+  const wait = el("p", {class:"note", style:"margin:12px 0 0"}, "عم ندوّر على موسيقى الفيلم…");
+  box.appendChild(wait);
+  let st = null;
+  try { st = await soundtrackOf(f); } catch (e) {}
+  if (token !== showToken) return;
+  wait.remove();
+  if (st && st.tracks.length) {
+    box.appendChild(el("p", {class:"note", style:"margin:14px 0 0"},
+      `<b style="color:var(--cream)">${esc(st.album)}</b> · ${esc(st.artist)} · ${st.tracks.length} مقطوعة · <a href="${st.url}" target="_blank" rel="noopener">Apple Music ↗</a>`));
+    box.appendChild(trackList(f, st.tracks.map(t => ({...t, art: st.art})), curated.length));
+  } else if (!curated.length) {
+    box.appendChild(el("p", {class:"note", style:"margin:12px 0 0"}, "ما لقينا ألبوم موسيقى رسمي لهالفيلم."));
   }
+  if (f.tr) box.appendChild(trackList(f, [{t:"التريلر الرسمي", by:f.en, yt:f.tr, trailer:true}], 0));
   box.appendChild(el("div", {class:"empty", style:"margin-top:10px"},
-    `<span class="note">${MUSIC[keyOf(f)] ? "بدك أغاني أكثر من هالفيلم؟" : "لسا ما جهّزنا قائمة أغاني لهالفيلم."} دوّر على كل موسيقاه على يوتيوب:</span>
+    `<span class="note">بدك تسمع كل موسيقى الفيلم على يوتيوب؟</span>
      <div><a class="btn btn-gold" href="${ytSearch(f.en + " " + (f.y || "") + " soundtrack")}" target="_blank" rel="noopener">كل أغاني الفيلم على يوتيوب ↗</a></div>`));
 }
 function search(q) {
@@ -123,10 +180,14 @@ function openChoice(f, t) {
   lastFocus = document.activeElement;
   $("#md-title").textContent = t.trailer ? "تريلر " + titleAr(f) : t.t;
   $("#md-sub").textContent = `${t.by} · ${f.en}`;
-  $("#md-yt").href = ytWatch(t.yt);
-  $("#md-here").onclick = () => { closeChoice(); playHere(f, t); };
+  $("#md-yt").href = t.yt ? ytWatch(t.yt) : ytSearch(`${t.t} ${t.by} ${f.en}`);
+  $("#md-yt").textContent = t.yt ? "افتحها على يوتيوب ↗" : "اسمعها كاملة على يوتيوب ↗";
+  const here = $("#md-here");
+  here.hidden = !(t.yt || t.pv);
+  here.textContent = t.yt ? "▶ اسمعها هون بالصفحة" : "▶ اسمع مقطع منها هون (٣٠ ثانية)";
+  here.onclick = () => { closeChoice(); playHere(f, t); };
   $("#modal").classList.add("open");
-  $("#md-here").focus();
+  (here.hidden ? $("#md-yt") : here).focus();
 }
 function closeChoice() { $("#modal").classList.remove("open"); if (lastFocus) lastFocus.focus(); }
 $("#md-close").addEventListener("click", closeChoice);
@@ -136,17 +197,21 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#modal"
 function playHere(f, t) {
   current = t;
   const scr = $("#screen");
-  scr.querySelectorAll("iframe").forEach(x => x.remove());
+  scr.querySelectorAll("iframe,.pv").forEach(x => x.remove());
   $("#idle").hidden = true;
-  scr.appendChild(el("iframe", {
-    src: `https://www.youtube-nocookie.com/embed/${t.yt}?autoplay=1&rel=0`,
-    title: `${t.t} — ${t.by}`,
-    allow: "autoplay; encrypted-media; picture-in-picture; fullscreen",
-    referrerpolicy: "strict-origin-when-cross-origin", allowfullscreen: ""
-  }));
+  if (t.yt) {
+    scr.appendChild(el("iframe", {
+      src: `https://www.youtube-nocookie.com/embed/${t.yt}?autoplay=1&rel=0`,
+      title: `${t.t} — ${t.by}`,
+      allow: "autoplay; encrypted-media; picture-in-picture; fullscreen",
+      referrerpolicy: "strict-origin-when-cross-origin", allowfullscreen: ""
+    }));
+  } else {
+    scr.appendChild(el("div", {class:"pv"}, `${t.art ? `<img src="${t.art}" alt="">` : ""}<div class="pv-in"><div class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><b>${esc(t.t)}</b><small>${esc(t.by)} · مقطع ٣٠ ثانية</small><audio controls autoplay src="${t.pv}"></audio></div>`));
+  }
   $("#cap-left").textContent = `شغّال: ${t.trailer ? "التريلر" : t.t} · ${titleAr(f)}`;
-  const y = $("#cap-yt"); y.href = ytWatch(t.yt); y.hidden = false;
-  showFilm(f);
+  const y = $("#cap-yt"); y.href = t.yt ? ytWatch(t.yt) : ytSearch(`${t.t} ${t.by} ${f.en}`); y.textContent = t.yt ? "افتحها على يوتيوب ↗" : "اسمعها كاملة على يوتيوب ↗"; y.hidden = false;
+  document.querySelectorAll("#m-result .track").forEach(b => b.classList.toggle("playing", b.querySelector("b")?.textContent === t.t));
   scr.scrollIntoView({block:"nearest"});
 }
 $("#m-form").addEventListener("submit", e => { e.preventDefault(); const q = $("#m-input").value.trim(); if (q) search(q); });
