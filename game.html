@@ -73,6 +73,18 @@
 .reveal img{width:min(260px,60vw);border-radius:14px;box-shadow:0 30px 80px #000}
 .reveal h2{font-size:clamp(34px,6vw,60px);color:var(--ticket)}
 [hidden]{display:none!important}
+.story{border:1px dashed var(--line);border-radius:14px;padding:12px 14px}
+.story summary{cursor:pointer;color:var(--ticket);font-weight:700}
+.story-form{display:grid;gap:8px;margin-top:10px}
+textarea.inp{resize:vertical;font:inherit;line-height:1.6}
+.result .ai{display:block;color:var(--ticket);font-size:13px}
+.osc-sum{margin:0;font-size:17px}
+.osc{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.osc li{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;background:var(--velvet-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.osc li span{font-size:13px;color:var(--muted)}
+.osc li.won{border-color:var(--ticket)}
+.osc li.won span{color:var(--ticket);font-weight:700}
+.osc li small{grid-column:2;color:var(--muted);direction:ltr;text-align:right}
 </style>
 <main class="wrap">
   <header class="page-head">
@@ -88,6 +100,14 @@
         <button class="btn btn-gold" type="submit">دوّر</button>
         <button class="btn btn-ghost" type="button" id="random-btn">فيلم عشوائي</button>
       </form>
+      <details class="story" id="story-box">
+        <summary>ما بتعرف اسم الفيلم؟ احكي قصته وخلّي الذكاء الاصطناعي يعرفه</summary>
+        <form class="story-form" id="story-form" autocomplete="off">
+          <label for="story-in" class="q-label">احكي القصة بالعربي أو الإنجليزي، وكل ما زدت تفاصيل كان أحسن</label>
+          <textarea class="inp" id="story-in" rows="3" placeholder="مثلاً: رواد فضاء بيسافروا من خلال ثقب دودي عشان يلاقوا كوكب جديد للبشر، والأب تارك بنته على الأرض"></textarea>
+          <button class="btn btn-red" type="submit">🤖 اعرفلي الفيلم</button>
+        </form>
+      </details>
       <p class="warn" id="need-players" hidden>لازم تضيف متسابقين اثنين على الأقل قبل ما تبلش.</p>
       <div class="sugg" id="sugg"></div>
       <div class="row" id="judge-tools" hidden>
@@ -186,7 +206,7 @@ function suggest(list) {
   const box = $("#sugg"); box.innerHTML = "";
   list.forEach(f => {
     const b = el("button", {type:"button", class:"result"});
-    b.innerHTML = `${posterBox(f, "w92")}<span><b dir="ltr">${esc(f.en)}</b><small>${esc(titleAr(f))} · ${f.y || ""}</small></span>`;
+    b.innerHTML = `${posterBox(f, "w92")}<span><b dir="ltr">${esc(f.en)}</b><small>${esc(titleAr(f))} · ${f.y || ""}</small>${f.why ? `<span class="ai">🤖 ${esc(f.why)}</span>` : ""}</span>`;
     b.addEventListener("click", () => { box.innerHTML = ""; chooseFilm(f); });
     box.appendChild(b);
   });
@@ -205,6 +225,51 @@ $("#pick-form").addEventListener("submit", async e => {
   if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما لقينا فيلم بهالاسم. جرّب تكتبه بطريقة ثانية.</p>`; return; }
   if (list.length === 1) { $("#sugg").innerHTML = ""; chooseFilm(list[0]); } else suggest(list);
 });
+$("#story-form").addEventListener("submit", async e => {
+  e.preventDefault(); if (needPlayers()) return;
+  const s = $("#story-in").value.trim(); if (s.length < 8) return;
+  $("#sugg").innerHTML = `<p class="note">🤖 عم يفكّر… (أول مرة ممكن تاخذ لحد دقيقة)</p>`;
+  let j = null;
+  try { const r = await fetch(API + "/guess?story=" + encodeURIComponent(s)); if (r.ok) j = await r.json(); } catch (e) {}
+  const list = j?.results || [];
+  if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما قدرنا نعرف الفيلم من هالوصف. زيد تفاصيل: ممثل، سنة، مكان، أو مشهد مشهور.</p>`; return; }
+  suggest(list);
+  $("#sugg").insertAdjacentHTML("afterbegin", j.source === "wikipedia" ? `<p class="note">النتائج من بحث ويكيبيديا، لأن الذكاء الاصطناعي لسا مش مفعّل.</p>` : `<p class="note">🤖 هاي توقعات الذكاء الاصطناعي، اختار الصح:</p>`);
+});
+async function loadOscars(imdb) {
+  const box = document.getElementById("oscars"); if (!box || box.dataset.k !== imdb) return;
+  const W = "https://www.wikidata.org/w/api.php?format=json&origin=*&";
+  try {
+    const s = await (await fetch(W + "action=query&list=search&srlimit=1&srsearch=" + encodeURIComponent("haswbstatement:P345=" + imdb))).json();
+    const qid = s.query?.search?.[0]?.title;
+    if (!qid) throw new Error("no item");
+    const e = await (await fetch(W + "action=wbgetentities&props=claims&ids=" + qid)).json();
+    const cl = e.entities?.[qid]?.claims || {};
+    const rows = [];
+    for (const [p, kind] of [["P166", "won"], ["P1411", "nom"]]) for (const c of cl[p] || []) {
+      const aw = c.mainsnak?.datavalue?.value?.id; if (!aw) continue;
+      const q = c.qualifiers || {};
+      rows.push({kind, aw, year: (q.P585?.[0]?.datavalue?.value?.time || "").slice(1, 5), who: (q.P2453 || q.P1346 || []).map(x => x.datavalue?.value?.id).filter(Boolean)});
+    }
+    const ids = [...new Set(rows.flatMap(r => [r.aw, ...r.who]))];
+    const L = {};
+    for (let i = 0; i < ids.length; i += 50) { const j = await (await fetch(W + "action=wbgetentities&props=labels&languages=ar|en&ids=" + ids.slice(i, i + 50).join("|"))).json(); Object.assign(L, j.entities || {}); }
+    const lab = (id, l) => L[id]?.labels?.[l]?.value;
+    const cats = new Map();
+    for (const r of rows.filter(r => /^Academy Award/.test(lab(r.aw, "en") || ""))) {
+      const c = cats.get(r.aw) || {name: lab(r.aw, "ar") || lab(r.aw, "en"), won: false, who: new Set(), year: r.year};
+      if (r.kind === "won") c.won = true;
+      r.who.forEach(w => c.who.add(lab(w, "en") || lab(w, "ar")));
+      c.year = c.year || r.year; cats.set(r.aw, c);
+    }
+    const list = [...cats.values()].sort((a, b) => b.won - a.won);
+    const won = list.filter(c => c.won).length;
+    if (box.dataset.k !== imdb) return;
+    box.innerHTML = `<h4>الأوسكار</h4>` + (list.length
+      ? `<p class="osc-sum">ترشّح لـ <b>${list.length}</b> ${list.length === 1 ? "جائزة" : "جوائز"} أوسكار، وفاز بـ <b>${won}</b>${list[0].year ? ` · حفل ${list[0].year}` : ""}</p><ul class="osc">${list.map(c => `<li class="${c.won ? "won" : ""}"><span>${c.won ? "🏆 فاز" : "ترشّح"}</span><b>${esc((c.name || "").replace(/^جائزة الأوسكار ل/, "").replace(/^Academy Award for /, ""))}</b>${c.who.size ? `<small>${esc([...c.who].filter(Boolean).join(", "))}</small>` : ""}</li>`).join("")}</ul>`
+      : `<p class="note">ما في ترشيحات أوسكار مسجّلة لهالفيلم.</p>`);
+  } catch (e) { if (box.dataset.k === imdb) box.innerHTML = `<h4>الأوسكار</h4><p class="note">ما قدرنا نجيب معلومات الأوسكار هلأ.</p>`; }
+}
 async function apiSearch(q) {
   try { const r = await fetch(API + "/search?q=" + encodeURIComponent(q)); if (r.ok) return (await r.json()).results || []; } catch (e) {}
   return [];
@@ -250,6 +315,8 @@ function renderDetails(f, d) {
       ${f.ir ? `<div class="fact"><span>تقييم IMDb</span><b>${f.ir.toFixed(1)} <small style="font-size:12px;color:var(--muted)">(${(f.iv || 0).toLocaleString("en")} صوت)</small></b></div>` : ""}
       ${!f.ir && f.tv ? `<div class="fact"><span>تقييم TMDB</span><b>${f.tv}</b></div>` : ""}
     </div>`;
+  const imdbId = (d && d.imdb) || f.imdb;
+  if (imdbId) h += `<div class="sec" id="oscars" data-k="${imdbId}"><h4>الأوسكار</h4><p class="note">عم نجيب الترشيحات…</p></div>`;
   if (d) {
     h += `<div class="sec"><h4>مين أنتجه</h4>
       ${d.companies?.length ? `<div class="cos">${d.companies.map(c => `<span class="co">${c.logo ? `<img src="${IMG}w92${c.logo}" alt="">` : ""}<span dir="ltr">${esc(c.n)}</span></span>`).join("")}</div>` : `<p class="note">ما في معلومات عن شركات الإنتاج.</p>`}
@@ -264,6 +331,7 @@ function renderDetails(f, d) {
   h += `<div class="actions"><a class="btn btn-ghost" href="${imdbUrl(f)}" target="_blank" rel="noopener">صفحته على IMDb ↗</a></div>`;
   $("#det").innerHTML = h;
   window.CUR = f;
+  if (imdbId) loadOscars(imdbId);
 }
 $("#hide-btn").addEventListener("click", () => {
   const s = $("#secret"); s.classList.toggle("hidden");
