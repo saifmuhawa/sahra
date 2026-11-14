@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>أغاني الأفلام · سهرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="music">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <div class="nav-links">
+      <a href="tonight.html" data-page="tonight">شو نحضر الليلة؟</a>
+      <a href="puzzle.html" data-page="puzzle">لغز اليوم</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="page-head">
+    <h1>أغاني الأفلام</h1>
+    <p>اكتب اسم أي فيلم وبيطلعلك تريلره وأغانيه. اضغط على أي وحدة وبتختار: تسمعها هون، أو تفتحها على يوتيوب.</p>
+  </header>
+  <section class="hall" aria-label="المشغّل">
+    <div class="music">
+      <div class="screen-wrap">
+        <div class="screen" id="screen">
+          <div class="idle" id="idle">
+            <div class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="now">الشاشة جاهزة</div>
+            <div class="title">اختار أغنية من القائمة</div>
+          </div>
+        </div>
+        <div class="curtain" aria-hidden="true"></div>
+        <div class="screen-cap"><span id="cap-left">لسا ما في شي شغّال</span><a id="cap-yt" href="#" target="_blank" rel="noopener" hidden>افتحها على يوتيوب ↗</a></div>
+      </div>
+      <div style="display:grid;gap:14px">
+        <form class="search" id="m-form" autocomplete="off">
+          <label for="m-input" class="q-label" hidden>اسم الفيلم</label>
+          <input id="m-input" placeholder="مثلاً: انترستلر، Joker، Dune">
+          <button class="btn btn-gold" type="submit">دوّر</button>
+        </form>
+        <div class="results" id="m-matches" aria-live="polite"></div>
+        <div id="m-result" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="md-title">
+  <div class="modal-card">
+    <h3 id="md-title"></h3>
+    <div class="en" id="md-sub"></div>
+    <div class="modal-btns">
+      <button class="btn btn-red" id="md-here" type="button">▶ اسمعها هون بالصفحة</button>
+      <a class="btn btn-ghost" id="md-yt" href="#" target="_blank" rel="noopener">افتحها على يوتيوب ↗</a>
+    </div>
+    <button class="close" id="md-close" type="button">رجوع</button>
+  </div>
+</div>
+<footer>
+  <div class="wrap">
+    <span>سهرة · فكرة وإعداد saiflex · <span id="updated" class="updated"></span></span>
+    <div class="credits">
+      <span dir="ltr">This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+      <span dir="ltr">Information courtesy of IMDb (https://www.imdb.com). Used with permission.</span>
+      <span>أماكن المشاهدة من JustWatch عن طريق TMDB · الأغاني من يوتيوب</span>
+    </div>
+  </div>
+</footer>
+<script src="curated.js"></script>
+<script src="common.js"></script>
+<script>
+let current = null;
+function tracksOf(f) {
+  const list = [...(MUSIC[keyOf(f)] || [])];
+  if (f.tr) list.push({t:"التريلر الرسمي", by:f.en, yt:f.tr, trailer:true});
+  return list;
+}
+function showMatches(list) {
+  const box = $("#m-matches");
+  box.innerHTML = "";
+  list.forEach(f => {
+    const b = el("button", {type:"button", class:"result"});
+    b.innerHTML = `${posterBox(f, "w92")}<span><b>${esc(titleAr(f))}</b><small>${esc(f.en)} · ${f.y || ""}</small></span>${MUSIC[keyOf(f)] ? `<span class="tag-tr">أغاني</span>` : f.tr ? `<span class="tag-tr">تريلر</span>` : ""}`;
+    b.addEventListener("click", () => { box.querySelectorAll(".result").forEach(x => x.setAttribute("aria-pressed", "false")); b.setAttribute("aria-pressed", "true"); showFilm(f); });
+    box.appendChild(b);
+  });
+}
+function showFilm(f) {
+  const box = $("#m-result");
+  const tracks = tracksOf(f);
+  box.innerHTML = `<div class="film-head"><h3>${esc(titleAr(f))}</h3><div class="en">${esc(f.en)} · ${f.y || ""} ${badges(f)}</div></div>`;
+  if (tracks.length) {
+    const ul = el("ul", {class:"tracks", style:"margin-top:10px"});
+    tracks.forEach((t, i) => {
+      const li = el("li");
+      const b = el("button", {type:"button", class:"track" + (current && current.yt === t.yt ? " playing" : "")});
+      b.innerHTML = `<span class="n">${t.trailer ? "🎬" : i + 1}</span><span class="tt"><b>${esc(t.t)}</b><small>${esc(t.by)}${t.note ? ` · <span dir="rtl">${esc(t.note)}</span>` : ""}</small></span><span class="play" aria-hidden="true">▶</span>`;
+      b.addEventListener("click", () => openChoice(f, t));
+      li.appendChild(b); ul.appendChild(li);
+    });
+    box.appendChild(ul);
+  }
+  box.appendChild(el("div", {class:"empty", style:"margin-top:10px"},
+    `<span class="note">${MUSIC[keyOf(f)] ? "بدك أغاني أكثر من هالفيلم؟" : "لسا ما جهّزنا قائمة أغاني لهالفيلم."} دوّر على كل موسيقاه على يوتيوب:</span>
+     <div><a class="btn btn-gold" href="${ytSearch(f.en + " " + (f.y || "") + " soundtrack")}" target="_blank" rel="noopener">كل أغاني الفيلم على يوتيوب ↗</a></div>`));
+}
+function search(q) {
+  const list = searchFilms(q, 8);
+  if (!list.length) {
+    $("#m-matches").innerHTML = `<div class="empty"><b>ما لقينا "${esc(q)}" بالقائمة.</b><div><a class="btn btn-gold" href="${ytSearch(q + " soundtrack")}" target="_blank" rel="noopener">دوّر على يوتيوب ↗</a></div></div>`;
+    $("#m-result").innerHTML = ""; return;
+  }
+  showMatches(list); showFilm(list[0]);
+  $("#m-matches .result")?.setAttribute("aria-pressed", "true");
+}
+let lastFocus = null;
+function openChoice(f, t) {
+  lastFocus = document.activeElement;
+  $("#md-title").textContent = t.trailer ? "تريلر " + titleAr(f) : t.t;
+  $("#md-sub").textContent = `${t.by} · ${f.en}`;
+  $("#md-yt").href = ytWatch(t.yt);
+  $("#md-here").onclick = () => { closeChoice(); playHere(f, t); };
+  $("#modal").classList.add("open");
+  $("#md-here").focus();
+}
+function closeChoice() { $("#modal").classList.remove("open"); if (lastFocus) lastFocus.focus(); }
+$("#md-close").addEventListener("click", closeChoice);
+$("#md-yt").addEventListener("click", () => setTimeout(closeChoice, 50));
+$("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeChoice(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#modal").classList.contains("open")) closeChoice(); });
+function playHere(f, t) {
+  current = t;
+  const scr = $("#screen");
+  scr.querySelectorAll("iframe").forEach(x => x.remove());
+  $("#idle").hidden = true;
+  scr.appendChild(el("iframe", {
+    src: `https://www.youtube-nocookie.com/embed/${t.yt}?autoplay=1&rel=0`,
+    title: `${t.t} — ${t.by}`,
+    allow: "autoplay; encrypted-media; picture-in-picture; fullscreen",
+    referrerpolicy: "strict-origin-when-cross-origin", allowfullscreen: ""
+  }));
+  $("#cap-left").textContent = `شغّال: ${t.trailer ? "التريلر" : t.t} · ${titleAr(f)}`;
+  const y = $("#cap-yt"); y.href = ytWatch(t.yt); y.hidden = false;
+  showFilm(f);
+  scr.scrollIntoView({block:"nearest"});
+}
+$("#m-form").addEventListener("submit", e => { e.preventDefault(); const q = $("#m-input").value.trim(); if (q) search(q); });
+loadFilms().then(() => {
+  const want = new URLSearchParams(location.search).get("f");
+  let f = want && (FILMS.find(x => String(x.id) === want) || findByKey(want));
+  if (!f) f = findByKey("interstellar|2014") || FILMS[0];
+  if (f) { $("#m-input").value = titleAr(f); showMatches([f]); $("#m-matches .result")?.setAttribute("aria-pressed", "true"); showFilm(f); }
+});
+</script>
+</body>
+</html>

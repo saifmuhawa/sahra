@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شو نحضر الليلة؟ · سهرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="tonight">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <div class="nav-links">
+      <a href="tonight.html" data-page="tonight">شو نحضر الليلة؟</a>
+      <a href="puzzle.html" data-page="puzzle">لغز اليوم</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="page-head">
+    <h1>شو نحضر الليلة؟</h1>
+    <p>مش قائمة طويلة تحتار فيها. ترشيح واحد من آلاف الأفلام بيناسب مزاجك ووقتك واللي قاعدين معك.</p>
+  </header>
+  <section class="hall" aria-label="الأسئلة والترشيح">
+    <div class="tonight">
+      <div class="qs">
+        <div class="q"><span class="q-label" id="q-with">مين معك؟</span><div class="chips" role="group" aria-labelledby="q-with" data-q="with"></div></div>
+        <div class="q"><span class="q-label" id="q-mood">شو مزاجك؟</span><div class="chips" role="group" aria-labelledby="q-mood" data-q="mood"></div></div>
+        <div class="q"><span class="q-label" id="q-time">قديش عندك وقت؟</span><div class="chips" role="group" aria-labelledby="q-time" data-q="time"></div></div>
+        <div class="q"><span class="q-label" id="q-type">شو بدك تحضر؟</span><div class="chips" role="group" aria-labelledby="q-type" data-q="type"></div></div>
+      </div>
+      <div><article class="ticket" id="pick" aria-live="polite"><p class="why">عم نجهّز الأفلام…</p></article></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>سهرة · فكرة وإعداد saiflex · <span id="updated" class="updated"></span></span>
+    <div class="credits">
+      <span dir="ltr">This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+      <span dir="ltr">Information courtesy of IMDb (https://www.imdb.com). Used with permission.</span>
+      <span>أماكن المشاهدة من JustWatch عن طريق TMDB · الأغاني من يوتيوب</span>
+    </div>
+  </div>
+</footer>
+<script src="curated.js"></script>
+<script src="common.js"></script>
+<script>
+const MOOD_AR = {think:"بدي أفكّر",laugh:"بدي أضحك",cry:"بدي أبكي",action:"بدي أكشن",scare:"بدي أخاف"};
+const MOOD_G = {laugh:[35], scare:[27,53], cry:[18,10749], action:[28,12,10752,37,14], think:[9648,878,80,99,36,53]};
+const WITH_G = {family:[10751,16], partner:[10749,18,35], friends:[35,28,27,53,80], alone:[18,878,9648,53,99]};
+const QUESTIONS = {
+  with:[["alone","لحالي"],["partner","مع حدا قريب"],["family","مع العيلة"],["friends","مع الشباب"]],
+  mood:Object.entries(MOOD_AR),
+  time:[["short","ساعة ونص"],["mid","ساعتين"],["long","الليل كله"]],
+  type:[["any","أي شي"],["foreign","أجنبي"],["arab","عربي"],["anime","أنمي"]]
+};
+const state = {with:"friends",mood:"think",time:"long",type:"any"};
+let ranked = [], rankPos = 0;
+const today = new Date().toISOString().slice(0, 10);
+
+function buildChips() {
+  document.querySelectorAll(".chips").forEach(box => {
+    const q = box.dataset.q;
+    QUESTIONS[q].forEach(([val, label]) => {
+      const b = el("button", {type:"button", class:"chip", "aria-pressed":String(state[q] === val), "data-v":val}, label);
+      b.addEventListener("click", () => {
+        state[q] = val;
+        box.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c.dataset.v === val)));
+        recommend();
+      });
+      box.appendChild(b);
+    });
+  });
+}
+function score(f) {
+  const g = f.g || [];
+  const has = arr => arr.some(x => g.includes(x));
+  let s = 0;
+  if (has(MOOD_G[state.mood])) s += 8; else s -= 6;
+  if (has(WITH_G[state.with])) s += 3;
+  if (state.with === "family" && g.includes(27)) s -= 20;
+  const max = {short:110, mid:140, long:999}[state.time];
+  if (f.rt) s += f.rt <= max ? 3 : -Math.min(8, (f.rt - max) / 10);
+  const rating = f.ir || f.tv || 6;
+  s += (rating - 6) * 3 + Math.log10(1 + (f.iv || f.tc || 0)) * 0.8;
+  return s + Math.random() * 2.5;
+}
+function recommend() {
+  ranked = FILMS
+    .filter(f => !f.rd || f.rd <= today)
+    .filter(f => !f.rt || f.rt >= 60)
+    .filter(f => (f.ir || f.tv || 0) >= 6.2)
+    .filter(f => state.type === "any" || typeOf(f) === state.type)
+    .map(f => [score(f), f]).sort((a, b) => b[0] - a[0]).slice(0, 40).map(x => x[1]);
+  rankPos = 0; renderPick();
+}
+function renderPick() {
+  const box = $("#pick");
+  if (!ranked.length) { box.innerHTML = `<p class="why">ما لقينا فيلم بهالاختيارات. جرّب تغيّر نوع الفيلم أو الوقت.</p>`; return; }
+  const f = ranked[rankPos % ranked.length];
+  const why = note(f)?.why || f.ov || "";
+  const genres = (f.g || []).slice(0, 3).map(x => GENRE_AR[x]).filter(Boolean);
+  const music = MUSIC[keyOf(f)] || f.tr;
+  box.innerHTML = `
+    <div class="ticket-top"><span>تذكرة الليلة · ${rankPos % ranked.length + 1}/${ranked.length}</span><span>${TYPE_AR[typeOf(f)]} · ${f.y || ""}</span></div>
+    <div class="pick-wrap">${posterBox(f, "w342")}
+      <div style="display:grid;gap:8px">
+        <div><h3>${esc(titleAr(f))}</h3>${titleAr(f) !== f.en ? `<div class="en">${esc(f.en)}</div>` : ""}</div>
+        <div class="meta">${badges(f)}<span class="tag">⏱ ${timeLabel(f.rt)}</span>${genres.map(x => `<span class="tag">${x}</span>`).join("")}</div>
+        <p class="why">${esc(why)}</p>
+        ${f.pr?.length ? `<div class="prov">متوفر بالإمارات على: <b>${f.pr.map(esc).join("، ")}</b></div>` : f.rb ? `<div class="prov">متوفر للإيجار أو الشراء بالإمارات</div>` : ""}
+      </div>
+    </div>
+    <div class="perf" aria-hidden="true"></div>
+    <div class="actions">
+      <a class="btn btn-red" href="${watchUrl(f)}" target="_blank" rel="noopener">وين أحضره بالإمارات ↗</a>
+      ${music ? `<a class="btn btn-ghost" href="music.html?f=${encodeURIComponent(f.id || keyOf(f))}">♫ أغانيه والتريلر</a>` : ""}
+      <button class="btn btn-ghost" type="button" id="another">رشّحلي غيره</button>
+    </div>`;
+  $("#another").addEventListener("click", () => { rankPos++; renderPick(); });
+}
+buildChips();
+loadFilms().then(recommend);
+</script>
+</body>
+</html>
