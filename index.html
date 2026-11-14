@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سهرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* عالم بصري واحد: صالة سينما — مخمل غامق، أحمر الكراسي، ذهبي التذكرة، كريمي ضوء البروجكتر */
+  --velvet:#170a0f;
+  --velvet-2:#22111a;
+  --velvet-3:#2e1823;
+  --seat:#c8323c;
+  --ticket:#e2b457;
+  --cream:#f4ead9;
+  --muted:#b9a79a;
+  --line:rgba(244,234,217,.12);
+  --good:#5fbf8a;
+  --bad:#e0646b;
+  --display:"Lalezar","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
+  --r:14px;
+  /* التخطيط: شريط تنقّل ثابت، وتحته ثلاث "صالات" بالترتيب: شو نحضر → لغز اليوم → أغاني الأفلام */
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--velvet);color:var(--cream);font-family:var(--body);font-size:17px;line-height:1.7;
+  background-image:radial-gradient(1200px 500px at 50% -200px,rgba(226,180,87,.12),transparent 70%);}
+a{color:var(--ticket)}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ticket);outline-offset:3px;border-radius:8px}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.2;text-wrap:balance;margin:0}
+
+/* ===== التنقّل ===== */
+.nav{position:sticky;top:0;z-index:20;background:rgba(23,10,15,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-size:30px;color:var(--ticket);text-decoration:none;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.logo .dot{width:10px;height:10px;border-radius:50%;background:var(--seat);box-shadow:0 0 12px var(--seat)}
+.nav-links{display:flex;gap:6px;margin-inline-start:auto;flex-wrap:wrap}
+.nav-links a{color:var(--cream);text-decoration:none;padding:6px 14px;border-radius:999px;border:1px solid var(--line);font-size:15px}
+.nav-links a:hover{border-color:var(--ticket);color:var(--ticket)}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+.hero{padding:44px 0 18px;display:grid;gap:8px}
+.hero h1{font-size:clamp(38px,6vw,60px)}
+.hero h1 span{color:var(--ticket)}
+.hero p{margin:0;color:var(--muted);max-width:60ch}
+
+section.hall{margin:28px 0 40px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,var(--velvet-2),var(--velvet));padding:clamp(18px,3vw,32px);display:grid;gap:22px}
+.hall-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.hall-no{font-family:var(--display);color:var(--seat);font-size:20px;border:1px solid var(--seat);border-radius:8px;padding:0 10px}
+.hall-head h2{font-size:clamp(28px,4vw,40px)}
+.hall-head p{margin:0;color:var(--muted);flex-basis:100%}
+
+/* ===== شو نحضر الليلة ===== */
+.tonight{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px;align-items:start}
+@media (max-width:820px){.tonight{grid-template-columns:1fr}}
+.q{display:grid;gap:8px}
+.q-label{font-weight:700;font-size:15px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--velvet-3);padding:7px 14px;border-radius:999px;cursor:pointer;font-size:15px;transition:.15s}
+.chip:hover{border-color:var(--ticket)}
+.chip[aria-pressed="true"]{background:var(--ticket);color:#1b0d12;border-color:var(--ticket);font-weight:700}
+.qs{display:grid;gap:18px}
+
+.ticket{position:relative;background:var(--cream);color:#1b0d12;border-radius:var(--r);padding:22px 24px 20px;display:grid;gap:10px;
+  -webkit-mask:radial-gradient(circle 13px at 0 62%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 13px at 100% 62%,transparent 98%,#000) right/51% 100% no-repeat;
+          mask:radial-gradient(circle 13px at 0 62%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 13px at 100% 62%,transparent 98%,#000) right/51% 100% no-repeat;}
+.ticket-top{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:700;color:#7a4b3e;letter-spacing:.3px}
+.ticket h3{font-size:clamp(30px,4vw,40px);color:#1b0d12}
+.ticket .en{font-size:15px;color:#6b5249;direction:ltr;text-align:right}
+.ticket .why{margin:0;font-size:17px}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:13px;background:#ead9bf;border-radius:6px;padding:2px 9px}
+.perf{border-top:2px dashed #cdb595;margin:6px -24px 2px;}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:700;font-size:15px;text-decoration:none}
+.btn-red{background:var(--seat);color:#fff}
+.btn-red:hover{filter:brightness(1.1)}
+.btn-ghost{background:transparent;border:1.5px solid currentColor;color:inherit}
+.btn-gold{background:var(--ticket);color:#1b0d12}
+.ticket .btn-ghost{color:#1b0d12}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+/* ===== لغز اليوم ===== */
+.puzzle{display:grid;gap:18px}
+.pz-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{font-size:13px;border-radius:999px;padding:3px 12px;border:1px solid var(--line);color:var(--muted)}
+.pill.lvl-easy{color:var(--good);border-color:var(--good)}
+.pill.lvl-mid{color:var(--ticket);border-color:var(--ticket)}
+.pill.lvl-hard{color:var(--bad);border-color:var(--bad)}
+.board{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;padding:26px 14px;border-radius:18px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0 2px,transparent 2px 40px),var(--velvet-3);border:1px solid var(--line);direction:ltr}
+.tile{width:132px;min-height:132px;border-radius:16px;background:var(--cream);color:#1b0d12;display:grid;place-items:center;align-content:center;gap:4px;padding:10px;box-shadow:0 8px 0 #0004}
+.tile .e{font-size:62px;line-height:1}
+.tile .sub{font-size:13px;font-weight:700;background:#1b0d12;color:var(--cream);border-radius:6px;padding:1px 8px;direction:rtl;text-align:center}
+.key{font-family:ui-monospace,Menlo,monospace;font-size:20px;font-weight:700;border:2px solid #1b0d12;border-bottom-width:6px;border-radius:10px;padding:10px 14px;background:#fff}
+.op{font-family:var(--display);font-size:46px;color:var(--ticket)}
+.answer-row{display:flex;gap:8px;flex-wrap:wrap}
+.answer-row input{flex:1 1 260px;background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:18px}
+.answer-row input:focus{border-color:var(--ticket);outline:none}
+.feedback{min-height:28px;margin:0;font-weight:700}
+.feedback.ok{color:var(--good)}
+.feedback.no{color:var(--bad)}
+.solved{display:none;gap:10px;padding:16px 18px;border-radius:14px;border:1px solid var(--good);background:rgba(95,191,138,.08)}
+.solved.show{display:grid}
+.solved h3{font-size:28px}
+.tries{display:flex;gap:5px}
+.tries i{width:12px;height:12px;border-radius:50%;background:var(--velvet-3);border:1px solid var(--line)}
+.tries i.used{background:var(--seat);border-color:var(--seat)}
+.pz-nav{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ===== أغاني الأفلام ===== */
+.music{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.music{grid-template-columns:1fr}}
+.search{display:flex;gap:8px}
+.search input{flex:1;background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:18px}
+.search input:focus{border-color:var(--ticket);outline:none}
+.suggest{display:flex;flex-wrap:wrap;gap:6px}
+.screen-wrap{display:grid;gap:10px}
+.screen{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#07040a;border:10px solid #0b0609;box-shadow:0 0 0 1px var(--line),0 30px 80px -30px rgba(226,180,87,.35)}
+.screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.idle{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:14px;text-align:center;padding:16px;
+  background:radial-gradient(60% 80% at 50% 30%,rgba(226,180,87,.18),transparent 70%)}
+.idle .now{font-size:13px;color:var(--muted)}
+.idle .title{font-family:var(--display);font-size:clamp(22px,3.4vw,34px);color:var(--cream)}
+.eq{display:flex;gap:5px;align-items:flex-end;height:54px}
+.eq span{width:8px;border-radius:3px 3px 0 0;background:linear-gradient(var(--ticket),var(--seat));animation:eq 1.1s ease-in-out infinite;height:30%}
+.eq span:nth-child(2){animation-delay:-.2s}.eq span:nth-child(3){animation-delay:-.5s}.eq span:nth-child(4){animation-delay:-.1s}
+.eq span:nth-child(5){animation-delay:-.7s}.eq span:nth-child(6){animation-delay:-.35s}.eq span:nth-child(7){animation-delay:-.9s}
+.eq span:nth-child(8){animation-delay:-.15s}.eq span:nth-child(9){animation-delay:-.6s}
+@keyframes eq{0%,100%{height:20%}50%{height:100%}}
+.curtain{height:14px;background:repeating-linear-gradient(90deg,#7e1c25 0 14px,#9c2530 14px 28px);border-radius:0 0 8px 8px;opacity:.85}
+.screen-cap{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.tracks{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.track{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;width:100%;text-align:right;background:var(--velvet-3);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
+.track:hover{border-color:var(--ticket)}
+.track.playing{border-color:var(--seat);background:rgba(200,50,60,.12)}
+.track .n{font-family:var(--display);color:var(--ticket);font-size:20px;width:24px;text-align:center}
+.track .tt{display:grid;line-height:1.35}
+.track .tt b{direction:ltr;text-align:right;font-weight:700}
+.track .tt small{color:var(--muted);direction:ltr;text-align:right}
+.track .play{width:34px;height:34px;border-radius:50%;background:var(--seat);display:grid;place-items:center;font-size:13px;color:#fff}
+.film-head{display:grid;gap:2px}
+.film-head h3{font-size:30px}
+.film-head .en{color:var(--muted);direction:ltr;text-align:right;font-size:15px}
+.empty{border:1px dashed var(--line);border-radius:12px;padding:16px;display:grid;gap:10px}
+
+/* ===== نافذة الاختيار ===== */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,4,7,.72);display:none;place-items:center;padding:16px}
+.modal.open{display:grid}
+.modal-card{width:min(440px,100%);background:var(--cream);color:#1b0d12;border-radius:18px;padding:22px;display:grid;gap:14px;box-shadow:0 30px 80px #000a}
+.modal-card h3{font-size:26px}
+.modal-card .en{direction:ltr;text-align:right;color:#6b5249;margin-top:-8px}
+.modal-btns{display:grid;gap:8px}
+.modal-btns .btn{justify-content:center;padding:13px 16px;font-size:16px}
+.modal .close{justify-self:start;background:none;border:0;color:#6b5249;cursor:pointer;text-decoration:underline;font-size:14px}
+
+footer{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="#top"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <div class="nav-links">
+      <a href="#tonight">شو نحضر الليلة؟</a>
+      <a href="#puzzle">لغز اليوم</a>
+      <a href="#music">أغاني الأفلام</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap" id="top">
+  <header class="hero">
+    <h1>كل اللي بدك ياه <span>لسهرة فيلم</span></h1>
+    <p>جاوب ٣ أسئلة وخذ فيلم واحد بس للّيلة، حلّ لغز اليوم، ودوّر على الأغنية اللي علقت براسك من فيلم.</p>
+  </header>
+
+  <!-- ===== ١. شو نحضر الليلة ===== -->
+  <section class="hall" id="tonight" aria-labelledby="t-h">
+    <div class="hall-head">
+      <span class="hall-no">صالة ١</span>
+      <h2 id="t-h">شو نحضر الليلة؟</h2>
+      <p>مش قائمة طويلة تحتار فيها. ترشيح واحد بيناسب مزاجك ووقتك واللي قاعدين معك.</p>
+    </div>
+    <div class="tonight">
+      <div class="qs">
+        <div class="q"><span class="q-label" id="q-with">مين معك؟</span><div class="chips" role="group" aria-labelledby="q-with" data-q="with"></div></div>
+        <div class="q"><span class="q-label" id="q-mood">شو مزاجك؟</span><div class="chips" role="group" aria-labelledby="q-mood" data-q="mood"></div></div>
+        <div class="q"><span class="q-label" id="q-time">قديش عندك وقت؟</span><div class="chips" role="group" aria-labelledby="q-time" data-q="time"></div></div>
+        <div class="q"><span class="q-label" id="q-type">شو بدك تحضر؟</span><div class="chips" role="group" aria-labelledby="q-type" data-q="type"></div></div>
+      </div>
+      <div>
+        <article class="ticket" id="pick" aria-live="polite"></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ٢. لغز اليوم ===== -->
+  <section class="hall" id="puzzle" aria-labelledby="p-h">
+    <div class="hall-head">
+      <span class="hall-no">صالة ٢</span>
+      <h2 id="p-h">لغز اليوم</h2>
+      <p>اجمع أصوات الصور مع بعض واطلع باسم الفيلم. السهم أو الملاحظة تحت الصورة بتقلك شو تعمل بالكلمة.</p>
+    </div>
+    <div class="puzzle">
+      <div class="pz-bar">
+        <span class="pill" id="pz-num"></span>
+        <span class="pill" id="pz-lvl"></span>
+        <span class="pill" id="pz-lang"></span>
+        <span class="tries" id="pz-tries" aria-label="المحاولات"></span>
+      </div>
+      <div class="board" id="pz-board" aria-label="صور اللغز"></div>
+      <form class="answer-row" id="pz-form" autocomplete="off">
+        <label for="pz-input" class="q-label" style="flex-basis:100%">شو اسم الفيلم؟ (عربي أو إنجليزي)</label>
+        <input id="pz-input" placeholder="اكتب اسم الفيلم…">
+        <button class="btn btn-red" type="submit">تحقّق</button>
+        <button class="btn btn-ghost" type="button" id="pz-hint">تلميح</button>
+      </form>
+      <p class="feedback" id="pz-fb" aria-live="polite"></p>
+      <div class="solved" id="pz-solved"></div>
+      <div class="pz-nav">
+        <button class="btn btn-ghost" type="button" id="pz-prev">→ اللغز اللي قبله</button>
+        <button class="btn btn-ghost" type="button" id="pz-next">اللغز اللي بعده ←</button>
+        <button class="btn btn-ghost" type="button" id="pz-reveal" style="margin-inline-start:auto">استسلمت، فرجيني الجواب</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ٣. أغاني الأفلام ===== -->
+  <section class="hall" id="music" aria-labelledby="m-h">
+    <div class="hall-head">
+      <span class="hall-no">صالة ٣</span>
+      <h2 id="m-h">أغاني الأفلام</h2>
+      <p>اكتب اسم الفيلم وبتطلعلك أغانيه وموسيقاه. اضغط على أي وحدة وبتختار: تسمعها هون، أو تفتحها على يوتيوب.</p>
+    </div>
+    <div class="music">
+      <div class="screen-wrap">
+        <div class="screen" id="screen">
+          <div class="idle" id="idle">
+            <div class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="now" id="idle-now">الشاشة جاهزة</div>
+            <div class="title" id="idle-title">اختار أغنية من القائمة</div>
+          </div>
+        </div>
+        <div class="curtain" aria-hidden="true"></div>
+        <div class="screen-cap"><span id="cap-left">لسا ما في شي شغّال</span><a id="cap-yt" href="#" target="_blank" rel="noopener" hidden>افتحها على يوتيوب ↗</a></div>
+      </div>
+      <div style="display:grid;gap:14px">
+        <form class="search" id="m-form" autocomplete="off">
+          <label for="m-input" class="q-label" hidden>اسم الفيلم</label>
+          <input id="m-input" list="m-list" placeholder="مثلاً: انترستلر، Joker، الفيل الأزرق">
+          <datalist id="m-list"></datalist>
+          <button class="btn btn-gold" type="submit">دوّر</button>
+        </form>
+        <div class="suggest" id="m-suggest" aria-label="أفلام موجودة"></div>
+        <div id="m-result" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="md-title">
+  <div class="modal-card">
+    <h3 id="md-title"></h3>
+    <div class="en" id="md-sub"></div>
+    <div class="modal-btns">
+      <button class="btn btn-red" id="md-here" type="button">▶ اسمعها هون بالصفحة</button>
+      <a class="btn btn-ghost" id="md-yt" href="#" target="_blank" rel="noopener">افتحها على يوتيوب ↗</a>
+    </div>
+    <button class="close" id="md-close" type="button">رجوع</button>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <span>سهرة · فكرة وإعداد saiflex</span>
+    <span>الأغاني بتشتغل من يوتيوب، وروابط المشاهدة من JustWatch الإمارات</span>
+  </div>
+</footer>
+
+<script>
+/* =========================================================
+   البيانات
+   ========================================================= */
+
+// type: foreign | arab | anime  ·  mins تقريبي  ·  moods: think laugh cry action scare  ·  with: alone partner family friends
+const FILMS = [
+  {id:"interstellar",ar:"إنترستلر",en:"Interstellar",y:2014,type:"foreign",mins:169,moods:["think","cry"],with:["alone","partner","friends"],why:"رحلة بين النجوم، بس قلبها قصة أب وبنته. وموسيقاها لحالها بتستاهل السهرة.",alias:["انترستلر","انتر ستلر","بين النجوم"]},
+  {id:"inception",ar:"إنسبشن",en:"Inception",y:2010,type:"foreign",mins:148,moods:["think","action"],with:["alone","friends","partner"],why:"حلم جوّا حلم جوّا حلم. ركّز من أول دقيقة وإلا رح تضيع.",alias:["انسبشن","استهلال"]},
+  {id:"darkknight",ar:"فارس الظلام",en:"The Dark Knight",y:2008,type:"foreign",mins:152,moods:["action","think"],with:["friends","alone"],why:"أقوى جوكر بتاريخ السينما، وفيلم أبطال خارقين بيحس كأنه فيلم جريمة.",alias:["دارك نايت","ذا دارك نايت","الفارس الأسود"]},
+  {id:"joker",ar:"جوكر",en:"Joker",y:2019,type:"foreign",mins:122,moods:["think"],with:["alone","friends"],why:"ثقيل ومظلم، بس رح يضل براسك أيام. مش لسهرة مع العيلة.",alias:["الجوكر"]},
+  {id:"titanic",ar:"تايتانك",en:"Titanic",y:1997,type:"foreign",mins:194,moods:["cry"],with:["partner","family"],why:"كلنا بنعرف النهاية، وبرضو بنبكي كل مرة.",alias:["تيتانيك","تايتانيك"]},
+  {id:"guardians",ar:"حراس المجرة",en:"Guardians of the Galaxy",y:2014,type:"foreign",mins:121,moods:["laugh","action"],with:["friends","family"],why:"عصابة فاشلة بتنقذ المجرة، مع أحلى شريط أغاني بأفلام مارفل.",alias:["جارديانز","حراس المجره","جاردينز اوف ذا جالاكسي"]},
+  {id:"pirates",ar:"قراصنة الكاريبي",en:"Pirates of the Caribbean",y:2003,type:"foreign",mins:143,moods:["action","laugh"],with:["family","friends"],why:"جاك سبارو لحاله بيكفي. مغامرة كاملة لكل العيلة.",alias:["قراصنه الكاريبي","بايرتس","جاك سبارو"]},
+  {id:"parasite",ar:"طفيلي",en:"Parasite",y:2019,type:"foreign",mins:132,moods:["think"],with:["friends","partner","alone"],why:"بيبلش كوميدي وبيقلب على نص الفيلم. احضره وانت ما بتعرف عنه شي.",alias:["باراسايت","الطفيلي"]},
+  {id:"getout",ar:"اطلع برا",en:"Get Out",y:2017,type:"foreign",mins:104,moods:["scare","think"],with:["friends","partner"],why:"رعب بيلعب بأعصابك بدون ولا قطرة دم زيادة.",alias:["جت اوت","غيت اوت"]},
+  {id:"quietplace",ar:"مكان هادئ",en:"A Quiet Place",y:2018,type:"foreign",mins:90,moods:["scare"],with:["friends","partner"],why:"ممنوع تعمل صوت. رح تلاقي حالك ساكت انت كمان.",alias:["كوايت بليس","مكان هادىء"]},
+  {id:"knivesout",ar:"السكاكين في الخارج",en:"Knives Out",y:2019,type:"foreign",mins:130,moods:["think","laugh"],with:["family","friends","partner"],why:"لغز جريمة مين القاتل، بس بدم خفيف. حلو تحضروه وتتراهنوا.",alias:["نايفز اوت"]},
+  {id:"paddington2",ar:"بادينغتون ٢",en:"Paddington 2",y:2017,type:"foreign",mins:104,moods:["laugh"],with:["family"],why:"أدفى فيلم ممكن تحضره مع العيلة. ما حدا بيطلع منه زعلان.",alias:["بادينجتون","بادنغتون"]},
+  {id:"coco",ar:"كوكو",en:"Coco",y:2017,type:"foreign",mins:105,moods:["cry","laugh"],with:["family"],why:"فيلم كرتون عن العيلة والذكريات، وجهّز المحارم للآخر.",alias:["كوكو"]},
+  {id:"up",ar:"فوق",en:"Up",y:2009,type:"foreign",mins:96,moods:["cry","laugh"],with:["family","partner"],why:"أول ١٠ دقايق منه أقوى من أفلام كاملة.",alias:["اب","أب"]},
+  {id:"lalaland",ar:"لا لا لاند",en:"La La Land",y:2016,type:"foreign",mins:128,moods:["cry"],with:["partner","alone"],why:"أغاني وألوان وحلم، ونهاية بتوجع بهدوء.",alias:["لالا لاند","لا لا لند"]},
+  {id:"whiplash",ar:"ويبلاش",en:"Whiplash",y:2014,type:"foreign",mins:106,moods:["think"],with:["alone","friends"],why:"طبّال ومعلّم مجنون. توتر أكثر من أي فيلم أكشن.",alias:["وبلاش"]},
+  {id:"madmax",ar:"ماد ماكس: طريق الغضب",en:"Mad Max: Fury Road",y:2015,type:"foreign",mins:120,moods:["action"],with:["friends"],why:"ساعتين مطاردة بدون ما ياخذ نفس.",alias:["ماد ماكس"]},
+  {id:"spiderverse",ar:"سبايدرمان: في عالم العناكب",en:"Spider-Man: Into the Spider-Verse",y:2018,type:"foreign",mins:117,moods:["action","laugh"],with:["family","friends"],why:"أحلى شكل رسوم ممكن تشوفه، وقصة سبايدرمان من زاوية جديدة.",alias:["سبايدر فيرس","سبايدرمان"]},
+  {id:"yourname",ar:"اسمك",en:"Your Name",y:2016,type:"anime",mins:106,moods:["cry","think"],with:["alone","partner"],why:"ولد وبنت بيتبادلوا الأجسام، وبعدين القصة بتاخذ منعطف ما بتتوقعه.",alias:["يور نيم","كيمي نو نا وا","كيمي نو ناوا"]},
+  {id:"spirited",ar:"المخطوفة",en:"Spirited Away",y:2001,type:"anime",mins:125,moods:["think","laugh"],with:["family","alone"],why:"أشهر فيلم من جيبلي. عالم سحري كل كادر فيه لوحة.",alias:["سبيريتد اواي","المخطوفه","تشيهيرو"]},
+  {id:"mononoke",ar:"الأميرة مونونوكي",en:"Princess Mononoke",y:1997,type:"anime",mins:134,moods:["action","think"],with:["alone","friends"],why:"حرب بين البشر والغابة، ولا حدا فيهم الشرير بالكامل.",alias:["مونونوكي","الاميرة مونونوكي"]},
+  {id:"silentvoice",ar:"صوت صامت",en:"A Silent Voice",y:2016,type:"anime",mins:130,moods:["cry"],with:["alone"],why:"عن التنمّر والندم ومحاولة تصلّح اللي خرّبته. ثقيل بس حلو.",alias:["سايلنت فويس","كوي نو كاتاتشي"]},
+  {id:"fireflies",ar:"قبر اليراعات",en:"Grave of the Fireflies",y:1988,type:"anime",mins:89,moods:["cry"],with:["alone"],why:"أقصر فيلم بالقائمة وأكثرها وجع. احضره لما تكون جاهز.",alias:["قبر اليراعات","جريف اوف ذا فايرفلايز"]},
+  {id:"perfectblue",ar:"بيرفكت بلو",en:"Perfect Blue",y:1997,type:"anime",mins:81,moods:["scare","think"],with:["alone","friends"],why:"رعب نفسي، والمخرج اللي ألهم أفلام هوليوود كثير.",alias:["برفكت بلو"]},
+  {id:"blueelephant",ar:"الفيل الأزرق",en:"The Blue Elephant",y:2014,type:"arab",mins:170,moods:["scare","think"],with:["friends","alone"],why:"رعب نفسي مصري، وموسيقى هشام نزيه بتقيمك عن الكرسي.",alias:["الفيل الازرق","بلو اليفانت"]},
+  {id:"theeb",ar:"ذيب",en:"Theeb",y:2014,type:"arab",mins:100,moods:["think","action"],with:["alone","family","friends"],why:"فيلم أردني بالصحرا وقت الحرب العالمية الأولى، وترشّح للأوسكار.",alias:["ذيب","ذئب"]},
+  {id:"wadjda",ar:"وجدة",en:"Wadjda",y:2012,type:"arab",mins:98,moods:["laugh","cry"],with:["family","alone"],why:"بنت سعودية صغيرة كل حلمها بسكليت. بسيط وبيوصل للقلب.",alias:["وجده"]},
+  {id:"capernaum",ar:"كفرناحوم",en:"Capernaum",y:2018,type:"arab",mins:126,moods:["cry","think"],with:["alone","partner"],why:"ولد بيرفع قضية على أهله. فيلم لبناني رح يكسرك.",alias:["كفر ناحوم"]},
+  {id:"halla2",ar:"هلّأ لوين؟",en:"Where Do We Go Now?",y:2011,type:"arab",mins:110,moods:["laugh","cry"],with:["family","friends"],why:"ستات ضيعة بيعملوا المستحيل ليوقفوا الفتنة بين الرجال. ضحك وبكا مع بعض.",alias:["هلا لوين","هلأ لوين"]},
+  {id:"asalaswad",ar:"عسل أسود",en:"Asal Eswed",y:2010,type:"arab",mins:125,moods:["laugh"],with:["family","friends"],why:"أحمد حلمي راجع على مصر بعد ٢٠ سنة، ومصر ما بترحم.",alias:["عسل اسود","عسل إسود","عسل اسوِد"]},
+  {id:"waladrizk",ar:"ولاد رزق",en:"Welad Rizk",y:2015,type:"arab",mins:110,moods:["action","laugh"],with:["friends"],why:"عصابة إخوة وعملية سرقة أخيرة. أكشن مصري بإيقاع سريع.",alias:["أولاد رزق","اولاد رزق","ولاد رزق"]}
+];
+
+// أغاني كل فيلم — yt = رقم الفيديو على يوتيوب (من قنوات رسمية قدر الإمكان)
+const MUSIC = {
+  interstellar:[
+    {t:"Cornfield Chase",by:"Hans Zimmer",yt:"7GlsxNI4LVI"},
+    {t:"No Time for Caution",by:"Hans Zimmer",yt:"2o9KfyPqQzY",note:"مشهد الالتحام"},
+    {t:"S.T.A.Y.",by:"Hans Zimmer",yt:"MU3EOO4fWQo"},
+    {t:"Day One",by:"Hans Zimmer",yt:"vPA6T0la6uI"}
+  ],
+  inception:[
+    {t:"Time",by:"Hans Zimmer",yt:"c56t7upa8Bk"},
+    {t:"Dream Is Collapsing",by:"Hans Zimmer",yt:"OzLhXesNkCI"}
+  ],
+  darkknight:[
+    {t:"Why So Serious?",by:"Hans Zimmer & James Newton Howard",yt:"KjShkVqz2a4"}
+  ],
+  joker:[
+    {t:"Bathroom Dance",by:"Hildur Guðnadóttir",yt:"LNYCuj4ur-U"}
+  ],
+  titanic:[
+    {t:"My Heart Will Go On",by:"Céline Dion",yt:"9bFHsd3o1w0"}
+  ],
+  guardians:[
+    {t:"Hooked on a Feeling",by:"Blue Swede",yt:"l6DepmNwbn8"},
+    {t:"Come and Get Your Love",by:"Redbone",yt:"BA4rSO-h9Io",note:"أول مشهد بالفيلم"}
+  ],
+  pirates:[
+    {t:"He's a Pirate",by:"Klaus Badelt",yt:"BuYf0taXoNw"}
+  ],
+  yourname:[
+    {t:"Zenzenzense (前前前世)",by:"RADWIMPS",yt:"PDSkFeMVNFs"},
+    {t:"Sparkle",by:"RADWIMPS",yt:"-J9FuvPmMoI"}
+  ],
+  spirited:[
+    {t:"One Summer's Day",by:"Joe Hisaishi",yt:"aRYGvrDmXRs"}
+  ],
+  blueelephant:[
+    {t:"موسيقى الفيلم الرئيسية",by:"هشام نزيه",yt:"pw2QJC94v3w"}
+  ],
+  aot:[
+    {t:"Guren no Yumiya (紅蓮の弓矢)",by:"Linked Horizon",yt:"6JETOMv_v5I",note:"شارة الموسم الأول"}
+  ]
+};
+// أعمال موجودة بالأغاني بس مش بالترشيح (مسلسلات)
+const EXTRA = [
+  {id:"aot",ar:"هجوم العمالقة",en:"Attack on Titan",y:2013,type:"anime",alias:["هجوم العمالقه","اتاك اون تايتن","شينجيكي نو كيوجين"]}
+];
+
+// الألغاز. tiles: e = إيموجي، key = زر كيبورد، sub = ملاحظة تحت الصورة. "+" بين الصور
+const PUZZLES = [
+  {film:"interstellar",lvl:"mid",lang:"en",tiles:[{key:"Enter ⏎"},"+",{e:"⭐",sub:"بالإنجليزي: نجمي"}],hint:"الصورة الأولى زر بالكيبورد. لفظه بالعربي.",answers:["interstellar","انترستلر","انترستيلر","انتر ستلر"]},
+  {film:"darkknight",lvl:"mid",lang:"en",tiles:[{e:"🌑",sub:"معتم"},"+",{e:"🛡️",sub:"فارس"}],hint:"بطله لابس أسود وبيطلع بالليل.",answers:["the dark knight","dark knight","فارس الظلام","دارك نايت","ذا دارك نايت"]},
+  {film:"asalaswad",lvl:"easy",lang:"ar",tiles:[{e:"🍯"},"+",{e:"⚫"}],hint:"فيلم أحمد حلمي.",answers:["عسل اسود","عسل إسود","عسل أسود"]},
+  {film:"coco",lvl:"hard",lang:"en",tiles:[{e:"🥥",sub:"احذف آخر ٣ حروف"}],hint:"اسم الثمرة بالإنجليزي COCONUT.",answers:["coco","كوكو"]},
+  {film:"blueelephant",lvl:"easy",lang:"ar",tiles:[{e:"🐘"},"+",{e:"🔵"}],hint:"رعب مصري، كريم عبد العزيز.",answers:["الفيل الازرق","الفيل الأزرق","the blue elephant","blue elephant"]},
+  {film:"spiderverse",lvl:"mid",lang:"en",tiles:[{e:"🕷️"},"+",{e:"👨"},"+",{e:"🌌",sub:"كون، بالإنجليزي verse"}],hint:"أبطال عناكب من أكثر من عالم.",answers:["spider-man into the spider-verse","spiderman into the spiderverse","spider verse","spiderverse","سبايدر فيرس","سبايدرمان في عالم العناكب"]},
+  {film:"waladrizk",lvl:"mid",lang:"ar",tiles:[{e:"👦👦"},"+",{e:"💰",sub:"اللي ربنا بيبعته"}],hint:"عصابة إخوة مصريين.",answers:["ولاد رزق","اولاد رزق","أولاد رزق"]},
+  {film:"knivesout",lvl:"mid",lang:"en",tiles:[{e:"🔪🔪"},"+",{e:"🚪➡️",sub:"لبرّا"}],hint:"لغز جريمة، Out = برّا.",answers:["knives out","السكاكين في الخارج","نايفز اوت"]},
+  {film:"theeb",lvl:"easy",lang:"ar",tiles:[{e:"🐺",sub:"بلهجة البدو"}],hint:"فيلم أردني بالصحرا.",answers:["ذيب","ذئب","theeb"]},
+  {film:"silentvoice",lvl:"hard",lang:"en",tiles:[{e:"🤫",sub:"ساكت"},"+",{e:"🗣️",sub:"صوت"}],hint:"أنمي عن بنت ما بتسمع.",answers:["a silent voice","silent voice","صوت صامت","سايلنت فويس"]},
+  {film:"madmax",lvl:"easy",lang:"en",tiles:[{e:"😡",sub:"زعلان، بالإنجليزي"},"+",{e:"📈",sub:"أعلى حد"}],hint:"مطاردة بالصحرا.",answers:["mad max","mad max fury road","ماد ماكس"]},
+  {film:"pirates",lvl:"mid",lang:"ar",tiles:[{e:"🏴‍☠️",sub:"بالجمع"},"+",{e:"🏝️",sub:"بحر بأمريكا الوسطى"}],hint:"جاك سبارو.",answers:["قراصنة الكاريبي","قراصنه الكاريبي","pirates of the caribbean"]}
+];
+
+/* =========================================================
+   أدوات
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const ALL = [...FILMS, ...EXTRA];
+const byId = id => ALL.find(f => f.id === id);
+function norm(s){
+  return (s||"").toLowerCase()
+    .replace(/[ً-ْـ]/g,"")      // تشكيل وتطويل
+    .replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي")
+    .replace(/[^a-z0-9؀-ۿ]+/g,"")     // مسافات وعلامات
+    .replace(/^the/,"");
+}
+const jw = f => "https://www.justwatch.com/ae/search?q=" + encodeURIComponent(f.en);
+const ytWatch = id => "https://www.youtube.com/watch?v=" + id;
+const ytSearch = q => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+function el(tag, attrs={}, html=""){const e=document.createElement(tag);for(const k in attrs)e.setAttribute(k,attrs[k]);e.innerHTML=html;return e}
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function timeLabel(m){ if(m<100) return "ساعة ونص تقريباً"; if(m<=135) return "حوالي ساعتين"; if(m<=160) return "ساعتين ونص تقريباً"; return "قرابة ٣ ساعات"; }
+const TYPE_AR = {foreign:"أجنبي",arab:"عربي",anime:"أنمي"};
+const MOOD_AR = {think:"بدي أفكّر",laugh:"بدي أضحك",cry:"بدي أبكي",action:"بدي أكشن",scare:"بدي أخاف"};
+
+/* =========================================================
+   ١. شو نحضر الليلة
+   ========================================================= */
+const QUESTIONS = {
+  with:[["alone","لحالي"],["partner","مع حدا قريب"],["family","مع العيلة"],["friends","مع الشباب"]],
+  mood:Object.entries(MOOD_AR),
+  time:[["short","ساعة ونص"],["mid","ساعتين"],["long","الليل كله"]],
+  type:[["any","أي شي"],["foreign","أجنبي"],["arab","عربي"],["anime","أنمي"]]
+};
+const state = {with:"friends",mood:"think",time:"long",type:"any"};
+let ranked = [], rankPos = 0;
+
+function buildChips(){
+  document.querySelectorAll(".chips").forEach(box=>{
+    const q = box.dataset.q;
+    QUESTIONS[q].forEach(([val,label])=>{
+      const b = el("button",{type:"button",class:"chip","aria-pressed":String(state[q]===val),"data-v":val},label);
+      b.addEventListener("click",()=>{
+        state[q]=val;
+        box.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.v===val)));
+        recommend();
+      });
+      box.appendChild(b);
+    });
+  });
+}
+function recommend(){
+  const maxMins = {short:110,mid:140,long:999}[state.time];
+  ranked = FILMS
+    .filter(f => state.type==="any" || f.type===state.type)
+    .map(f => {
+      let s = 0;
+      if (f.moods[0]===state.mood) s+=6; else if (f.moods.includes(state.mood)) s+=4;
+      if (f.with.includes(state.with)) s+=3;
+      if (f.mins<=maxMins) s+=3; else s-= Math.min(4,(f.mins-maxMins)/20);
+      return {f, s: s + Math.random()*0.8};
+    })
+    .sort((a,b)=>b.s-a.s)
+    .map(x=>x.f);
+  rankPos = 0;
+  renderPick();
+}
+function renderPick(){
+  const box = $("#pick");
+  const f = ranked[rankPos % ranked.length];
+  const hasMusic = !!MUSIC[f.id];
+  box.innerHTML = `
+    <div class="ticket-top"><span>تذكرة الليلة · ${rankPos+1}/${ranked.length}</span><span>${TYPE_AR[f.type]} · ${f.y}</span></div>
+    <div><h3>${esc(f.ar)}</h3><div class="en">${esc(f.en)}</div></div>
+    <p class="why">${esc(f.why)}</p>
+    <div class="meta"><span class="tag">⏱ ${timeLabel(f.mins)}</span>${f.moods.map(m=>`<span class="tag">${MOOD_AR[m].replace("بدي ","")}</span>`).join("")}</div>
+    <div class="perf" aria-hidden="true"></div>
+    <div class="actions">
+      <a class="btn btn-red" href="${jw(f)}" target="_blank" rel="noopener">وين أحضره بالإمارات ↗</a>
+      ${hasMusic?`<button class="btn btn-ghost" type="button" data-music="${f.id}">♫ اسمع موسيقاه</button>`:""}
+      <button class="btn btn-ghost" type="button" id="another">رشّحلي غيره</button>
+    </div>`;
+  $("#another").addEventListener("click",()=>{rankPos++;renderPick();});
+}
+
+/* =========================================================
+   ٢. لغز اليوم
+   ========================================================= */
+const DAY = Math.floor(Date.now()/86400000);
+const TODAY = DAY % PUZZLES.length;
+let pIdx = TODAY, tries = 0, done = false;
+const MAX_TRIES = 6;
+const LVL = {easy:["سهل","lvl-easy"],mid:["متوسط","lvl-mid"],hard:["صعب","lvl-hard"]};
+
+function renderPuzzle(){
+  const p = PUZZLES[pIdx]; tries = 0; done = false;
+  $("#pz-num").textContent = pIdx===TODAY ? "لغز اليوم" : `لغز رقم ${pIdx+1}`;
+  const [lt,lc] = LVL[p.lvl]; const lv=$("#pz-lvl"); lv.textContent=lt; lv.className="pill "+lc;
+  $("#pz-lang").textContent = p.lang==="ar" ? "الأصوات بالعربي" : "الأصوات بالإنجليزي";
+  const board = $("#pz-board"); board.innerHTML=""; board.style.direction = p.lang==="ar" ? "rtl" : "ltr";
+  p.tiles.forEach(t=>{
+    if (t==="+") { board.appendChild(el("span",{class:"op","aria-hidden":"true"},"+")); return; }
+    const tile = el("div",{class:"tile"});
+    tile.innerHTML = (t.key?`<span class="key">${esc(t.key)}</span>`:`<span class="e">${t.e}</span>`) + (t.sub?`<span class="sub">${esc(t.sub)}</span>`:"");
+    board.appendChild(tile);
+  });
+  $("#pz-input").value=""; $("#pz-input").disabled=false;
+  $("#pz-fb").textContent=""; $("#pz-fb").className="feedback";
+  $("#pz-solved").className="solved"; $("#pz-solved").innerHTML="";
+  drawTries();
+}
+function drawTries(){
+  const t=$("#pz-tries"); t.innerHTML="";
+  for(let i=0;i<MAX_TRIES;i++) t.appendChild(el("i",{class:i<tries?"used":""}));
+}
+function checkAnswer(raw){
+  const p = PUZZLES[pIdx], a = norm(raw);
+  if (!a) return false;
+  const f = byId(p.film);
+  const pool = [...p.answers, f.ar, f.en, ...(f.alias||[])].map(norm);
+  return pool.includes(a);
+}
+function finish(won){
+  done = true;
+  const p = PUZZLES[pIdx], f = byId(p.film);
+  $("#pz-input").disabled = true;
+  const fb=$("#pz-fb");
+  fb.textContent = won ? `صح! حليتها من ${tries} ${tries===1?"محاولة":"محاولات"} 👏` : "ولا يهمك، هاد هو الجواب:";
+  fb.className = "feedback " + (won?"ok":"no");
+  const s=$("#pz-solved");
+  s.innerHTML = `<h3>${esc(f.ar)} <span style="font-family:var(--body);font-size:16px;color:var(--muted)">${esc(f.en)} · ${f.y}</span></h3>
+    ${f.why?`<p style="margin:0">${esc(f.why)}</p>`:""}
+    <div class="actions">
+      <a class="btn btn-red" href="${jw(f)}" target="_blank" rel="noopener">وين أحضره بالإمارات ↗</a>
+      ${MUSIC[f.id]?`<button class="btn btn-ghost" type="button" data-music="${f.id}">♫ اسمع موسيقاه</button>`:""}
+    </div>`;
+  s.className="solved show";
+}
+$("#pz-form").addEventListener("submit",e=>{
+  e.preventDefault(); if(done) return;
+  const v=$("#pz-input").value; if(!norm(v)) return;
+  tries++; drawTries();
+  if (checkAnswer(v)) return finish(true);
+  if (tries>=MAX_TRIES) return finish(false);
+  const fb=$("#pz-fb"); fb.textContent=`لا، مش هو. ضايلك ${MAX_TRIES-tries}.`; fb.className="feedback no";
+  $("#pz-input").select();
+});
+$("#pz-hint").addEventListener("click",()=>{ if(done) return; const fb=$("#pz-fb"); fb.textContent="💡 "+PUZZLES[pIdx].hint; fb.className="feedback"; });
+$("#pz-reveal").addEventListener("click",()=>{ if(!done) finish(false); });
+$("#pz-next").addEventListener("click",()=>{ pIdx=(pIdx+1)%PUZZLES.length; renderPuzzle(); });
+$("#pz-prev").addEventListener("click",()=>{ pIdx=(pIdx-1+PUZZLES.length)%PUZZLES.length; renderPuzzle(); });
+
+/* =========================================================
+   ٣. أغاني الأفلام
+   ========================================================= */
+let current = null; // {film, track}
+function findFilm(q){
+  const n = norm(q); if(!n) return null;
+  const withMusic = ALL.filter(f=>MUSIC[f.id]);
+  const names = f => [f.ar,f.en,...(f.alias||[])].map(norm);
+  return withMusic.find(f=>names(f).includes(n))
+      || withMusic.find(f=>names(f).some(x=>x.includes(n)||n.includes(x)))
+      || null;
+}
+function showFilm(f){
+  const box=$("#m-result");
+  const tracks = MUSIC[f.id];
+  box.innerHTML = `<div class="film-head"><h3>${esc(f.ar)}</h3><div class="en">${esc(f.en)} · ${f.y}</div></div>
+    <p class="note" style="margin:6px 0 10px">${tracks.length===1?"في أغنية وحدة":"في "+tracks.length+" مقطوعات"}. اضغط على وحدة.</p>`;
+  const ul = el("ul",{class:"tracks"});
+  tracks.forEach((t,i)=>{
+    const li = el("li");
+    const b = el("button",{type:"button",class:"track"+(current&&current.track===t?" playing":"")});
+    b.innerHTML = `<span class="n">${i+1}</span><span class="tt"><b>${esc(t.t)}</b><small>${esc(t.by)}${t.note?` · <span dir="rtl">${esc(t.note)}</span>`:""}</small></span><span class="play" aria-hidden="true">▶</span>`;
+    b.setAttribute("aria-label",`${t.t} — ${t.by}`);
+    b.addEventListener("click",()=>openChoice(f,t));
+    li.appendChild(b); ul.appendChild(li);
+  });
+  box.appendChild(ul);
+}
+function notFound(q){
+  $("#m-result").innerHTML = `<div class="empty">
+    <b>"${esc(q)}" لسا مش عنا بالقائمة.</b>
+    <span class="note">بنضيف أفلام كل أسبوع. لهلأ بتقدر تدوّر على أغانيه مباشرة على يوتيوب.</span>
+    <div><a class="btn btn-gold" href="${ytSearch(q+" soundtrack")}" target="_blank" rel="noopener">دوّر على يوتيوب ↗</a></div></div>`;
+}
+function searchMusic(q){
+  const f = findFilm(q);
+  f ? showFilm(f) : notFound(q);
+}
+// نافذة الاختيار
+let lastFocus=null;
+function openChoice(f,t){
+  lastFocus=document.activeElement;
+  $("#md-title").textContent = t.t;
+  $("#md-sub").textContent = `${t.by} · ${f.en}`;
+  $("#md-yt").href = ytWatch(t.yt);
+  $("#md-here").onclick = ()=>{ closeChoice(); playHere(f,t); };
+  $("#modal").classList.add("open");
+  $("#md-here").focus();
+}
+function closeChoice(){ $("#modal").classList.remove("open"); if(lastFocus) lastFocus.focus(); }
+$("#md-close").addEventListener("click",closeChoice);
+$("#md-yt").addEventListener("click",()=>setTimeout(closeChoice,50));
+$("#modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeChoice(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && $("#modal").classList.contains("open")) closeChoice(); });
+
+function playHere(f,t){
+  current={film:f,track:t};
+  const scr=$("#screen");
+  scr.querySelectorAll("iframe").forEach(x=>x.remove());
+  $("#idle").hidden = true;
+  const fr = el("iframe",{
+    src:`https://www.youtube-nocookie.com/embed/${t.yt}?autoplay=1&rel=0&modestbranding=1`,
+    title:`${t.t} — ${t.by}`,
+    allow:"autoplay; encrypted-media; picture-in-picture; fullscreen",
+    referrerpolicy:"strict-origin-when-cross-origin",
+    allowfullscreen:""
+  });
+  scr.appendChild(fr);
+  $("#cap-left").textContent = `شغّال: ${t.t} · ${f.ar}`;
+  const y=$("#cap-yt"); y.href=ytWatch(t.yt); y.hidden=false;
+  showFilm(f);
+  scr.scrollIntoView({block:"nearest"});
+}
+
+function buildMusicUI(){
+  const dl=$("#m-list"), sg=$("#m-suggest");
+  ALL.filter(f=>MUSIC[f.id]).forEach(f=>{
+    dl.appendChild(el("option",{value:f.ar}));
+    dl.appendChild(el("option",{value:f.en}));
+    const c=el("button",{type:"button",class:"chip"},esc(f.ar));
+    c.addEventListener("click",()=>{ $("#m-input").value=f.ar; showFilm(f); });
+    sg.appendChild(c);
+  });
+  $("#m-form").addEventListener("submit",e=>{e.preventDefault(); const q=$("#m-input").value.trim(); if(q) searchMusic(q);});
+}
+
+// أزرار "اسمع موسيقاه" من الترشيح واللغز
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-music]"); if(!b) return;
+  const f=byId(b.dataset.music);
+  $("#m-input").value=f.ar; showFilm(f);
+  document.getElementById("music").scrollIntoView();
+});
+
+/* تشغيل */
+buildChips(); recommend(); renderPuzzle(); buildMusicUI();
+showFilm(byId("interstellar")); $("#m-input").value="إنترستلر";
+</script>
+</body>
+</html>
