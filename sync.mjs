@@ -1,6 +1,7 @@
 // تحديث قائمة الأفلام كل ساعة: TMDB (الأفلام، البوسترات، التريلرات، وين تحضر بالإمارات) + تقييمات IMDb (ملفات IMDb المجانية)
 // بيشتغل من GitHub Actions. المفتاح بيجي من السر TMDB_API_KEY.
 import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 
 const KEY = process.env.TMDB_API_KEY || "";
@@ -72,10 +73,10 @@ async function main() {
   const need = ids.filter(id => {
     const f = byId.get(id);
     const lists = membership.get(id);
-    return !f || !f.en || id % 72 === hour % 72 || (lists && (lists.has("now") || lists.has("up")));
+    return !f || !f.en || !existsSync(`data/d/${id}.json`) || id % 72 === hour % 72 || (lists && (lists.has("now") || lists.has("up")));
   });
   console.log("details to fetch:", need.length);
-  const details = await pool(need, 8, id => tmdb(`/movie/${id}`, { language: "en-US", append_to_response: "videos,external_ids,watch/providers,translations" }));
+  const details = await pool(need, 8, id => tmdb(`/movie/${id}`, { language: "en-US", append_to_response: "videos,external_ids,watch/providers,translations,credits,release_dates" }));
 
   for (let k = 0; k < need.length; k++) {
     const d = details[k]; if (!d) continue;
@@ -104,6 +105,41 @@ async function main() {
       rb: !!((prov.rent || []).length || (prov.buy || []).length),
     });
   }
+
+  // تفاصيل كل فيلم بملف لحاله (للعبة خمّن الفيلم)
+  await mkdir("data/d", { recursive: true });
+  let wroteD = 0;
+  for (const d of details) {
+    if (!d) continue;
+    const tr = (d.translations?.translations || []).find(t => t.iso_639_1 === "ar")?.data || {};
+    const crew = d.credits?.crew || [];
+    const jobs = (...js) => [...new Set(crew.filter(c => js.includes(c.job)).map(c => c.name))].slice(0, 6);
+    const rel = [];
+    for (const r of d.release_dates?.results || []) {
+      const all = r.release_dates || [];
+      const th = all.filter(x => x.type === 3 || x.type === 2).sort((a, b) => a.release_date.localeCompare(b.release_date))[0] || all[0];
+      if (th) rel.push({ c: r.iso_3166_1, d: th.release_date.slice(0, 10) });
+    }
+    rel.sort((a, b) => a.d.localeCompare(b.d));
+    const det = {
+      id: d.id, imdb: d.external_ids?.imdb_id || null, en: d.title, orig: d.original_title, ar: (tr.title || "").trim() || null,
+      tag: (tr.tagline || d.tagline || "").trim() || null,
+      ov: (tr.overview || d.overview || "").trim(),
+      rd: d.release_date || null, rt: d.runtime || null, g: (d.genres || []).map(g => g.id), lang: d.original_language,
+      budget: d.budget || 0, revenue: d.revenue || 0,
+      companies: (d.production_companies || []).slice(0, 6).map(c => ({ n: c.name, logo: c.logo_path, c: c.origin_country })),
+      countries: (d.production_countries || []).map(c => c.iso_3166_1),
+      langs: (d.spoken_languages || []).map(l => l.english_name),
+      col: d.belongs_to_collection?.name || null,
+      rel: rel.slice(0, 40),
+      dir: jobs("Director"), prod: jobs("Producer"), wri: jobs("Screenplay", "Writer", "Novel", "Story"), mus: jobs("Original Music Composer", "Music"), dop: jobs("Director of Photography"),
+      cast: (d.credits?.cast || []).slice(0, 16).map(c => ({ n: c.name, ch: c.character, p: c.profile_path })),
+    };
+    const file = `data/d/${d.id}.json`, body = JSON.stringify(det);
+    let prev = null; try { prev = await readFile(file, "utf8"); } catch {}
+    if (prev !== body) { await writeFile(file, body); wroteD++; }
+  }
+  console.log("detail files written:", wroteD);
 
   // ٣. عضوية القوائم الحالية
   for (const f of byId.values()) f.l = [...(membership.get(f.id) || [])];
