@@ -72,6 +72,7 @@
 .reveal-in{display:grid;gap:14px;justify-items:center}
 .reveal img{width:min(260px,60vw);border-radius:14px;box-shadow:0 30px 80px #000}
 .reveal h2{font-size:clamp(34px,6vw,60px);color:var(--ticket)}
+[hidden]{display:none!important}
 </style>
 <main class="wrap">
   <header class="page-head">
@@ -126,7 +127,7 @@
 <script>
 const RAW_D = "https://raw.githubusercontent.com/saifmuhawa/sahra/main/data/d/";
 const regionAr = (() => { try { const d = new Intl.DisplayNames(["ar"], {type:"region"}); return c => { try { return d.of(c); } catch (e) { return c; } }; } catch (e) { return c => c; } })();
-const flag = c => /^[A-Z]{2}$/.test(c) ? String.fromCodePoint(...[...c].map(x => 127397 + x.charCodeAt(0))) : "";
+const flag = c => "";
 function money(n) {
   if (!n) return "غير معروف";
   if (n >= 1e9) return "$" + (n / 1e9).toFixed(2).replace(/\.?0+$/, "") + " مليار";
