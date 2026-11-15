@@ -54,7 +54,7 @@ async function loadFilms() {
     } catch (e) {}
   }
   const u = document.getElementById("updated");
-  if (u && UPDATED) u.textContent = `${FILMS.length.toLocaleString("en")} فيلم · آخر تحديث ${ago(UPDATED)}`;
+  if (u && UPDATED) u.textContent = `آخر تحديث ${ago(UPDATED)}`;
   return FILMS;
 }
 // إيجاد فيلم من مفتاحنا (اسم إنجليزي|سنة)، مع احتياط بالاسم العربي
