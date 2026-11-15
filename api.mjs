@@ -70,8 +70,8 @@ async function postJSON(url, body, headers = {}) {
   if (!r.ok) throw new Error(url.split("/")[2] + " " + r.status + " " + t.slice(0, 200));
   return JSON.parse(t);
 }
-async function askAI(story, errs = []) {
-  const p = PROMPT(story);
+async function askAI(story, errs = [], mk = PROMPT) {
+  const p = mk(story);
   const ok = (source, text) => (parseCandidates(text).length ? { source, text } : (errs.push(source + ": no json"), null));
   if (process.env.GROQ_API_KEY) {
     for (const model of [process.env.GROQ_MODEL, "openai/gpt-oss-120b", "llama-3.3-70b-versatile"].filter(Boolean)) {
@@ -120,6 +120,48 @@ async function resolve(c) {
   return { id: m.id, en: m.title, y: m.release_date ? +m.release_date.slice(0, 4) : null, rd: m.release_date || null, p: m.poster_path || null, pop: m.popularity || 0, tv: m.vote_average || null, tc: m.vote_count || 0, lang: m.original_language, g: m.genre_ids || [], l: [], ext: true, why: c.why || "" };
 }
 
+// ===== الأنمي (مسلسلات وأفلام) =====
+const isAnime = m => (m.genre_ids || (m.genres || []).map(g => g.id) || []).includes(16) && (m.original_language === "ja" || (m.origin_country || []).includes("JP"));
+const animeItem = (m, t) => ({ id: m.id, t, en: t === "tv" ? m.name : m.title, orig: t === "tv" ? m.original_name : m.original_title, y: +((t === "tv" ? m.first_air_date : m.release_date) || "").slice(0, 4) || null, p: m.poster_path || null, pop: m.popularity || 0, tv: m.vote_average || null, tc: m.vote_count || 0, g: m.genre_ids || [] });
+async function animeSearch(q) {
+  const params = { query: q, include_adult: "false", language: "en-US" };
+  const [a, b] = await Promise.all([tmdb("/search/tv", params).catch(() => null), tmdb("/search/movie", params).catch(() => null)]);
+  const out = [...(a?.results || []).filter(isAnime).map(m => animeItem(m, "tv")), ...(b?.results || []).filter(isAnime).map(m => animeItem(m, "movie"))];
+  return out.sort((x, y) => y.tc - x.tc).slice(0, 10);
+}
+function animeShape(d, t) {
+  const tr = (d.translations?.translations || []).find(x => x.iso_639_1 === "ar")?.data || {};
+  const tv = t === "tv";
+  const crew = d.credits?.crew || d.aggregate_credits?.crew || [];
+  const jobs = (...js) => [...new Set(crew.filter(c => js.includes(c.job) || (c.jobs || []).some(j => js.includes(j.job))).map(c => c.name))].slice(0, 6);
+  const cast = tv
+    ? (d.aggregate_credits?.cast || []).slice(0, 16).map(c => ({ n: c.name, ch: (c.roles || []).map(r => r.character).filter(Boolean).slice(0, 2).join(" / "), p: c.profile_path }))
+    : (d.credits?.cast || []).slice(0, 16).map(c => ({ n: c.name, ch: c.character, p: c.profile_path }));
+  return {
+    id: d.id, t, imdb: d.external_ids?.imdb_id || d.imdb_id || null,
+    en: tv ? d.name : d.title, orig: tv ? d.original_name : d.original_title, ar: (tr.name || tr.title || "").trim() || null,
+    tag: (tr.tagline || d.tagline || "").trim() || null, ov: (tr.overview || d.overview || "").trim(),
+    y: +((tv ? d.first_air_date : d.release_date) || "").slice(0, 4) || null,
+    first: (tv ? d.first_air_date : d.release_date) || null, last: tv ? d.last_air_date || null : null,
+    status: d.status || null, inprod: tv ? !!d.in_production : false,
+    seasons: tv ? d.number_of_seasons || 0 : 0, episodes: tv ? d.number_of_episodes || 0 : 0,
+    seasonList: tv ? (d.seasons || []).filter(x => x.season_number > 0).map(x => ({ n: x.season_number, name: x.name, ep: x.episode_count, y: (x.air_date || "").slice(0, 4) })) : [],
+    rt: tv ? (d.episode_run_time || [])[0] || null : d.runtime || null,
+    budget: d.budget || 0, revenue: d.revenue || 0,
+    g: (d.genres || []).map(g => g.id), p: d.poster_path || null,
+    tv: d.vote_average ? Math.round(d.vote_average * 10) / 10 : null, tc: d.vote_count || 0,
+    studios: (d.production_companies || []).slice(0, 6).map(c => ({ n: c.name, logo: c.logo_path })),
+    networks: (d.networks || []).slice(0, 4).map(c => ({ n: c.name, logo: c.logo_path })),
+    creators: tv ? (d.created_by || []).map(c => c.name) : [],
+    dir: jobs("Director", "Series Director"), wri: jobs("Original Concept", "Comic Book", "Novel", "Series Composition", "Screenplay", "Writer", "Story"), mus: jobs("Original Music Composer", "Music"), chr: jobs("Character Designer"),
+    cast,
+  };
+}
+const ANIME_PROMPT = s => `You are an anime expert. Someone describes the plot of an anime series or anime film (in Arabic or English, possibly vague or with mistakes). Identify the anime.
+Return ONLY JSON: {"candidates":[{"title":"<most common English or romaji title>","year":<first release year>,"why":"<one short sentence in Arabic explaining the match>"}]}
+Give up to 3 candidates, most likely first. Only real Japanese anime.
+Plot: """${s}"""`;
+
 function send(res, code, obj) {
   res.writeHead(code, { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=600" });
   res.end(JSON.stringify(obj));
@@ -153,6 +195,40 @@ http.createServer(async (req, res) => {
       const seen = new Set(), results = [];
       for (const c of cands) { const f = await resolve(c).catch(() => null); if (f && !seen.has(f.id)) { seen.add(f.id); results.push(f); } }
       return send(res, 200, errs.length && source === "wikipedia" ? { source, results, aiError: errs.join(" | ").slice(0, 600) } : { source, results });
+    }
+    if (u.pathname === "/anime/search") {
+      const q = (u.searchParams.get("q") || "").trim().slice(0, 100);
+      if (!q) return send(res, 400, { error: "q is required" });
+      return send(res, 200, { results: await animeSearch(q) });
+    }
+    if (u.pathname === "/anime/random") {
+      const page = 1 + Math.floor(Math.random() * 5);
+      const j = await tmdb("/discover/tv", { with_genres: "16", with_original_language: "ja", sort_by: "vote_count.desc", page: String(page), language: "en-US" });
+      const list = (j?.results || []).map(m => animeItem(m, "tv"));
+      if (!list.length) return send(res, 404, { error: "not found" });
+      res.writeHead(200, { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "no-store" });
+      return res.end(JSON.stringify(list[Math.floor(Math.random() * list.length)]));
+    }
+    if (u.pathname === "/anime/guess") {
+      const story = (u.searchParams.get("story") || "").trim().slice(0, 800);
+      if (story.length < 8) return send(res, 400, { error: "story is too short" });
+      const errs = [];
+      const ai = await askAI(story, errs, ANIME_PROMPT).catch(e => (errs.push(String(e)), null));
+      const cands = ai ? parseCandidates(ai.text) : [];
+      const seen = new Set(), results = [];
+      for (const c of cands) {
+        const list = await animeSearch(c.title).catch(() => []);
+        const f = list.find(x => c.year && x.y && Math.abs(x.y - c.year) <= 1) || list[0];
+        if (f && !seen.has(f.t + f.id)) { seen.add(f.t + f.id); results.push({ ...f, why: c.why || "" }); }
+      }
+      return send(res, 200, results.length ? { source: ai.source, results } : { source: "none", results, aiError: errs.join(" | ").slice(0, 600) });
+    }
+    const am = u.pathname.match(/^\/anime\/(tv|movie)\/(\d+)$/);
+    if (am) {
+      const tv = am[1] === "tv";
+      const d = await tmdb("/" + am[1] + "/" + am[2], { language: "en-US", append_to_response: (tv ? "aggregate_credits" : "credits") + ",external_ids,translations" });
+      if (!d) return send(res, 404, { error: "not found" });
+      return send(res, 200, animeShape(d, am[1]));
     }
     const m = u.pathname.match(/^\/movie\/(\d+)$/);
     if (m) {

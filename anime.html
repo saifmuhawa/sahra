@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>خمّن الأنمي · سهرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="anime">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <div class="nav-links">
+      <a href="tonight.html" data-page="tonight">شو نحضر الليلة؟</a>
+      <a href="game.html" data-page="game">خمّن الفيلم</a>
+      <a href="anime.html" data-page="anime">خمّن الأنمي</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+      <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
+      <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
+    </div>
+  </div>
+</nav>
+<style>
+.game{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:900px){.game{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,var(--velvet-2),var(--velvet));padding:clamp(16px,2.5vw,26px);display:grid;gap:16px}
+.panel h2{font-size:26px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.inp{flex:1 1 200px;background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;font-size:17px}
+.inp:focus{border-color:var(--ticket);outline:none}
+.sugg{display:grid;gap:6px}
+.secret{position:relative}
+.secret.hidden .det{filter:blur(16px);pointer-events:none;user-select:none}
+.secret.hidden::after{content:"المعلومات مخفية عن المتسابقين";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:26px;color:var(--ticket)}
+.det{display:grid;gap:18px}
+.dhead{display:grid;grid-template-columns:130px 1fr;gap:16px;align-items:start}
+.dhead img,.dhead .noposter{width:130px;aspect-ratio:2/3;border-radius:10px;object-fit:cover;background:var(--velvet-3)}
+.dhead h3{font-size:32px}
+.dhead .en{color:var(--muted);direction:ltr;text-align:right}
+.tagline{color:var(--ticket);font-style:italic;margin:0}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.fact{background:var(--velvet-3);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
+.fact span{font-size:12.5px;color:var(--muted)}
+.fact b{font-size:18px;font-variant-numeric:tabular-nums}
+.fact.big b{color:var(--ticket);font-size:22px}
+.sec h4{margin:0 0 8px;font-family:var(--display);font-weight:400;font-size:20px;color:var(--cream)}
+.chiplist{display:flex;flex-wrap:wrap;gap:6px}
+.cchip{background:var(--velvet-3);border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:14px}
+.cchip small{color:var(--muted);font-variant-numeric:tabular-nums}
+.cos{display:flex;flex-wrap:wrap;gap:10px}
+.co{display:flex;align-items:center;gap:8px;background:var(--cream);color:#1b0d12;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:700}
+.co img{height:24px;max-width:80px;object-fit:contain}
+.cast{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
+.actor{display:grid;gap:4px;font-size:13.5px;line-height:1.35}
+.actor img,.actor .noposter{width:100%;aspect-ratio:2/3;border-radius:10px;object-fit:cover;background:var(--velvet-3)}
+.actor b{direction:ltr;text-align:right}
+.actor small{color:var(--muted);direction:ltr;text-align:right}
+.crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.players{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.player{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;background:var(--velvet-3);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.player.lead{border-color:var(--ticket)}
+.player .sc{font-family:var(--display);font-size:28px;color:var(--ticket);min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+.player .nm{font-weight:700;font-size:17px}
+.mini{border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:14px}
+.mini:hover{border-color:var(--ticket)}
+.win{background:var(--good);color:#0b1f14;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer}
+.counter{display:flex;align-items:center;gap:12px;justify-content:space-between;background:var(--velvet-3);border-radius:12px;padding:10px 14px}
+.counter .num{font-family:var(--display);font-size:34px;color:var(--cream);font-variant-numeric:tabular-nums}
+.warn{color:#ffb3b8;font-size:14px;margin:0}
+.reveal{position:fixed;inset:0;z-index:60;background:rgba(10,4,7,.92);display:none;place-items:center;padding:20px;text-align:center}
+.reveal.open{display:grid}
+.reveal-in{display:grid;gap:14px;justify-items:center}
+.reveal img{width:min(260px,60vw);border-radius:14px;box-shadow:0 30px 80px #000}
+.reveal h2{font-size:clamp(34px,6vw,60px);color:var(--ticket)}
+[hidden]{display:none!important}
+.story{border:1px dashed var(--line);border-radius:14px;padding:12px 14px}
+.story summary{cursor:pointer;color:var(--ticket);font-weight:700}
+.story-form{display:grid;gap:8px;margin-top:10px}
+textarea.inp{resize:vertical;font:inherit;line-height:1.6}
+.result .ai{display:block;color:var(--ticket);font-size:13px}
+.osc-sum{margin:0;font-size:17px}
+.osc{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.osc li{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;background:var(--velvet-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.osc li span{font-size:13px;color:var(--muted)}
+.osc li.won{border-color:var(--ticket)}
+.osc li.won span{color:var(--ticket);font-weight:700}
+.osc li small{grid-column:2;color:var(--muted);direction:ltr;text-align:right}
+.seasons{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+</style>
+<main class="wrap">
+  <header class="page-head">
+    <h1>خمّن الأنمي</h1>
+    <p>نفس لعبة خمّن الفيلم، بس للأنمي. الحكم بيختار أنمي (مسلسل أو فيلم)، والمتسابقين بيسألوه أسئلة لحد ما حدا يعرفه، واللي بيعرفه بياخذ النقاط.</p>
+  </header>
+  <div class="game" style="margin:20px 0 40px">
+    <section class="panel" aria-labelledby="judge-h">
+      <div class="row" style="justify-content:space-between"><h2 id="judge-h">لوحة الحكم</h2><span class="pill" id="round-pill">الجولة ١</span></div>
+      <form class="row" id="pick-form" autocomplete="off">
+        <label for="pick-in" class="q-label" style="flex-basis:100%">اكتب اسم الأنمي بالإنجليزي (كبتل أو سمول عادي)</label>
+        <input class="inp" id="pick-in" placeholder="مثلاً: attack on titan أو ONE PIECE" dir="ltr">
+        <button class="btn btn-gold" type="submit">دوّر</button>
+        <button class="btn btn-ghost" type="button" id="random-btn">أنمي عشوائي</button>
+      </form>
+      <details class="story" id="story-box">
+        <summary>ما بتعرف اسم الأنمي؟ احكي قصته وخلّي الذكاء الاصطناعي يعرفه</summary>
+        <form class="story-form" id="story-form" autocomplete="off">
+          <label for="story-in" class="q-label">احكي القصة بالعربي أو الإنجليزي، وكل ما زدت تفاصيل كان أحسن</label>
+          <textarea class="inp" id="story-in" rows="3" placeholder="مثلاً: ولد لقى دفتر، أي حدا بينكتب اسمه فيه بيموت، ومحقق عبقري بيحاول يمسكه"></textarea>
+          <button class="btn btn-red" type="submit">🤖 اعرفلي الأنمي</button>
+        </form>
+      </details>
+      <p class="warn" id="need-players" hidden>لازم تضيف متسابقين اثنين على الأقل قبل ما تبلش.</p>
+      <div class="sugg" id="sugg"></div>
+      <div class="row" id="judge-tools" hidden>
+        <button class="btn btn-ghost" type="button" id="hide-btn">👁 إخفاء المعلومات عن المتسابقين</button>
+        <button class="btn btn-red" type="button" id="reveal-btn">🎬 كشف الأنمي للكل</button>
+        <button class="btn btn-ghost" type="button" id="new-round">جولة جديدة</button>
+      </div>
+      <div class="secret" id="secret"><div class="det" id="det"></div></div>
+    </section>
+    <aside class="panel" aria-labelledby="pl-h">
+      <h2 id="pl-h">المتسابقين</h2>
+      <form class="row" id="add-form" autocomplete="off">
+        <label for="add-in" class="q-label" style="flex-basis:100%">اسم المتسابق</label>
+        <input class="inp" id="add-in" placeholder="مثلاً: سيف">
+        <button class="btn btn-gold" type="submit">إضافة</button>
+      </form>
+      <ul class="players" id="players"></ul>
+      <div class="counter"><span>عدد الأسئلة بهالجولة</span><span class="num" id="qnum">0</span><span class="row"><button class="mini" type="button" id="q-plus">+ سؤال</button><button class="mini" type="button" id="q-reset">صفّر</button></span></div>
+      <div class="row"><label for="pts" class="q-label">نقاط الفوز بالجولة</label><input class="inp" id="pts" type="number" min="1" max="10" value="3" style="flex:0 0 80px"></div>
+      <button class="btn btn-ghost" type="button" id="reset-all">بلّش لعبة جديدة (صفّر النقاط)</button>
+    </aside>
+  </div>
+</main>
+<div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="كشف الأنمي"><div class="reveal-in" id="reveal-in"></div></div>
+<footer>
+  <div class="wrap">
+    <span>سهرة · فكرة وإعداد saiflex</span>
+    <a class="credits" href="credits.html">المصادر</a>
+  </div>
+</footer>
+<script src="curated.js"></script>
+<script src="common.js"></script>
+<script>
+const API = "https://sahra-api-kxww.onrender.com";
+fetch(API + "/health").catch(() => {});
+const EMPTY = `<p class="note">اختار أنمي وبتطلعلك كل معلوماته هون: كم موسم وحلقة، أي سنة، أي استوديو، مين ألّفه، والشخصيات ومؤدّي الأصوات بصورهم.</p>`;
+const STATUS_AR = {"Returning Series":"مستمر", "Ended":"منتهي", "Canceled":"ملغي", "In Production":"قيد الإنتاج", "Released":"صدر", "Planned":"مخطط له", "Post Production":"قيد التجهيز"};
+function money(n) {
+  if (!n) return "";
+  if (n >= 1e9) return "$" + (n / 1e9).toFixed(2).replace(/\.?0+$/, "") + " مليار";
+  if (n >= 1e6) return "$" + (n / 1e6).toFixed(1).replace(/\.0$/, "") + " مليون";
+  return "$" + n.toLocaleString("en");
+}
+const dateAr = d => d ? new Date(d + "T00:00:00").toLocaleDateString("ar-EG-u-nu-latn", {year:"numeric", month:"long", day:"numeric"}) : "غير معروف";
+const typeAr = f => f.t === "tv" ? "مسلسل" : "فيلم";
+
+// ===== الحالة (بتنحفظ بالمتصفح، ومنفصلة عن لعبة الأفلام) =====
+let G = {players: [], round: 1, q: 0, cur: null, pts: 3};
+try { G = Object.assign(G, JSON.parse(localStorage.getItem("sahra-anime") || "{}")); } catch (e) {}
+const save = () => { try { localStorage.setItem("sahra-anime", JSON.stringify(G)); } catch (e) {} };
+
+// ===== المتسابقين =====
+function renderPlayers() {
+  const ul = $("#players"); ul.innerHTML = "";
+  const top = Math.max(0, ...G.players.map(p => p.s));
+  G.players.forEach((p, i) => {
+    const li = el("li", {class: "player" + (top > 0 && p.s === top ? " lead" : "")});
+    li.innerHTML = `<span class="sc">${p.s}</span><span class="nm">${top > 0 && p.s === top ? "👑 " : ""}${esc(p.n)}</span>
+      <button class="win" type="button" data-win="${i}">فاز بالجولة</button>
+      <span class="row" style="gap:4px"><button class="mini" type="button" data-plus="${i}" aria-label="زيد نقطة لـ ${esc(p.n)}">+1</button><button class="mini" type="button" data-minus="${i}" aria-label="نقّص نقطة من ${esc(p.n)}">−1</button><button class="mini" type="button" data-del="${i}" aria-label="احذف ${esc(p.n)}">✕</button></span>`;
+    ul.appendChild(li);
+  });
+  if (!G.players.length) ul.innerHTML = `<li class="note">لسا ما في متسابقين. ضيف اثنين على الأقل.</li>`;
+  $("#need-players").hidden = G.players.length >= 2;
+  $("#qnum").textContent = G.q;
+  $("#round-pill").textContent = "الجولة " + G.round;
+  $("#pts").value = G.pts;
+}
+$("#add-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const n = $("#add-in").value.trim(); if (!n) return;
+  G.players.push({n, s: 0}); $("#add-in").value = ""; save(); renderPlayers(); $("#add-in").focus();
+});
+$("#players").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = b.dataset;
+  if (d.win !== undefined) { G.players[+d.win].s += G.pts; save(); renderPlayers(); if (window.CUR) reveal(G.players[+d.win].n); return; }
+  if (d.plus !== undefined) G.players[+d.plus].s += 1;
+  if (d.minus !== undefined) G.players[+d.minus].s = Math.max(0, G.players[+d.minus].s - 1);
+  if (d.del !== undefined) G.players.splice(+d.del, 1);
+  save(); renderPlayers();
+});
+$("#q-plus").addEventListener("click", () => { G.q++; save(); renderPlayers(); });
+$("#q-reset").addEventListener("click", () => { G.q = 0; save(); renderPlayers(); });
+$("#pts").addEventListener("change", () => { G.pts = Math.max(1, Math.min(10, +$("#pts").value || 3)); save(); renderPlayers(); });
+$("#reset-all").addEventListener("click", () => { G.players.forEach(p => p.s = 0); G.round = 1; G.q = 0; G.cur = null; save(); renderPlayers(); clearPick(); });
+$("#new-round").addEventListener("click", () => { G.round++; G.q = 0; G.cur = null; save(); renderPlayers(); clearPick(); $("#pick-in").focus(); });
+
+// ===== اختيار الأنمي =====
+function needPlayers() { if (G.players.length >= 2) return false; $("#need-players").hidden = false; $("#add-in").focus(); return true; }
+const WAIT = "(أول مرة ممكن تاخذ لحد دقيقة)";
+async function api(path) { try { const r = await fetch(API + path); if (r.ok) return await r.json(); } catch (e) {} return null; }
+function suggest(list) {
+  const box = $("#sugg"); box.innerHTML = "";
+  list.forEach(f => {
+    const b = el("button", {type:"button", class:"result"});
+    b.innerHTML = `${posterBox(f, "w92")}<span><b dir="ltr">${esc(f.en)}</b><small>${typeAr(f)} · ${f.y || ""}</small>${f.why ? `<span class="ai">🤖 ${esc(f.why)}</span>` : ""}</span>`;
+    b.addEventListener("click", () => { box.innerHTML = ""; choose(f); });
+    box.appendChild(b);
+  });
+}
+$("#pick-form").addEventListener("submit", async e => {
+  e.preventDefault(); if (needPlayers()) return;
+  const q = $("#pick-in").value.trim(); if (!q) return;
+  $("#sugg").innerHTML = `<p class="note">عم ندوّر… ${WAIT}</p>`;
+  const list = (await api("/anime/search?q=" + encodeURIComponent(q)))?.results || [];
+  if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما لقينا أنمي بهالاسم. جرّب الاسم الإنجليزي أو الياباني (روماجي).</p>`; return; }
+  if (list.length === 1) { $("#sugg").innerHTML = ""; choose(list[0]); } else suggest(list);
+});
+$("#story-form").addEventListener("submit", async e => {
+  e.preventDefault(); if (needPlayers()) return;
+  const s = $("#story-in").value.trim(); if (s.length < 8) return;
+  $("#sugg").innerHTML = `<p class="note">🤖 عم يفكّر… ${WAIT}</p>`;
+  const list = (await api("/anime/guess?story=" + encodeURIComponent(s)))?.results || [];
+  if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما قدرنا نعرف الأنمي من هالوصف. زيد تفاصيل: اسم شخصية، قوة البطل، أو مشهد مشهور.</p>`; return; }
+  suggest(list);
+  $("#sugg").insertAdjacentHTML("afterbegin", `<p class="note">🤖 هاي توقعات الذكاء الاصطناعي، اختار الصح:</p>`);
+});
+$("#random-btn").addEventListener("click", async () => {
+  if (needPlayers()) return;
+  $("#sugg").innerHTML = `<p class="note">عم نختار أنمي… ${WAIT}</p>`;
+  const f = await api("/anime/random");
+  $("#sugg").innerHTML = f ? "" : `<p class="warn">ما زبطت هلأ، جرّب كمان مرة.</p>`;
+  if (f) choose(f);
+});
+function clearPick() {
+  $("#det").innerHTML = EMPTY; window.CUR = null;
+  $("#judge-tools").hidden = true; $("#secret").classList.remove("hidden"); $("#pick-in").value = ""; $("#sugg").innerHTML = "";
+}
+async function choose(f) {
+  G.cur = {id: f.id, t: f.t}; G.q = 0; save(); renderPlayers();
+  $("#judge-tools").hidden = false;
+  $("#det").innerHTML = `<p class="note">عم نجيب معلومات ${esc(f.en || "الأنمي")}… ${WAIT}</p>`;
+  const d = await api("/anime/" + f.t + "/" + f.id);
+  if (!d) { $("#det").innerHTML = `<p class="warn">ما قدرنا نجيب المعلومات هلأ. جرّب كمان مرة.</p>`; return; }
+  render(d);
+}
+function people(title, arr) { return arr && arr.length ? `<div class="fact"><span>${title}</span><b style="font-size:15px;direction:ltr;text-align:right">${arr.map(esc).join("، ")}</b></div>` : ""; }
+const logos = arr => `<div class="cos">${arr.map(c => `<span class="co">${c.logo ? `<img src="${IMG}w92${c.logo}" alt="">` : ""}<span dir="ltr">${esc(c.n)}</span></span>`).join("")}</div>`;
+function render(d) {
+  const tv = d.t === "tv";
+  const g = (d.g || []).map(x => GENRE_AR[x]).filter(Boolean);
+  const st = d.status ? (STATUS_AR[d.status] || d.status) : "";
+  let h = `<div class="dhead">${posterBox(d, "w342")}<div style="display:grid;gap:6px">
+      <h3>${esc(d.ar || d.en)}</h3><div class="en">${esc(d.en)}${d.orig && d.orig !== d.en ? " · " + esc(d.orig) : ""}</div>
+      <div class="meta"><span class="cchip">${typeAr(d)}</span>${g.map(x => `<span class="cchip">${x}</span>`).join("")}</div>
+      ${d.tag ? `<p class="tagline" dir="auto">"${esc(d.tag)}"</p>` : ""}
+    </div></div>
+    <div class="facts">
+      <div class="fact big"><span>سنة البداية</span><b>${d.y || "غير معروف"}</b></div>
+      ${tv ? `<div class="fact big"><span>عدد المواسم</span><b>${d.seasons || "؟"}</b></div><div class="fact big"><span>عدد الحلقات</span><b>${d.episodes || "؟"}</b></div>` : ""}
+      ${st ? `<div class="fact"><span>الحالة</span><b>${esc(st)}</b></div>` : ""}
+      <div class="fact"><span>${tv ? "أول حلقة" : "تاريخ العرض"}</span><b style="font-size:15px">${dateAr(d.first)}</b></div>
+      ${tv && d.last ? `<div class="fact"><span>آخر حلقة</span><b style="font-size:15px">${dateAr(d.last)}</b></div>` : ""}
+      ${d.rt ? `<div class="fact"><span>${tv ? "مدة الحلقة" : "المدة"}</span><b>${timeLabel(d.rt)}</b></div>` : ""}
+      ${!tv && d.revenue ? `<div class="fact big"><span>كم جاب (شباك التذاكر)</span><b>${money(d.revenue)}</b></div>` : ""}
+      ${!tv && d.budget ? `<div class="fact"><span>الميزانية</span><b>${money(d.budget)}</b></div>` : ""}
+      ${d.tv ? `<div class="fact"><span>تقييم TMDB</span><b>${d.tv} <small style="font-size:12px;color:var(--muted)">(${(d.tc || 0).toLocaleString("en")} صوت)</small></b></div>` : ""}
+    </div>`;
+  if (d.studios?.length) h += `<div class="sec"><h4>الاستوديو وشركات الإنتاج</h4>${logos(d.studios)}</div>`;
+  if (d.networks?.length) h += `<div class="sec"><h4>وين انعرض</h4>${logos(d.networks)}</div>`;
+  h += `<div class="crew">${people("صاحب العمل", d.creators)}${people("المخرج", d.dir)}${people("التأليف والقصة", d.wri)}${people("الموسيقى", d.mus)}${people("تصميم الشخصيات", d.chr)}</div>`;
+  if (d.seasonList?.length > 1) h += `<div class="sec"><h4>المواسم</h4><div class="seasons">${d.seasonList.map(s => `<div class="fact"><span>${esc(s.name || "موسم " + s.n)}${s.y ? " · " + s.y : ""}</span><b style="font-size:15px">${s.ep} حلقة</b></div>`).join("")}</div></div>`;
+  if (d.cast?.length) h += `<div class="sec"><h4>الشخصيات ومؤدّي الأصوات</h4><div class="cast">${d.cast.map(c => `<div class="actor">${c.p ? `<img src="${IMG}w185${c.p}" alt="${esc(c.n)}" loading="lazy">` : `<div class="noposter">${esc(c.n)}</div>`}<b>${esc(c.ch || "")}</b><small>${esc(c.n)}</small></div>`).join("")}</div></div>`;
+  if (d.ov) h += `<div class="sec"><h4>القصة</h4><p style="margin:0;max-width:70ch">${esc(d.ov)}</p></div>`;
+  h += `<div class="actions"><a class="btn btn-ghost" href="https://www.themoviedb.org/${d.t}/${d.id}" target="_blank" rel="noopener">صفحته على TMDB ↗</a>${d.imdb ? `<a class="btn btn-ghost" href="https://www.imdb.com/title/${d.imdb}/" target="_blank" rel="noopener">صفحته على IMDb ↗</a>` : ""}</div>`;
+  $("#det").innerHTML = h;
+  window.CUR = d;
+}
+$("#hide-btn").addEventListener("click", () => {
+  const s = $("#secret"); s.classList.toggle("hidden");
+  $("#hide-btn").textContent = s.classList.contains("hidden") ? "👁 إظهار المعلومات للحكم" : "👁 إخفاء المعلومات عن المتسابقين";
+});
+function reveal(winner) {
+  const f = window.CUR; if (!f) return;
+  $("#reveal-in").innerHTML = `${posterUrl(f, "w342") ? `<img src="${posterUrl(f, "w342")}" alt="">` : ""}<h2>${esc(f.ar || f.en)}</h2><div class="en" style="direction:ltr">${esc(f.en)} · ${f.y || ""}</div>
+    ${winner ? `<p style="font-size:22px;margin:0">🏆 ${esc(winner)} عرفه وأخذ ${G.pts} نقاط بعد ${G.q} سؤال</p>` : ""}
+    <button class="btn btn-gold" type="button" id="reveal-close">تمام</button>`;
+  $("#reveal").classList.add("open");
+  $("#reveal-close").focus();
+  $("#reveal-close").onclick = () => $("#reveal").classList.remove("open");
+}
+$("#reveal-btn").addEventListener("click", () => reveal(null));
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("#reveal").classList.remove("open"); });
+
+$("#det").innerHTML = EMPTY;
+renderPlayers();
+if (G.cur) choose(G.cur);
+</script>
+</body>
+</html>
