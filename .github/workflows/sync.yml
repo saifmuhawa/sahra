@@ -2,7 +2,7 @@ name: Sync films (TMDB + IMDb)
 
 on:
   schedule:
-    - cron: "17 * * * *"   # كل ساعة
+    - cron: "7,27,47 * * * *"   # كل 20 دقيقة (GitHub بيأخّر أو بيفوّت بعض المواعيد)
   workflow_dispatch: {}
 
 permissions:
