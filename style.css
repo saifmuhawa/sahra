@@ -196,7 +196,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .field small{color:var(--muted);font-size:14px}
 .field input,.field textarea{font:inherit;color:var(--cream);background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:17px;width:100%;resize:vertical}
 .field input:focus,.field textarea:focus{border-color:var(--ticket);outline:none}
-.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.hp{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);opacity:0;pointer-events:none}
 .form-end{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .form-end .btn{padding:12px 26px;font-size:17px}
 .btn:disabled{opacity:.6;cursor:wait}
