@@ -65,14 +65,14 @@ Return ONLY JSON: {"candidates":[{"title":"<official English title>","year":<rel
 Give up to 3 candidates, most likely first. Prefer real, well-known feature films.
 Plot: """${s}"""`;
 async function postJSON(url, body, headers = {}) {
-  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(15000) });
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(12000) });
   const t = await r.text();
   if (!r.ok) throw new Error(url.split("/")[2] + " " + r.status + " " + t.slice(0, 200));
   return JSON.parse(t);
 }
 async function askAI(story, errs = [], mk = PROMPT) {
   const p = mk(story);
-  const ok = (source, text) => (parseCandidates(text).length ? { source, text } : (errs.push(source + ": no json"), null));
+  const ok = (source, text) => (parseCandidates(text).length ? { source, text } : (errs.push(source + ": no json: " + String(text).slice(0, 120)), null));
   if (process.env.GROQ_API_KEY) {
     for (const model of [process.env.GROQ_MODEL, "openai/gpt-oss-120b", "llama-3.3-70b-versatile"].filter(Boolean)) {
       try {
@@ -82,7 +82,7 @@ async function askAI(story, errs = [], mk = PROMPT) {
     }
   }
   if (process.env.GEMINI_API_KEY) {
-    for (const model of [process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-3.8-flash", "gemini-flash-lite-latest", "gemini-flash-latest"].filter(Boolean)) {
+    for (const model of [process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3.8-flash"].filter(Boolean)) {
       try {
         const j = await postJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { contents: [{ parts: [{ text: p }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" } }, { "x-goog-api-key": process.env.GEMINI_API_KEY });
         const r = ok("gemini", j.candidates?.[0]?.content?.parts?.map(x => x.text || "").join("") || ""); if (r) return r;
@@ -98,9 +98,15 @@ async function askAI(story, errs = [], mk = PROMPT) {
   return null;
 }
 function parseCandidates(text) {
-  const m = (text || "").match(/\{[\s\S]*\}/);
-  if (!m) return [];
-  try { return (JSON.parse(m[0]).candidates || []).filter(c => c && c.title).slice(0, 3); } catch { return []; }
+  const t = (text || "").trim();
+  let j = null;
+  for (const src of [t, (t.match(/\{[\s\S]*\}/) || [])[0], (t.match(/\[[\s\S]*\]/) || [])[0]]) {
+    if (!src) continue;
+    try { j = JSON.parse(src); break; } catch {}
+  }
+  if (!j) return [];
+  const arr = Array.isArray(j) ? j : j.candidates || j.results || j.movies || j.anime || (j.title ? [j] : []);
+  return (Array.isArray(arr) ? arr : []).filter(c => c && c.title).slice(0, 3);
 }
 async function wikiGuess(story) {
   const u = "https://en.wikipedia.org/w/api.php?format=json&action=query&list=search&srlimit=3&srsearch=" + encodeURIComponent(story + ' hastemplate:"Infobox film"');
