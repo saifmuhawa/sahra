@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ادعمنا · سهرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="support">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <div class="nav-links">
+      <a href="tonight.html" data-page="tonight">شو نحضر الليلة؟</a>
+      <a href="game.html" data-page="game">خمّن الفيلم</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+      <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
+      <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="page-head">
+    <h1>ادعم سهرة ♥</h1>
+    <p>سهرة مجانية وبدون إعلانات، وبتضل هيك. إذا عجبك الموقع وحاب تدعمه، من طيب خاطرك، أي مبلغ بيفرق معنا.</p>
+  </header>
+  <section class="hall support" aria-label="الدعم">
+    <div class="support-grid">
+      <div class="support-box">
+        <h2>دعمك بيروح على:</h2>
+        <ul class="support-list">
+          <li><b>السيرفرات</b>، عشان الأفلام تتحدّث كل ساعة والموقع يضل سريع.</li>
+          <li><b>الذكاء الاصطناعي</b> اللي بيعرف الفيلم من قصته بلعبة "خمّن الفيلم".</li>
+          <li><b>صالات وألعاب جديدة</b>، والتحسينات اللي بتقترحوها.</li>
+        </ul>
+      </div>
+      <div class="ticket support-ticket">
+        <div class="ticket-top"><span>تذكرة دعم</span><span>سهرة</span></div>
+        <h3>شكراً من القلب</h3>
+        <p>الدعم بيتم عن طريق منصة كريترز (Creators). بتختار المبلغ وطريقة الدفع هناك بأمان.</p>
+        <div class="perf" aria-hidden="true"></div>
+        <a class="btn btn-red support-btn" id="support-link" href="#" target="_blank" rel="noopener">ادعمنا على كريترز ↗</a>
+        <p class="form-msg" id="support-note" hidden>رابط الدعم رح ينزل قريباً.</p>
+      </div>
+    </div>
+    <p class="support-alt">ما بدك تدفع؟ عادي أبداً. شارك سهرة مع صحابك، أو <a href="feedback.html">ابعتلنا اقتراح</a>، وهاد كمان دعم.</p>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>سهرة · فكرة وإعداد saiflex · <a href="feedback.html">التحسينات والمقترحات</a> · <a href="support.html">ادعمنا</a></span>
+  </div>
+</footer>
+<script src="common.js"></script>
+<script>
+const SUPPORT_URL = "";
+const a = document.getElementById("support-link");
+if (SUPPORT_URL) a.href = SUPPORT_URL; else { a.hidden = true; document.getElementById("support-note").hidden = false; }
+</script>
+</body>
+</html>

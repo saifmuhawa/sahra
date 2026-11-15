@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>التحسينات والمقترحات · سهرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="feedback">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <div class="nav-links">
+      <a href="tonight.html" data-page="tonight">شو نحضر الليلة؟</a>
+      <a href="game.html" data-page="game">خمّن الفيلم</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+      <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
+      <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="page-head">
+    <h1>التحسينات والمقترحات</h1>
+    <p>عندك فكرة تخلّي سهرة أحلى؟ لقيت إشي مش زابط؟ اكتبلنا، وكل رسالة بتوصلنا وبنقراها.</p>
+  </header>
+  <section class="hall" aria-label="نموذج الاقتراحات">
+    <form id="fb" class="form" novalidate>
+      <div class="field">
+        <label for="fb-name">الاسم</label>
+        <input id="fb-name" name="name" type="text" autocomplete="name" required maxlength="80" placeholder="شو اسمك؟">
+      </div>
+      <div class="field">
+        <label for="fb-email">البريد الإلكتروني</label>
+        <input id="fb-email" name="email" type="email" dir="ltr" autocomplete="email" required maxlength="120" placeholder="name@example.com">
+        <small>عشان نقدر نرد عليك. ما رح ننشره لحدا.</small>
+      </div>
+      <div class="field">
+        <label for="fb-msg">شو التحسين أو الشكوى؟</label>
+        <textarea id="fb-msg" name="message" rows="7" required maxlength="3000" placeholder="احكيلنا بالتفصيل: بأي صفحة، وشو صار، وشو بتقترح…"></textarea>
+      </div>
+      <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="form-end">
+        <button class="btn btn-red" type="submit" id="fb-send">ابعث ←</button>
+        <p class="form-msg" id="fb-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>سهرة · فكرة وإعداد saiflex · <a href="feedback.html">التحسينات والمقترحات</a> · <a href="support.html">ادعمنا</a></span>
+  </div>
+</footer>
+<script src="common.js"></script>
+<script>
+// مفتاح Web3Forms عام بطبيعته (بس بيوجّه الرسائل لإيميلك، وما بيفتح حسابك)
+const W3F_KEY = "8b4315dd-9a58-469e-bfd4-1e2700ec2278";
+const form = document.getElementById("fb"), F = form.elements, status = document.getElementById("fb-status"), btn = document.getElementById("fb-send");
+const say = (t, ok) => { status.textContent = t; status.className = "form-msg " + (ok ? "ok" : "err"); };
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = F["name"].value.trim(), email = F["email"].value.trim(), message = F["message"].value.trim();
+  if (!name) { say("اكتب اسمك لو سمحت."); F["name"].focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say("البريد الإلكتروني مش مزبوط."); F["email"].focus(); return; }
+  if (message.length < 5) { say("احكيلنا شوي أكثر عن التحسين أو الشكوى."); F["message"].focus(); return; }
+  if (F["botcheck"].checked) return;
+  if (!W3F_KEY) { say("النموذج لسا عم يتجهّز، جرّب كمان شوي."); return; }
+  btn.disabled = true; say("عم نبعث…", true);
+  try {
+    const r = await fetch("https://api.web3forms.com/submit", {
+      method: "POST", headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ access_key: W3F_KEY, subject: "سهرة: اقتراح أو شكوى جديدة من " + name, from_name: "موقع سهرة", name, email, message, page: document.referrer || "" })
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.success === false) throw new Error(j.message || r.status);
+    form.reset(); say("وصلت رسالتك، شكراً إلك! 🎬", true);
+  } catch (err) { say("ما قدرنا نبعثها هلأ. جرّب كمان مرة بعد شوي."); }
+  finally { btn.disabled = false; }
+});
+</script>
+</body>
+</html>

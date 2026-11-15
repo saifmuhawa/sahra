@@ -186,3 +186,32 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .result small{color:var(--muted)}
 .tag-tr{font-size:12px;border:1px solid var(--seat);color:#ffb3b8;border-radius:6px;padding:0 6px}
 .credits{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+
+/* ===== الاقتراحات والدعم ===== */
+.nav-links a.nav-support{border-color:var(--seat);color:#ffd9dc}
+.nav-links a.nav-support[aria-current="page"]{background:var(--seat);border-color:var(--seat);color:#fff}
+.form{display:grid;gap:18px;max-width:640px}
+.field{display:grid;gap:6px}
+.field label{font-weight:700}
+.field small{color:var(--muted);font-size:14px}
+.field input,.field textarea{font:inherit;color:var(--cream);background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:17px;width:100%;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--ticket);outline:none}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.form-end{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.form-end .btn{padding:12px 26px;font-size:17px}
+.btn:disabled{opacity:.6;cursor:wait}
+.form-msg{margin:0;font-weight:700}
+.form-msg.ok{color:var(--good)}
+.form-msg.err{color:var(--bad)}
+.support-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;align-items:start}
+.support-box{display:grid;gap:10px}
+.support-box h2{font-size:28px}
+.support-list{margin:0;padding-inline-start:20px;display:grid;gap:8px;color:var(--cream)}
+.support-list b{color:var(--ticket)}
+.support-ticket{display:grid;gap:10px}
+.support-ticket h3{font-size:30px}
+.support-ticket p{margin:0}
+.support-btn{justify-content:center;padding:14px 18px;font-size:18px}
+.support-alt{margin:0;color:var(--muted)}
+.ticket .form-msg{color:#7a4b3e}
+[hidden]{display:none!important}
