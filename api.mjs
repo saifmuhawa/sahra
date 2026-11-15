@@ -65,7 +65,7 @@ Return ONLY JSON: {"candidates":[{"title":"<official English title>","year":<rel
 Give up to 3 candidates, most likely first. Prefer real, well-known feature films.
 Plot: """${s}"""`;
 async function postJSON(url, body, headers = {}) {
-  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(15000) });
   const t = await r.text();
   if (!r.ok) throw new Error(url.split("/")[2] + " " + r.status + " " + t.slice(0, 200));
   return JSON.parse(t);
@@ -82,7 +82,7 @@ async function askAI(story, errs = [], mk = PROMPT) {
     }
   }
   if (process.env.GEMINI_API_KEY) {
-    for (const model of [...new Set([process.env.GEMINI_MODEL, "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-flash-lite-latest"].filter(Boolean))]) {
+    for (const model of [process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-3.8-flash", "gemini-flash-lite-latest", "gemini-flash-latest"].filter(Boolean)) {
       try {
         const j = await postJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { contents: [{ parts: [{ text: p }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" } }, { "x-goog-api-key": process.env.GEMINI_API_KEY });
         const r = ok("gemini", j.candidates?.[0]?.content?.parts?.map(x => x.text || "").join("") || ""); if (r) return r;
