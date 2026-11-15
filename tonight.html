@@ -51,7 +51,15 @@
 <script src="common.js"></script>
 <script>
 const MOOD_AR = {think:"بدي أفكّر",laugh:"بدي أضحك",cry:"بدي أبكي",action:"بدي أكشن",scare:"بدي أخاف"};
-const MOOD_G = {laugh:[35], scare:[27,53], cry:[18,10749], action:[28,12,10752,37,14], think:[9648,878,80,99,36,53]};
+// need: لازم يكون من نوعه، also: قريب منه، bad: بيخرب المزاج (مثلاً الطفيلي كوميدي بس كمان إثارة وجريمة)
+const MOOD_G = {
+  laugh: {need:[35], also:[], bad:[27,53,80,10752,9648,99,36], soft:[18]},
+  scare: {need:[27], also:[53], bad:[35,10751,16,10749,10402], soft:[]},
+  cry:   {need:[18], also:[10749,10751,10402,36,10752,16], bad:[35,27,28,878,14,12,80,53], soft:[]},
+  action:{need:[28], also:[12,10752,37], bad:[10749,99,10402,27], soft:[18,35]},
+  think: {need:[9648,878], also:[80,99,36,53], bad:[35,10751,16,10749,10402,12], soft:[28]},
+};
+const moodFit = f => { const g = f.g || [], m = MOOD_G[state.mood]; return m.need.some(x => g.includes(x)) ? 2 : m.also.some(x => g.includes(x)) ? 1 : 0; };
 const WITH_G = {family:[10751,16], partner:[10749,18,35], friends:[35,28,27,53,80], alone:[18,878,9648,53,99]};
 const QUESTIONS = {
   with:[["alone","لحالي"],["partner","مع حدا قريب"],["family","مع العيلة"],["friends","مع الشباب"]],
@@ -81,21 +89,27 @@ function score(f) {
   const g = f.g || [];
   const has = arr => arr.some(x => g.includes(x));
   let s = 0;
-  if (has(MOOD_G[state.mood])) s += 8; else s -= 6;
+  const m = MOOD_G[state.mood], fit = moodFit(f);
+  s += fit === 2 ? 14 : fit === 1 ? 5 : -20;
+  if (fit === 2 && m.also.some(x => g.includes(x))) s += 5;
+  s -= 9 * m.bad.filter(x => g.includes(x)).length + 5 * m.soft.filter(x => g.includes(x)).length;
   if (has(WITH_G[state.with])) s += 3;
   if (state.with === "family" && g.includes(27)) s -= 20;
   const max = {short:110, mid:140, long:999}[state.time];
   if (f.rt) s += f.rt <= max ? 3 : -Math.min(8, (f.rt - max) / 10);
   const rating = f.ir || f.tv || 6;
-  s += (rating - 6) * 3 + Math.log10(1 + (f.iv || f.tc || 0)) * 0.8;
+  s += Math.min(rating - 6, 3) * 2 + Math.log10(1 + (f.iv || f.tc || 0)) * 0.6;
   return s + Math.random() * 2.5;
 }
 function recommend() {
-  ranked = FILMS
+  const pool = FILMS
     .filter(f => !f.rd || f.rd <= today)
     .filter(f => !f.rt || f.rt >= 60)
     .filter(f => (f.ir || f.tv || 0) >= 6.2)
-    .filter(f => state.type === "any" || typeOf(f) === state.type)
+    .filter(f => state.type === "any" || typeOf(f) === state.type);
+  const m = MOOD_G[state.mood];
+  const clean = pool.filter(f => moodFit(f) === 2 && !m.bad.some(x => (f.g || []).includes(x)));
+  ranked = (clean.length >= 8 ? clean : pool)
     .map(f => [score(f), f]).sort((a, b) => b[0] - a[0]).slice(0, 40).map(x => x[1]);
   rankPos = 0; renderPick();
 }
