@@ -64,19 +64,19 @@ const PROMPT = s => `You are a film expert. Someone describes the plot of a movi
 Return ONLY JSON: {"candidates":[{"title":"<official English title>","year":<release year>,"why":"<one short sentence in Arabic explaining the match>"}]}
 Give up to 3 candidates, most likely first. Prefer real, well-known feature films.
 Plot: """${s}"""`;
-async function postJSON(url, body, headers = {}) {
-  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(12000) });
+async function postJSON(url, body, headers = {}, ms = 12000) {
+  const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal: AbortSignal.timeout(ms) });
   const t = await r.text();
   if (!r.ok) throw new Error(url.split("/")[2] + " " + r.status + " " + t.slice(0, 200));
   return JSON.parse(t);
 }
-async function askAI(story, errs = [], mk = PROMPT, check = t => parseCandidates(t).length) {
+async function askAI(story, errs = [], mk = PROMPT, check = t => parseCandidates(t).length, ms = 12000) {
   const p = mk(story);
   const ok = (source, text) => (check(text) ? { source, text } : (errs.push(source + ": no json: " + String(text).slice(0, 120)), null));
   if (process.env.GROQ_API_KEY) {
     for (const model of [process.env.GROQ_MODEL, "openai/gpt-oss-120b", "llama-3.3-70b-versatile"].filter(Boolean)) {
       try {
-        const j = await postJSON("https://api.groq.com/openai/v1/chat/completions", { model, temperature: 0.2, messages: [{ role: "user", content: p }] }, { authorization: "Bearer " + process.env.GROQ_API_KEY });
+        const j = await postJSON("https://api.groq.com/openai/v1/chat/completions", { model, temperature: 0.2, messages: [{ role: "user", content: p }] }, { authorization: "Bearer " + process.env.GROQ_API_KEY }, ms);
         const r = ok("groq", j.choices?.[0]?.message?.content || ""); if (r) return r;
       } catch (e) { errs.push(String(e.message || e)); console.warn(String(e)); }
     }
@@ -84,14 +84,14 @@ async function askAI(story, errs = [], mk = PROMPT, check = t => parseCandidates
   if (process.env.GEMINI_API_KEY) {
     for (const model of [process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3.8-flash"].filter(Boolean)) {
       try {
-        const j = await postJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { contents: [{ parts: [{ text: p }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" } }, { "x-goog-api-key": process.env.GEMINI_API_KEY });
+        const j = await postJSON(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { contents: [{ parts: [{ text: p }] }], generationConfig: { temperature: 0.2, responseMimeType: "application/json" } }, { "x-goog-api-key": process.env.GEMINI_API_KEY }, ms);
         const r = ok("gemini", j.candidates?.[0]?.content?.parts?.map(x => x.text || "").join("") || ""); if (r) return r;
       } catch (e) { errs.push(model + " " + String(e.message || e)); console.warn(model, String(e)); }
     }
   }
   if (process.env.ANTHROPIC_API_KEY) {
     try {
-      const j = await postJSON("https://api.anthropic.com/v1/messages", { model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5", max_tokens: 500, messages: [{ role: "user", content: p }] }, { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" });
+      const j = await postJSON("https://api.anthropic.com/v1/messages", { model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5", max_tokens: 1500, messages: [{ role: "user", content: p }] }, { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" }, ms);
       const r = ok("claude", j.content?.map(x => x.text || "").join("") || ""); if (r) return r;
     } catch (e) { errs.push(String(e.message || e)); console.warn(String(e)); }
   }
@@ -192,7 +192,7 @@ function roomView(r, who) {
   const out = { code: r.code, kind: r.kind, v: r.v, stage: r.stage, players, teams: r.teams, winner: r.winner,
     shown: r.shown.map(i => ({ i, lvl: r.hints[i]?.lvl, text: r.hints[i]?.text })),
     film: r.stage === "reveal" ? r.film : null, hasFilm: !!r.film };
-  if (who === "judge") Object.assign(out, { film: r.film, hints: r.hints, hintsSrc: r.hintsSrc });
+  if (who === "judge") Object.assign(out, { film: r.film, hints: r.hints, hintsSrc: r.hintsSrc, hintsErr: r.hintsErr || null });
   else { const me = r.players.find(p => p.id === who); out.me = me ? { id: me.id, name: me.name, team: me.team } : null; }
   return out;
 }
@@ -288,8 +288,9 @@ function parseHints(text) {
 }
 async function aiHints(r, info, names) {
   try {
-    const ai = await askAI(info, [], x => HINTS_PROMPT(r.kind === "anime" ? "anime" : "movie", x), t => !!parseHints(t));
-    if (!ai) return;
+    const errs = [];
+    const ai = await askAI(info, errs, x => HINTS_PROMPT(r.kind === "anime" ? "anime" : "movie", x), t => !!parseHints(t), 40000);
+    if (!ai) { r.hintsErr = errs.join(" | ").slice(0, 400); console.warn("hints", r.hintsErr); return; }
     const h = parseHints(ai.text); const ws = titleWords(...names);
     const pick = arr => arr.map(x => clean(x, 200)).filter(x => x && !leaks(x, ws));
     const data = r.hints;
@@ -320,7 +321,7 @@ async function setFilm(r, t, id) {
     info = { year: f.y, genres: (det.g || []).map(x => GENRE_AR[x]).filter(Boolean), director: det.dir, cast: (det.cast || []).slice(0, 8).map(c => c.n + " as " + c.ch), writers: det.wri, countries: det.countries, boxOffice: det.revenue, plot: det.ov, tagline: det.tag };
   }
   if (r.filmToken !== token) return;
-  Object.assign(r, { film, hints, hintsSrc: "data", shown: [], winner: null, stage: "play" });
+  Object.assign(r, { film, hints, hintsSrc: "data", hintsErr: null, shown: [], winner: null, stage: "play" });
   bump(r);
   info.__token = token;
   aiHints(r, info, [film.en, film.ar, film.orig]);
