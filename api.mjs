@@ -70,9 +70,9 @@ async function postJSON(url, body, headers = {}) {
   if (!r.ok) throw new Error(url.split("/")[2] + " " + r.status + " " + t.slice(0, 200));
   return JSON.parse(t);
 }
-async function askAI(story, errs = [], mk = PROMPT) {
+async function askAI(story, errs = [], mk = PROMPT, check = t => parseCandidates(t).length) {
   const p = mk(story);
-  const ok = (source, text) => (parseCandidates(text).length ? { source, text } : (errs.push(source + ": no json: " + String(text).slice(0, 120)), null));
+  const ok = (source, text) => (check(text) ? { source, text } : (errs.push(source + ": no json: " + String(text).slice(0, 120)), null));
   if (process.env.GROQ_API_KEY) {
     for (const model of [process.env.GROQ_MODEL, "openai/gpt-oss-120b", "llama-3.3-70b-versatile"].filter(Boolean)) {
       try {
@@ -168,6 +168,234 @@ Return ONLY JSON: {"candidates":[{"title":"<most common English or romaji title>
 Give up to 3 candidates, most likely first. Only real Japanese anime.
 Plot: """${s}"""`;
 
+// ===== غرف اللعب (الحكم بيعمل غرفة، والمتسابقين بيدخلوا من تلفوناتهم) =====
+const ROOMS = new Map();
+const GENRE_AR = {28:"أكشن",12:"مغامرة",16:"رسوم متحركة",35:"كوميدي",80:"جريمة",99:"وثائقي",18:"دراما",10751:"عائلي",14:"فانتازيا",36:"تاريخي",27:"رعب",10402:"موسيقي",9648:"غموض",10749:"رومانسي",878:"خيال علمي",53:"إثارة",10752:"حرب",37:"ويسترن",10770:"تلفزيوني",10759:"أكشن ومغامرة",10762:"أطفال",10765:"خيال علمي وفانتازيا",10768:"حرب وسياسة"};
+const regionAr = (() => { try { const d = new Intl.DisplayNames(["ar"], { type: "region" }); return c => { try { return d.of(c); } catch { return c; } }; } catch { return c => c; } })();
+const langAr = (() => { try { const d = new Intl.DisplayNames(["ar"], { type: "language" }); return c => { try { return d.of(c); } catch { return c; } }; } catch { return c => c; } })();
+const rid = () => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+const clean = (s, n) => String(s || "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, n);
+function newCode() { for (;;) { const c = String(1000 + Math.floor(Math.random() * 9000)); if (!ROOMS.has(c)) return c; } }
+function gc() { const now = Date.now(); for (const [c, r] of ROOMS) if (now - r.touched > 4 * 3600e3) ROOMS.delete(c); }
+const bump = r => { r.v++; r.touched = Date.now(); };
+async function readBody(req) {
+  let b = ""; for await (const ch of req) { b += ch; if (b.length > 8000) throw new Error("body too large"); }
+  try { return JSON.parse(b || "{}"); } catch { return {}; }
+}
+function sendNow(res, code, obj) {
+  res.writeHead(code, { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "no-store" });
+  res.end(JSON.stringify(obj));
+}
+function roomView(r, who) {
+  const now = Date.now();
+  const players = r.players.map(p => ({ id: p.id, name: p.name, team: p.team, on: now - p.seen < 20000 }));
+  const out = { code: r.code, kind: r.kind, v: r.v, stage: r.stage, players, teams: r.teams, winner: r.winner,
+    shown: r.shown.map(i => ({ i, lvl: r.hints[i]?.lvl, text: r.hints[i]?.text })),
+    film: r.stage === "reveal" ? r.film : null, hasFilm: !!r.film };
+  if (who === "judge") Object.assign(out, { film: r.film, hints: r.hints, hintsSrc: r.hintsSrc });
+  else { const me = r.players.find(p => p.id === who); out.me = me ? { id: me.id, name: me.name, team: me.team } : null; }
+  return out;
+}
+// كلمات الاسم عشان ما تنكشف بالهنتات
+function titleWords(...names) {
+  const stop = new Set(["the", "and", "of", "a", "an", "in", "on", "to", "no", "wa"]);
+  const ws = new Set();
+  for (const n of names.filter(Boolean)) for (const w of String(n).toLowerCase().split(/[^\p{L}\p{N}]+/u)) if (w.length >= 3 && !stop.has(w)) ws.add(w);
+  return [...ws];
+}
+const leaks = (text, ws) => { const t = String(text).toLowerCase(); return ws.some(w => t.includes(w)); };
+const mask = (text, ws) => ws.reduce((t, w) => t.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "…"), String(text));
+const firstSentence = t => (String(t).split(/(?<=[.!؟?])\s/)[0] || "").slice(0, 220);
+const decadeAr = y => { if (!y) return ""; const d = Math.floor(y / 10) * 10; return { 1950: "الخمسينات", 1960: "الستينات", 1970: "السبعينات", 1980: "الثمانينات", 1990: "التسعينات", 2000: "الألفينات", 2010: "العشرية 2010", 2020: "العشرية 2020" }[d] || ("فترة " + d); };
+const moneyAr = n => n >= 1e9 ? (n / 1e9).toFixed(1).replace(/\.0$/, "") + " مليار دولار" : n >= 1e6 ? Math.round(n / 1e6) + " مليون دولار" : "";
+const durAr = m => { if (!m) return ""; const h = Math.floor(m / 60), r = m % 60; return (h === 1 ? "ساعة" : h === 2 ? "ساعتين" : h ? h + " ساعات" : "") + (h && r ? " و" : "") + (r ? r + " دقيقة" : ""); };
+const wordsAr = n => n === 1 ? "كلمة وحدة" : n === 2 ? "كلمتين" : n + " كلمات";
+function fillLevels(c) {
+  const out = { hard: [], mid: [], easy: [] };
+  for (const k of ["hard", "mid", "easy"]) out[k] = [...new Set(c[k].filter(Boolean))];
+  // إذا مستوى ناقص، نستلف من اللي جنبه
+  const take = (to, from) => { while (out[to].length < 5 && out[from].length > 5) out[to].push(out[from].splice(out[from].length - 1, 1)[0]); };
+  take("hard", "mid"); take("mid", "easy"); take("mid", "hard"); take("easy", "mid"); take("hard", "easy");
+  return [...out.hard.slice(0, 5).map(text => ({ lvl: "hard", text })), ...out.mid.slice(0, 5).map(text => ({ lvl: "mid", text })), ...out.easy.slice(0, 5).map(text => ({ lvl: "easy", text }))];
+}
+function dataHintsMovie(film, det) {
+  const ws = titleWords(film.en, film.ar, det.orig);
+  const ok = t => t && !leaks(t, ws);
+  const g = (det.g || []).map(x => GENRE_AR[x]).filter(Boolean);
+  const cast = det.cast || [];
+  const c = { hard: [], mid: [], easy: [] };
+  if (g.length) c.hard.push("نوعه: " + g.slice(0, 3).join("، "));
+  if (film.y) c.hard.push("نزل بفترة " + decadeAr(film.y));
+  if (det.countries?.length) c.hard.push("من إنتاج: " + det.countries.slice(0, 2).map(regionAr).join(" و"));
+  if (det.rt) c.hard.push("مدته حوالي " + durAr(det.rt));
+  if (det.lang && det.lang !== "en") c.hard.push("لغته الأصلية " + langAr(det.lang));
+  const co = (det.companies || []).map(x => x.n).filter(ok);
+  if (co.length) c.hard.push("من شركات إنتاجه " + co[co.length - 1]);
+  if (det.mus?.length) c.hard.push("الموسيقى من تأليف " + det.mus[0]);
+  if (film.y) c.mid.push("سنة الإصدار " + film.y);
+  if (det.dir?.length) c.mid.push("المخرج " + det.dir[0]);
+  if (cast[3]) c.mid.push("من الممثلين فيه " + cast[3].n);
+  if (cast[4]) c.mid.push("كمان فيه " + cast[4].n);
+  if (det.wri?.length && det.wri[0] !== det.dir?.[0]) c.mid.push("من كتّابه " + det.wri[0]);
+  if (det.revenue > 1e6) c.mid.push("جاب بشباك التذاكر حوالي " + moneyAr(det.revenue));
+  if (det.tag) c.mid.push("جملته الدعائية: \"" + mask(det.tag, ws) + "\"");
+  if (cast[2]) c.easy.push("من أبطاله " + cast[2].n);
+  if (cast[1]) c.easy.push("البطلة أو البطل الثاني " + cast[1].n);
+  if (cast[0]?.ch && ok(cast[0].ch)) c.easy.push("اسم شخصية البطل " + cast[0].ch);
+  if (cast[0]) c.easy.push("بطولة " + cast[0].n);
+  if (det.ov) c.easy.push("القصة: " + mask(firstSentence(det.ov), ws));
+  const name = film.en || ""; if (name) c.easy.push("اسمه بالإنجليزي " + wordsAr(name.split(/\s+/).length) + "، وبيبلش بحرف " + name.replace(/^the\s+/i, "")[0].toUpperCase());
+  for (const k in c) c[k] = c[k].filter(ok);
+  return fillLevels(c);
+}
+function dataHintsAnime(d) {
+  const ws = titleWords(d.en, d.ar, d.orig);
+  const ok = t => t && !leaks(t, ws);
+  const g = (d.g || []).map(x => GENRE_AR[x]).filter(x => x && x !== "رسوم متحركة");
+  const cast = d.cast || [];
+  const tv = d.t === "tv";
+  const c = { hard: [], mid: [], easy: [] };
+  if (g.length) c.hard.push("نوعه: " + g.slice(0, 3).join("، "));
+  if (d.y) c.hard.push("بلّش بفترة " + decadeAr(d.y));
+  const st = (d.studios || []).map(x => x.n).filter(ok);
+  if (st.length) c.hard.push("من إنتاج " + st[0]);
+  if (tv && d.status) c.hard.push(d.status === "Ended" ? "الأنمي خلص" : d.status === "Returning Series" ? "الأنمي لسا مستمر" : "حالته: " + d.status);
+  if (d.mus?.length) c.hard.push("الموسيقى من تأليف " + d.mus[0]);
+  if (!tv) c.hard.push("هو فيلم أنمي مش مسلسل");
+  if (d.y) c.mid.push("أول ما نزل كان سنة " + d.y);
+  if (tv && d.episodes) c.mid.push("عدد حلقاته " + d.episodes + (d.seasons > 1 ? " على " + d.seasons + " مواسم" : ""));
+  if (d.dir?.length) c.mid.push("من مخرجيه " + d.dir[0]);
+  if (d.wri?.length) c.mid.push("من كتّابه أو مؤلفيه " + d.wri[0]);
+  if (cast[3]?.ch && ok(cast[3].ch)) c.mid.push("فيه شخصية اسمها " + cast[3].ch.replace(/\s*\(voice\)/i, ""));
+  if (d.chr?.length) c.mid.push("تصميم الشخصيات " + d.chr[0]);
+  if (cast[0]?.ch && ok(cast[0].ch)) c.easy.push("البطل اسمه " + cast[0].ch.replace(/\s*\(voice\)/i, ""));
+  if (cast[1]?.ch && ok(cast[1].ch)) c.easy.push("فيه شخصية مهمة اسمها " + cast[1].ch.replace(/\s*\(voice\)/i, ""));
+  if (cast[0]) c.easy.push("صوت البطل " + cast[0].n);
+  if (d.ov) c.easy.push("القصة: " + mask(firstSentence(d.ov), ws));
+  const name = d.en || ""; if (name) c.easy.push("اسمه بالإنجليزي " + wordsAr(name.split(/\s+/).length) + "، وبيبلش بحرف " + name.replace(/^the\s+/i, "")[0].toUpperCase());
+  for (const k in c) c[k] = c[k].filter(ok);
+  return fillLevels(c);
+}
+const HINTS_PROMPT = (kindAr, info) => `You write hints for a party guessing game in Jordanian Arabic. Players must guess the ${kindAr} below by asking questions; the judge reveals hints when they are close.
+Write exactly 15 short hints in Arabic (one sentence each): 5 "hard" (vague: genre, era, mood, setting), 5 "medium" (specific: famous scene, director, a supporting actor, key plot point), 5 "easy" (almost gives it away: lead actor, main character name, iconic line or object).
+NEVER write the title, any word from the title, or a sequel/franchise name. No numbering.
+Return ONLY JSON: {"hard":["..."],"medium":["..."],"easy":["..."]}
+Details: ${JSON.stringify(info)}`;
+function parseHints(text) {
+  const t = String(text || "").trim();
+  for (const src of [t, (t.match(/\{[\s\S]*\}/) || [])[0]]) { if (!src) continue; try { const j = JSON.parse(src); if (j && Array.isArray(j.hard) && Array.isArray(j.medium || j.mid) && Array.isArray(j.easy)) return { hard: j.hard, mid: j.medium || j.mid, easy: j.easy }; } catch {} }
+  return null;
+}
+async function aiHints(r, info, names) {
+  try {
+    const ai = await askAI(info, [], x => HINTS_PROMPT(r.kind === "anime" ? "anime" : "movie", x), t => !!parseHints(t));
+    if (!ai) return;
+    const h = parseHints(ai.text); const ws = titleWords(...names);
+    const pick = arr => arr.map(x => clean(x, 200)).filter(x => x && !leaks(x, ws));
+    const data = r.hints;
+    const mixed = { hard: pick(h.hard), mid: pick(h.mid), easy: pick(h.easy) };
+    for (const k of ["hard", "mid", "easy"]) for (const d of data.filter(x => x.lvl === k)) if (mixed[k].length < 5) mixed[k].push(d.text);
+    // ما نبدّل إذا الحكم كشف هنت أو غيّر الفيلم
+    if (r.filmToken === info.__token && !r.shown.length) { r.hints = fillLevels(mixed); r.hintsSrc = "ai"; bump(r); }
+  } catch (e) { console.warn("hints", String(e)); }
+}
+async function setFilm(r, t, id) {
+  const token = rid();
+  r.filmToken = token;
+  let film, hints, info;
+  if (r.kind === "anime") {
+    const tt = t === "movie" ? "movie" : "tv";
+    const d = await tmdb("/" + tt + "/" + id, { language: "en-US", append_to_response: (tt === "tv" ? "aggregate_credits" : "credits") + ",external_ids,translations" });
+    if (!d) throw new Error("not found");
+    const a = animeShape(d, tt);
+    film = { t: tt, id: a.id, en: a.en, ar: a.ar, orig: a.orig, y: a.y, p: a.p };
+    hints = dataHintsAnime(a);
+    info = { type: tt === "tv" ? "anime series" : "anime film", year: a.y, genres: (a.g || []).map(x => GENRE_AR[x]).filter(Boolean), studios: (a.studios || []).map(x => x.n), episodes: a.episodes, seasons: a.seasons, characters: (a.cast || []).slice(0, 8).map(c => c.ch), voices: (a.cast || []).slice(0, 4).map(c => c.n), writers: a.wri, plot: a.ov };
+  } else {
+    const d = await tmdb("/movie/" + id, { language: "en-US", append_to_response: "videos,external_ids,translations,credits,release_dates" });
+    if (!d) throw new Error("not found");
+    const { film: f, det } = shape(d);
+    film = { t: "movie", id: f.id, en: f.en, ar: f.ar, orig: det.orig, y: f.y, p: f.p };
+    hints = dataHintsMovie(f, det);
+    info = { year: f.y, genres: (det.g || []).map(x => GENRE_AR[x]).filter(Boolean), director: det.dir, cast: (det.cast || []).slice(0, 8).map(c => c.n + " as " + c.ch), writers: det.wri, countries: det.countries, boxOffice: det.revenue, plot: det.ov, tagline: det.tag };
+  }
+  if (r.filmToken !== token) return;
+  Object.assign(r, { film, hints, hintsSrc: "data", shown: [], winner: null, stage: "play" });
+  bump(r);
+  info.__token = token;
+  aiHints(r, info, [film.en, film.ar, film.orig]);
+}
+async function roomRoute(req, res, u) {
+  const p = u.pathname;
+  if (p === "/room/create" && req.method === "POST") {
+    gc();
+    const b = await readBody(req);
+    const code = newCode(), key = rid();
+    ROOMS.set(code, { code, key, kind: b.kind === "anime" ? "anime" : "film", v: 1, touched: Date.now(), stage: "lobby", players: [], teams: ["الفريق الأحمر", "الفريق الذهبي"], film: null, hints: [], hintsSrc: null, shown: [], winner: null, filmToken: null, judgeSeen: Date.now() });
+    return sendNow(res, 200, { code, key });
+  }
+  const code = clean(u.searchParams.get("code"), 8);
+  let b = {};
+  if (req.method === "POST") b = await readBody(req);
+  const r = ROOMS.get(code || clean(b.code, 8));
+  if (!r) return sendNow(res, 404, { error: "room" });
+  if (p === "/room/state") {
+    const key = u.searchParams.get("key"), pid = u.searchParams.get("pid");
+    if (key && key === r.key) { r.judgeSeen = Date.now(); r.touched = Date.now(); return sendNow(res, 200, roomView(r, "judge")); }
+    const me = r.players.find(x => x.id === pid);
+    if (me) { me.seen = Date.now(); r.touched = Date.now(); }
+    return sendNow(res, 200, roomView(r, me ? me.id : null));
+  }
+  if (p === "/room/join" && req.method === "POST") {
+    const name = clean(b.name, 20);
+    if (!name) return sendNow(res, 400, { error: "name" });
+    if (r.players.length >= 20) return sendNow(res, 400, { error: "full" });
+    const old = b.pid && r.players.find(x => x.id === b.pid);
+    if (old) { old.name = name; old.seen = Date.now(); bump(r); return sendNow(res, 200, { pid: old.id }); }
+    const cnt = [0, 1].map(t => r.players.filter(x => x.team === t).length);
+    const pl = { id: rid(), name, team: cnt[0] <= cnt[1] ? 0 : 1, seen: Date.now() };
+    r.players.push(pl); bump(r);
+    return sendNow(res, 200, { pid: pl.id });
+  }
+  if (p === "/room/leave" && req.method === "POST") {
+    r.players = r.players.filter(x => x.id !== b.pid); bump(r);
+    return sendNow(res, 200, { ok: true });
+  }
+  if (p === "/room/act" && req.method === "POST") {
+    if (b.key !== r.key) return sendNow(res, 403, { error: "judge only" });
+    const pl = r.players.find(x => x.id === b.pid);
+    switch (b.type) {
+      case "move": if (pl) pl.team = pl.team ? 0 : 1; break;
+      case "kick": r.players = r.players.filter(x => x.id !== b.pid); break;
+      case "shuffle": {
+        const ps = r.players.slice().sort(() => Math.random() - 0.5);
+        ps.forEach((x, i) => { x.team = i % 2; });
+        break;
+      }
+      case "teams": r.teams = [clean(b.a, 24) || r.teams[0], clean(b.b, 24) || r.teams[1]]; break;
+      case "start": {
+        const cnt = [0, 1].map(t => r.players.filter(x => x.team === t).length);
+        if (!cnt[0] || cnt[0] !== cnt[1]) return sendNow(res, 400, { error: "teams", cnt });
+        r.stage = "pick"; break;
+      }
+      case "lobby": r.stage = "lobby"; break;
+      case "film": {
+        if (!KEY) return sendNow(res, 500, { error: "TMDB_API_KEY is missing" });
+        await setFilm(r, b.t, +b.id || 0);
+        return sendNow(res, 200, roomView(r, "judge"));
+      }
+      case "hint": { const i = +b.i; if (r.hints[i] && !r.shown.includes(i)) r.shown.push(i); break; }
+      case "unhint": r.shown = r.shown.filter(i => i !== +b.i); break;
+      case "reveal": if (r.film) { r.stage = "reveal"; r.winner = [0, 1].includes(b.winner) ? b.winner : -1; } break;
+      case "next": Object.assign(r, { stage: "pick", film: null, hints: [], hintsSrc: null, shown: [], winner: null, filmToken: null }); break;
+      default: return sendNow(res, 400, { error: "type" });
+    }
+    bump(r);
+    return sendNow(res, 200, roomView(r, "judge"));
+  }
+  return sendNow(res, 404, { error: "route" });
+}
+
 function send(res, code, obj) {
   res.writeHead(code, { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=600" });
   res.end(JSON.stringify(obj));
@@ -176,7 +404,8 @@ function send(res, code, obj) {
 http.createServer(async (req, res) => {
   try {
     const u = new URL(req.url, "http://x");
-    if (req.method === "OPTIONS") return send(res, 204, {});
+    if (req.method === "OPTIONS") { res.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "86400" }); return res.end(); }
+    if (u.pathname.startsWith("/room/")) return await roomRoute(req, res, u);
     if (u.pathname === "/" || u.pathname === "/health") return send(res, 200, { ok: true, key: !!KEY, ai: ["GROQ_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"].filter(k => process.env[k]).map(k => k.split("_")[0].toLowerCase()) });
     if (!KEY) return send(res, 500, { error: "TMDB_API_KEY is missing" });
     if (u.pathname === "/search") {

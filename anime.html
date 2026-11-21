@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="play.css">
 </head>
 <body data-page="anime">
 <nav class="nav" aria-label="أقسام الموقع">
@@ -23,131 +24,131 @@
     </div>
   </div>
 </nav>
-<style>
-.game{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;align-items:start}
-@media (max-width:900px){.game{grid-template-columns:1fr}}
-.panel{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,var(--velvet-2),var(--velvet));padding:clamp(16px,2.5vw,26px);display:grid;gap:16px}
-.panel h2{font-size:26px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.inp{flex:1 1 200px;background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:10px 14px;font-size:17px}
-.inp:focus{border-color:var(--ticket);outline:none}
-.sugg{display:grid;gap:6px}
-.secret{position:relative}
-.secret.hidden .det{filter:blur(16px);pointer-events:none;user-select:none}
-.secret.hidden::after{content:"المعلومات مخفية عن المتسابقين";position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:26px;color:var(--ticket)}
-.det{display:grid;gap:18px}
-.dhead{display:grid;grid-template-columns:130px 1fr;gap:16px;align-items:start}
-.dhead img,.dhead .noposter{width:130px;aspect-ratio:2/3;border-radius:10px;object-fit:cover;background:var(--velvet-3)}
-.dhead h3{font-size:32px}
-.dhead .en{color:var(--muted);direction:ltr;text-align:right}
-.tagline{color:var(--ticket);font-style:italic;margin:0}
-.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.fact{background:var(--velvet-3);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:2px}
-.fact span{font-size:12.5px;color:var(--muted)}
-.fact b{font-size:18px;font-variant-numeric:tabular-nums}
-.fact.big b{color:var(--ticket);font-size:22px}
-.sec h4{margin:0 0 8px;font-family:var(--display);font-weight:400;font-size:20px;color:var(--cream)}
-.chiplist{display:flex;flex-wrap:wrap;gap:6px}
-.cchip{background:var(--velvet-3);border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:14px}
-.cchip small{color:var(--muted);font-variant-numeric:tabular-nums}
-.cos{display:flex;flex-wrap:wrap;gap:10px}
-.co{display:flex;align-items:center;gap:8px;background:var(--cream);color:#1b0d12;border-radius:10px;padding:6px 10px;font-size:14px;font-weight:700}
-.co img{height:24px;max-width:80px;object-fit:contain}
-.cast{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
-.actor{display:grid;gap:4px;font-size:13.5px;line-height:1.35}
-.actor img,.actor .noposter{width:100%;aspect-ratio:2/3;border-radius:10px;object-fit:cover;background:var(--velvet-3)}
-.actor b{direction:ltr;text-align:right}
-.actor small{color:var(--muted);direction:ltr;text-align:right}
-.crew{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-.players{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.player{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;background:var(--velvet-3);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.player.lead{border-color:var(--ticket)}
-.player .sc{font-family:var(--display);font-size:28px;color:var(--ticket);min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
-.player .nm{font-weight:700;font-size:17px}
-.mini{border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:14px}
-.mini:hover{border-color:var(--ticket)}
-.win{background:var(--good);color:#0b1f14;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer}
-.counter{display:flex;align-items:center;gap:12px;justify-content:space-between;background:var(--velvet-3);border-radius:12px;padding:10px 14px}
-.counter .num{font-family:var(--display);font-size:34px;color:var(--cream);font-variant-numeric:tabular-nums}
-.warn{color:#ffb3b8;font-size:14px;margin:0}
-.reveal{position:fixed;inset:0;z-index:60;background:rgba(10,4,7,.92);display:none;place-items:center;padding:20px;text-align:center}
-.reveal.open{display:grid}
-.reveal-in{display:grid;gap:14px;justify-items:center}
-.reveal img{width:min(260px,60vw);border-radius:14px;box-shadow:0 30px 80px #000}
-.reveal h2{font-size:clamp(34px,6vw,60px);color:var(--ticket)}
-[hidden]{display:none!important}
-.story{border:1px dashed var(--line);border-radius:14px;padding:12px 14px}
-.story summary{cursor:pointer;color:var(--ticket);font-weight:700}
-.story-form{display:grid;gap:8px;margin-top:10px}
-textarea.inp{resize:vertical;font:inherit;line-height:1.6}
-.result .ai{display:block;color:var(--ticket);font-size:13px}
-.osc-sum{margin:0;font-size:17px}
-.osc{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
-.osc li{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;background:var(--velvet-3);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
-.osc li span{font-size:13px;color:var(--muted)}
-.osc li.won{border-color:var(--ticket)}
-.osc li.won span{color:var(--ticket);font-weight:700}
-.osc li small{grid-column:2;color:var(--muted);direction:ltr;text-align:right}
-.seasons{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-</style>
-<main class="wrap">
-  <header class="page-head">
-    <h1>خمّن الأنمي</h1>
-    <p>نفس لعبة خمّن الفيلم، بس للأنمي. الحكم بيختار أنمي (مسلسل أو فيلم)، والمتسابقين بيسألوه أسئلة لحد ما حدا يعرفه، واللي بيعرفه بياخذ النقاط.</p>
-  </header>
-  <div class="game" style="margin:20px 0 40px">
-    <section class="panel" aria-labelledby="judge-h">
-      <div class="row" style="justify-content:space-between"><h2 id="judge-h">لوحة الحكم</h2><span class="pill" id="round-pill">الجولة ١</span></div>
-      <form class="row" id="pick-form" autocomplete="off">
-        <label for="pick-in" class="q-label" style="flex-basis:100%">اكتب اسم الأنمي بالإنجليزي (كبتل أو سمول عادي)</label>
-        <input class="inp" id="pick-in" placeholder="مثلاً: attack on titan أو ONE PIECE" dir="ltr">
-        <button class="btn btn-gold" type="submit">دوّر</button>
-        <button class="btn btn-ghost" type="button" id="random-btn">أنمي عشوائي</button>
+<main class="app" id="app">
+  <!-- البداية -->
+  <section class="scr" id="s-home">
+    <div class="hero-g">
+      <div class="logo-g">🍥</div>
+      <h1>خمّن الأنمي</h1>
+      <p>الحكم بيعمل غرفة من تلفونه، والمتسابقين بيدخلوا بالكود أو الباركود من تلفوناتهم. فريقين متساويين، والحكم عنده كل المعلومات و15 هنت.</p>
+    </div>
+    <button class="bigbtn gold" type="button" id="create-btn">👑 أنا الحكم: اعمل غرفة</button>
+    <div class="or"><span>أو</span></div>
+    <form class="card-g" id="code-form" autocomplete="off">
+      <label for="code-in" class="lbl">عندك كود غرفة؟</label>
+      <input class="codein" id="code-in" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="• • • •" dir="ltr">
+      <button class="bigbtn red" type="submit">🎮 ادخل الغرفة</button>
+    </form>
+    <div class="card-g resume" id="resume" hidden></div>
+    <p class="msg" id="home-msg" role="status"></p>
+  </section>
+
+  <!-- المتسابق: الاسم -->
+  <section class="scr" id="s-name" hidden>
+    <div class="hero-g"><div class="pillcode" id="name-code"></div><h1>شو اسمك؟</h1><p>اكتب اسمك عشان يطلع للحكم ولفريقك.</p></div>
+    <form class="card-g" id="name-form" autocomplete="off">
+      <input class="inp big" id="name-in" maxlength="20" placeholder="مثلاً: سيف" enterkeyhint="go">
+      <button class="bigbtn red" type="submit">يلا ادخل</button>
+    </form>
+    <button class="linkbtn" type="button" data-home>رجوع</button>
+    <p class="msg" id="name-msg" role="status"></p>
+  </section>
+
+  <!-- المتسابق: داخل الغرفة -->
+  <section class="scr" id="s-player" hidden>
+    <div class="topbar"><span class="pillcode" id="p-code"></span><span class="me" id="p-me"></span><button class="linkbtn" type="button" id="p-leave">اطلع</button></div>
+    <div id="p-body"></div>
+  </section>
+
+  <!-- الحكم: الغرفة -->
+  <section class="scr" id="s-lobby" hidden>
+    <div class="topbar"><span class="pillcode">غرفة الحكم</span><span></span><button class="linkbtn" type="button" id="j-close">سكّر الغرفة</button></div>
+    <div class="card-g center">
+      <p class="lbl">كود الغرفة</p>
+      <div class="codebox" id="l-code" dir="ltr"></div>
+      <div class="qr" id="l-qr" aria-label="باركود الغرفة"></div>
+      <p class="note">خلّي المتسابقين يصوّروا الباركود أو يكتبوا الكود بصفحة خمّن الأنمي</p>
+      <button class="btn btn-ghost" type="button" id="l-share">🔗 ابعت رابط الغرفة</button>
+    </div>
+    <div class="teams" id="l-teams"></div>
+    <button class="btn btn-ghost shuf" type="button" id="l-shuffle">🔀 وزّع الفرق عشوائياً</button>
+    <p class="msg" id="l-msg" role="status"></p>
+    <button class="bigbtn gold" type="button" id="l-start" disabled>يلا نبلّش ▶</button>
+  </section>
+
+  <!-- الحكم: اختار فيلمك -->
+  <section class="scr" id="s-pick" hidden>
+    <div class="topbar"><span class="pillcode" id="k-code"></span><span class="vs" id="k-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
+    <div class="hero-g small"><h1>اختار الأنمي</h1><p>المتسابقين ما بيشوفوا إشي من هون.</p></div>
+    <form class="card-g" id="pick-form" autocomplete="off">
+      <label for="pick-in" class="lbl">اسم الأنمي بالإنجليزي أو الروماجي</label>
+      <input class="inp big" id="pick-in" placeholder="attack on titan" dir="ltr">
+      <div class="row2"><button class="bigbtn gold" type="submit">دوّر</button><button class="bigbtn ghost" type="button" id="random-btn">🎲 عشوائي</button></div>
+    </form>
+    <details class="card-g story">
+      <summary>🤖 ما بتعرف الاسم؟ احكي القصة</summary>
+      <form class="story-form" id="story-form" autocomplete="off">
+        <textarea class="inp" id="story-in" rows="3" placeholder="مثلاً: ولد لقى دفتر، أي حدا بينكتب اسمه فيه بيموت، ومحقق عبقري بيحاول يمسكه"></textarea>
+        <button class="bigbtn red" type="submit">اعرفلي الأنمي</button>
       </form>
-      <details class="story" id="story-box">
-        <summary>ما بتعرف اسم الأنمي؟ احكي قصته وخلّي الذكاء الاصطناعي يعرفه</summary>
-        <form class="story-form" id="story-form" autocomplete="off">
-          <label for="story-in" class="q-label">احكي القصة بالعربي أو الإنجليزي، وكل ما زدت تفاصيل كان أحسن</label>
-          <textarea class="inp" id="story-in" rows="3" placeholder="مثلاً: ولد لقى دفتر، أي حدا بينكتب اسمه فيه بيموت، ومحقق عبقري بيحاول يمسكه"></textarea>
-          <button class="btn btn-red" type="submit">🤖 اعرفلي الأنمي</button>
-        </form>
-      </details>
-      <p class="warn" id="need-players" hidden>لازم تضيف متسابقين اثنين على الأقل قبل ما تبلش.</p>
-      <div class="sugg" id="sugg"></div>
-      <div class="row" id="judge-tools" hidden>
-        <button class="btn btn-ghost" type="button" id="hide-btn">👁 إخفاء المعلومات عن المتسابقين</button>
-        <button class="btn btn-red" type="button" id="reveal-btn">🎬 كشف الأنمي للكل</button>
-        <button class="btn btn-ghost" type="button" id="new-round">جولة جديدة</button>
-      </div>
-      <div class="secret" id="secret"><div class="det" id="det"></div></div>
-    </section>
-    <aside class="panel" aria-labelledby="pl-h">
-      <h2 id="pl-h">المتسابقين</h2>
-      <form class="row" id="add-form" autocomplete="off">
-        <label for="add-in" class="q-label" style="flex-basis:100%">اسم المتسابق</label>
-        <input class="inp" id="add-in" placeholder="مثلاً: سيف">
-        <button class="btn btn-gold" type="submit">إضافة</button>
-      </form>
-      <ul class="players" id="players"></ul>
-      <div class="counter"><span>عدد الأسئلة بهالجولة</span><span class="num" id="qnum">0</span><span class="row"><button class="mini" type="button" id="q-plus">+ سؤال</button><button class="mini" type="button" id="q-reset">صفّر</button></span></div>
-      <div class="row"><label for="pts" class="q-label">نقاط الفوز بالجولة</label><input class="inp" id="pts" type="number" min="1" max="10" value="3" style="flex:0 0 80px"></div>
-      <button class="btn btn-ghost" type="button" id="reset-all">بلّش لعبة جديدة (صفّر النقاط)</button>
-    </aside>
-  </div>
+    </details>
+    <div class="sugg" id="sugg"></div>
+  </section>
+
+  <!-- الحكم: اللعب -->
+  <section class="scr" id="s-play" hidden>
+    <div class="topbar"><span class="pillcode" id="g-code"></span><span class="vs" id="g-vs"></span><button class="linkbtn" type="button" id="g-change">غيّر الأنمي</button></div>
+    <div class="film-head" id="g-head"></div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" id="tab-hints" aria-selected="true">💡 الهنتات</button>
+      <button type="button" role="tab" class="tab" id="tab-info" aria-selected="false">📋 كل المعلومات</button>
+    </div>
+    <div id="g-hints"></div>
+    <div id="g-info" hidden><div class="det" id="info"></div></div>
+    <div class="who card-g">
+      <p class="lbl">مين عرفه؟</p>
+      <div class="row2" id="g-who"></div>
+      <button class="linkbtn" type="button" id="g-nobody">ما حدا عرفه، اكشفه</button>
+    </div>
+  </section>
+
+  <!-- الحكم: الكشف -->
+  <section class="scr" id="s-reveal" hidden>
+    <div class="topbar"><span class="pillcode" id="r-code"></span><span class="vs" id="r-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
+    <div id="r-body"></div>
+    <button class="bigbtn gold" type="button" id="r-next">أنمي جديد ▶</button>
+  </section>
 </main>
-<div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="كشف الأنمي"><div class="reveal-in" id="reveal-in"></div></div>
 <footer>
   <div class="wrap">
     <span>سهرة · فكرة وإعداد saiflex</span>
     <a class="credits" href="credits.html">المصادر</a>
   </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script src="curated.js"></script>
 <script src="common.js"></script>
 <script>
-const API = "https://sahra-api-kxww.onrender.com";
-fetch(API + "/health").catch(() => {});
-const EMPTY = `<p class="note">اختار أنمي وبتطلعلك كل معلوماته هون: كم موسم وحلقة، أي سنة، أي استوديو، مين ألّفه، والشخصيات ومؤدّي الأصوات بصورهم.</p>`;
+const KIND = "anime", THING = "الأنمي", GAME_TITLE = "خمّن الأنمي";
+</script>
+<script src="play.js"></script>
+<script>
+const subLine = f => (f.t === "tv" ? "مسلسل" : "فيلم") + (f.y ? " · " + f.y : "");
+$("#pick-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const q = $("#pick-in").value.trim(); if (!q) return;
+  $("#sugg").innerHTML = `<p class="note">عم ندوّر… ${WAIT}</p>`;
+  let list = [];
+  try { list = (await call("/anime/search?q=" + encodeURIComponent(q))).results || []; } catch (err) {}
+  if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما لقينا أنمي بهالاسم. جرّب الاسم الإنجليزي أو الياباني (روماجي).</p>`; return; }
+  if (list.length === 1) choose(list[0]); else suggest(list, "اختار الأنمي الصح:");
+});
+$("#random-btn").addEventListener("click", async () => {
+  $("#sugg").innerHTML = `<p class="note">عم نختار أنمي… ${WAIT}</p>`;
+  try { choose(await call("/anime/random")); } catch (e) { $("#sugg").innerHTML = `<p class="warn">ما زبطت هلأ، جرّب كمان مرة.</p>`; }
+});
+
+// ===== معلومات الحكم الكاملة =====
 const STATUS_AR = {"Returning Series":"مستمر", "Ended":"منتهي", "Canceled":"ملغي", "In Production":"قيد الإنتاج", "Released":"صدر", "Planned":"مخطط له", "Post Production":"قيد التجهيز"};
 function money(n) {
   if (!n) return "";
@@ -158,100 +159,9 @@ function money(n) {
 const dateAr = d => d ? new Date(d + "T00:00:00").toLocaleDateString("ar-EG-u-nu-latn", {year:"numeric", month:"long", day:"numeric"}) : "غير معروف";
 const typeAr = f => f.t === "tv" ? "مسلسل" : "فيلم";
 
-// ===== الحالة (بتنحفظ بالمتصفح، ومنفصلة عن لعبة الأفلام) =====
-let G = {players: [], round: 1, q: 0, cur: null, pts: 3};
-try { G = Object.assign(G, JSON.parse(localStorage.getItem("sahra-anime") || "{}")); } catch (e) {}
-const save = () => { try { localStorage.setItem("sahra-anime", JSON.stringify(G)); } catch (e) {} };
-
-// ===== المتسابقين =====
-function renderPlayers() {
-  const ul = $("#players"); ul.innerHTML = "";
-  const top = Math.max(0, ...G.players.map(p => p.s));
-  G.players.forEach((p, i) => {
-    const li = el("li", {class: "player" + (top > 0 && p.s === top ? " lead" : "")});
-    li.innerHTML = `<span class="sc">${p.s}</span><span class="nm">${top > 0 && p.s === top ? "👑 " : ""}${esc(p.n)}</span>
-      <button class="win" type="button" data-win="${i}">فاز بالجولة</button>
-      <span class="row" style="gap:4px"><button class="mini" type="button" data-plus="${i}" aria-label="زيد نقطة لـ ${esc(p.n)}">+1</button><button class="mini" type="button" data-minus="${i}" aria-label="نقّص نقطة من ${esc(p.n)}">−1</button><button class="mini" type="button" data-del="${i}" aria-label="احذف ${esc(p.n)}">✕</button></span>`;
-    ul.appendChild(li);
-  });
-  if (!G.players.length) ul.innerHTML = `<li class="note">لسا ما في متسابقين. ضيف اثنين على الأقل.</li>`;
-  $("#need-players").hidden = G.players.length >= 2;
-  $("#qnum").textContent = G.q;
-  $("#round-pill").textContent = "الجولة " + G.round;
-  $("#pts").value = G.pts;
-}
-$("#add-form").addEventListener("submit", e => {
-  e.preventDefault();
-  const n = $("#add-in").value.trim(); if (!n) return;
-  G.players.push({n, s: 0}); $("#add-in").value = ""; save(); renderPlayers(); $("#add-in").focus();
-});
-$("#players").addEventListener("click", e => {
-  const b = e.target.closest("button"); if (!b) return;
-  const d = b.dataset;
-  if (d.win !== undefined) { G.players[+d.win].s += G.pts; save(); renderPlayers(); if (window.CUR) reveal(G.players[+d.win].n); return; }
-  if (d.plus !== undefined) G.players[+d.plus].s += 1;
-  if (d.minus !== undefined) G.players[+d.minus].s = Math.max(0, G.players[+d.minus].s - 1);
-  if (d.del !== undefined) G.players.splice(+d.del, 1);
-  save(); renderPlayers();
-});
-$("#q-plus").addEventListener("click", () => { G.q++; save(); renderPlayers(); });
-$("#q-reset").addEventListener("click", () => { G.q = 0; save(); renderPlayers(); });
-$("#pts").addEventListener("change", () => { G.pts = Math.max(1, Math.min(10, +$("#pts").value || 3)); save(); renderPlayers(); });
-$("#reset-all").addEventListener("click", () => { G.players.forEach(p => p.s = 0); G.round = 1; G.q = 0; G.cur = null; save(); renderPlayers(); clearPick(); });
-$("#new-round").addEventListener("click", () => { G.round++; G.q = 0; G.cur = null; save(); renderPlayers(); clearPick(); $("#pick-in").focus(); });
-
-// ===== اختيار الأنمي =====
-function needPlayers() { if (G.players.length >= 2) return false; $("#need-players").hidden = false; $("#add-in").focus(); return true; }
-const WAIT = "(أول مرة ممكن تاخذ لحد دقيقة)";
-async function api(path) { try { const r = await fetch(API + path); if (r.ok) return await r.json(); } catch (e) {} return null; }
-function suggest(list) {
-  const box = $("#sugg"); box.innerHTML = "";
-  list.forEach(f => {
-    const b = el("button", {type:"button", class:"result"});
-    b.innerHTML = `${posterBox(f, "w92")}<span><b dir="ltr">${esc(f.en)}</b><small>${typeAr(f)} · ${f.y || ""}</small>${f.why ? `<span class="ai">🤖 ${esc(f.why)}</span>` : ""}</span>`;
-    b.addEventListener("click", () => { box.innerHTML = ""; choose(f); });
-    box.appendChild(b);
-  });
-}
-$("#pick-form").addEventListener("submit", async e => {
-  e.preventDefault(); if (needPlayers()) return;
-  const q = $("#pick-in").value.trim(); if (!q) return;
-  $("#sugg").innerHTML = `<p class="note">عم ندوّر… ${WAIT}</p>`;
-  const list = (await api("/anime/search?q=" + encodeURIComponent(q)))?.results || [];
-  if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما لقينا أنمي بهالاسم. جرّب الاسم الإنجليزي أو الياباني (روماجي).</p>`; return; }
-  if (list.length === 1) { $("#sugg").innerHTML = ""; choose(list[0]); } else suggest(list);
-});
-$("#story-form").addEventListener("submit", async e => {
-  e.preventDefault(); if (needPlayers()) return;
-  const s = $("#story-in").value.trim(); if (s.length < 8) return;
-  $("#sugg").innerHTML = `<p class="note">🤖 عم يفكّر… ${WAIT}</p>`;
-  const list = (await api("/anime/guess?story=" + encodeURIComponent(s)))?.results || [];
-  if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما قدرنا نعرف الأنمي من هالوصف. زيد تفاصيل: اسم شخصية، قوة البطل، أو مشهد مشهور.</p>`; return; }
-  suggest(list);
-  $("#sugg").insertAdjacentHTML("afterbegin", `<p class="note">🤖 هاي توقعات الذكاء الاصطناعي، اختار الصح:</p>`);
-});
-$("#random-btn").addEventListener("click", async () => {
-  if (needPlayers()) return;
-  $("#sugg").innerHTML = `<p class="note">عم نختار أنمي… ${WAIT}</p>`;
-  const f = await api("/anime/random");
-  $("#sugg").innerHTML = f ? "" : `<p class="warn">ما زبطت هلأ، جرّب كمان مرة.</p>`;
-  if (f) choose(f);
-});
-function clearPick() {
-  $("#det").innerHTML = EMPTY; window.CUR = null;
-  $("#judge-tools").hidden = true; $("#secret").classList.remove("hidden"); $("#pick-in").value = ""; $("#sugg").innerHTML = "";
-}
-async function choose(f) {
-  G.cur = {id: f.id, t: f.t}; G.q = 0; save(); renderPlayers();
-  $("#judge-tools").hidden = false;
-  $("#det").innerHTML = `<p class="note">عم نجيب معلومات ${esc(f.en || "الأنمي")}… ${WAIT}</p>`;
-  const d = await api("/anime/" + f.t + "/" + f.id);
-  if (!d) { $("#det").innerHTML = `<p class="warn">ما قدرنا نجيب المعلومات هلأ. جرّب كمان مرة.</p>`; return; }
-  render(d);
-}
 function people(title, arr) { return arr && arr.length ? `<div class="fact"><span>${title}</span><b style="font-size:15px;direction:ltr;text-align:right">${arr.map(esc).join("، ")}</b></div>` : ""; }
 const logos = arr => `<div class="cos">${arr.map(c => `<span class="co">${c.logo ? `<img src="${IMG}w92${c.logo}" alt="">` : ""}<span dir="ltr">${esc(c.n)}</span></span>`).join("")}</div>`;
-function render(d) {
+function renderAnime(d) {
   const tv = d.t === "tv";
   const g = (d.g || []).map(x => GENRE_AR[x]).filter(Boolean);
   const st = d.status ? (STATUS_AR[d.status] || d.status) : "";
@@ -278,28 +188,13 @@ function render(d) {
   if (d.cast?.length) h += `<div class="sec"><h4>الشخصيات ومؤدّي الأصوات</h4><div class="cast">${d.cast.map(c => `<div class="actor">${c.p ? `<img src="${IMG}w185${c.p}" alt="${esc(c.n)}" loading="lazy">` : `<div class="noposter">${esc(c.n)}</div>`}<b>${esc(c.ch || "")}</b><small>${esc(c.n)}</small></div>`).join("")}</div></div>`;
   if (d.ov) h += `<div class="sec"><h4>القصة</h4><p style="margin:0;max-width:70ch">${esc(d.ov)}</p></div>`;
   h += `<div class="actions"><a class="btn btn-ghost" href="https://www.themoviedb.org/${d.t}/${d.id}" target="_blank" rel="noopener">صفحته على TMDB ↗</a>${d.imdb ? `<a class="btn btn-ghost" href="https://www.imdb.com/title/${d.imdb}/" target="_blank" rel="noopener">صفحته على IMDb ↗</a>` : ""}</div>`;
-  $("#det").innerHTML = h;
-  window.CUR = d;
+  $("#info").innerHTML = h;
 }
-$("#hide-btn").addEventListener("click", () => {
-  const s = $("#secret"); s.classList.toggle("hidden");
-  $("#hide-btn").textContent = s.classList.contains("hidden") ? "👁 إظهار المعلومات للحكم" : "👁 إخفاء المعلومات عن المتسابقين";
-});
-function reveal(winner) {
-  const f = window.CUR; if (!f) return;
-  $("#reveal-in").innerHTML = `${posterUrl(f, "w342") ? `<img src="${posterUrl(f, "w342")}" alt="">` : ""}<h2>${esc(f.ar || f.en)}</h2><div class="en" style="direction:ltr">${esc(f.en)} · ${f.y || ""}</div>
-    ${winner ? `<p style="font-size:22px;margin:0">🏆 ${esc(winner)} عرفه وأخذ ${G.pts} نقاط بعد ${G.q} سؤال</p>` : ""}
-    <button class="btn btn-gold" type="button" id="reveal-close">تمام</button>`;
-  $("#reveal").classList.add("open");
-  $("#reveal-close").focus();
-  $("#reveal-close").onclick = () => $("#reveal").classList.remove("open");
+async function loadInfo(base) {
+  $("#info").innerHTML = `<p class="note">عم نجيب كل المعلومات…</p>`;
+  try { const d = await call("/anime/" + base.t + "/" + base.id); if (infoKey === base.t + base.id) renderAnime(d); }
+  catch (e) { if (infoKey === base.t + base.id) $("#info").innerHTML = `<p class="warn">ما قدرنا نجيب المعلومات هلأ.</p>`; }
 }
-$("#reveal-btn").addEventListener("click", () => reveal(null));
-document.addEventListener("keydown", e => { if (e.key === "Escape") $("#reveal").classList.remove("open"); });
-
-$("#det").innerHTML = EMPTY;
-renderPlayers();
-if (G.cur) choose(G.cur);
 </script>
 </body>
 </html>
