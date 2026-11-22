@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>السحب · مسابقة سهرة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.d-head{padding:28px 0 4px;text-align:center;display:grid;gap:6px;justify-items:center}
+.d-head h1{font-size:clamp(34px,6vw,54px)}
+.d-head p{margin:0;color:var(--muted)}
+.lock{display:flex;gap:8px;flex-wrap:wrap;max-width:520px}
+.lock input{flex:1 1 220px;background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:17px;color:var(--cream)}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--velvet-3);border:1px solid var(--line);border-radius:14px;padding:10px 16px;display:grid}
+.stat b{font-family:var(--display);font-weight:400;font-size:34px;line-height:1.1;color:var(--ticket)}
+.stat small{color:var(--muted)}
+.films{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.fbox{display:grid;gap:14px;border:1px solid var(--line);border-top:6px solid var(--acc);border-radius:18px;padding:18px;background:var(--velvet-2)}
+.f-dune{--acc:#d9a35b}.f-doom{--acc:#3f8f5a}
+.fbox h2{font-size:30px}
+.reel{min-height:150px;border-radius:16px;background:var(--cream);color:#1b0d12;display:grid;place-items:center;align-content:center;text-align:center;padding:14px;gap:4px}
+.reel .nm{font-family:var(--display);font-size:clamp(30px,5vw,44px);line-height:1.15}
+.reel .ig{direction:ltr;font-weight:700;color:#7a4b3e}
+.reel .sub{font-size:14px;color:#7a4b3e}
+.reel.spin .nm{filter:blur(1px);opacity:.75}
+.reel.win{box-shadow:0 0 0 4px var(--acc),0 20px 60px -20px var(--acc)}
+.wins{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.wins li{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--velvet-3);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.wins li b{font-family:var(--display);font-weight:400;font-size:20px;color:var(--acc)}
+.wins li .who{flex:1}
+.wins li small{color:var(--muted);direction:ltr;display:inline-block}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+bdi{white-space:nowrap}
+.big-btn{justify-content:center;padding:14px 22px;font-size:19px;flex:1}
+</style>
+</head>
+<body data-page="draw">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="d-head">
+    <span class="hall-no">السحب لايف</span>
+    <h1>🎟️ سحب مسابقة سهرة</h1>
+    <p>3 فائزين لفيلم <bdi>Dune: Part Three</bdi>، و3 فائزين لفيلم <bdi>Avengers: Doomsday</bdi>. كل شخص بيربح مرة وحدة بس.</p>
+  </header>
+
+  <section class="hall" id="gate">
+    <div class="hall-head"><h2>كلمة سر السحب</h2><p>هاي الصفحة إلك بس. اكتب كلمة السر اللي حطيناها بالجدول.</p></div>
+    <form class="lock" id="lock"><input id="key" type="password" autocomplete="off" placeholder="كلمة السر" dir="ltr"><button class="btn btn-red" type="submit">افتح المشاركات</button></form>
+    <p class="form-msg" id="gate-msg" role="status"></p>
+  </section>
+
+  <section class="hall" id="board" hidden>
+    <div class="stats" id="stats"></div>
+    <div class="films">
+      <div class="fbox f-dune" data-film="dune">
+        <h2>Dune: Part Three</h2>
+        <div class="reel"><span class="nm">جاهزين؟</span><span class="sub">اكبس "اسحب" تحت</span></div>
+        <div class="row"><button class="btn btn-gold big-btn" data-act="draw">اسحب فائز 🎲</button></div>
+        <ol class="wins"></ol>
+      </div>
+      <div class="fbox f-doom" data-film="doom">
+        <h2>Avengers: Doomsday</h2>
+        <div class="reel"><span class="nm">جاهزين؟</span><span class="sub">اكبس "اسحب" تحت</span></div>
+        <div class="row"><button class="btn btn-gold big-btn" data-act="draw">اسحب فائز 🎲</button></div>
+        <ol class="wins"></ol>
+      </div>
+    </div>
+    <p class="note">بعد كل سحب: تأكد إن الفائز متابع @saiflex.u. إذا مش متابع، اكبس "↻ اسحب غيره" جنب اسمه. اللي رافع سكرين شوت مقبول اسمه داخل السحب مرتين. والنتائج بتنحفظ على هاد الجهاز، فما بتضيع إذا عملت تحديث للصفحة.</p>
+    <div class="row"><button class="btn btn-ghost" id="reset" type="button">ابدأ السحب من جديد</button><button class="btn btn-ghost" id="reload" type="button">حدّث المشاركات</button></div>
+  </section>
+</main>
+<script src="common.js"></script>
+<script>
+const GS_URL = "https://script.google.com/macros/s/AKfycbwLTQzPc1B6H1t-KEAMAG_4LPW78QijvmZKOgaLFqWrBBfKMePWNMNvwGOGli8ZD_rwMA/exec";
+const WINS = 3, SAVE = "sahra-draw-2026";
+let entries = [], state = { dune: [], doom: [], out: [] };
+try { state = JSON.parse(localStorage.getItem(SAVE)) || state; } catch (e) {}
+const save = () => { try { localStorage.setItem(SAVE, JSON.stringify(state)); } catch (e) {} };
+const rnd = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
+const idOf = e => e.row;
+const won = () => new Set([...state.dune, ...state.doom].map(w => w.row));
+const outSet = () => new Set(state.out);
+
+function pool(film) {
+  const taken = won(), out = outSet(), list = [];
+  for (const e of entries) {
+    if (taken.has(e.row) || out.has(e.row)) continue;
+    if (e.film !== film && e.film !== "both") continue;
+    list.push(e); if (e.shot) list.push(e); // السكرين شوت = فرصة ثانية
+  }
+  return list;
+}
+function render() {
+  const n = entries.length, shots = entries.filter(e => e.shot).length;
+  const c = f => entries.filter(e => e.film === f || e.film === "both").length;
+  $("#stats").innerHTML = [["مشاركين", n], ["مع سكرين شوت", shots], ["بسحب Dune", c("dune")], ["بسحب Doomsday", c("doom")]]
+    .map(([t, v]) => `<div class="stat"><b>${v}</b><small>${t}</small></div>`).join("");
+  for (const box of document.querySelectorAll(".fbox")) {
+    const f = box.dataset.film, list = state[f];
+    box.querySelector(".wins").innerHTML = list.map((w, i) => `<li><b>${i + 1}</b><span class="who">${esc(w.name)} <small>${esc(w.ig)} · …${esc(w.tail)}</small></span><button class="btn btn-ghost" data-redo="${w.row}" type="button">↻ اسحب غيره</button></li>`).join("");
+    const btn = box.querySelector("[data-act=draw]");
+    btn.disabled = list.length >= WINS || !pool(f).length;
+    btn.textContent = list.length >= WINS ? "خلصنا 🎉" : !pool(f).length ? "ما في مشاركين كفاية" : `اسحب الفائز رقم ${list.length + 1} 🎲`;
+  }
+}
+function spin(box, f) {
+  const p = pool(f); if (!p.length) return;
+  const reel = box.querySelector(".reel"), btns = document.querySelectorAll("[data-act=draw],[data-redo]");
+  btns.forEach(b => b.disabled = true); reel.classList.remove("win"); reel.classList.add("spin");
+  const pick = p[rnd(p.length)];
+  let t = 0, delay = 50;
+  const step = () => {
+    const show = t < 28 ? p[rnd(p.length)] : pick;
+    reel.innerHTML = `<span class="nm">${esc(show.name)}</span><span class="ig">${esc(show.ig)}</span>`;
+    if (t++ < 28) { delay *= 1.09; setTimeout(step, delay); return; }
+    reel.classList.remove("spin"); reel.classList.add("win");
+    reel.insertAdjacentHTML("beforeend", `<span class="sub">${esc(pick.emirate)} · رقم ينتهي بـ ${esc(pick.tail)}${pick.shot ? " · معه سكرين شوت" : ""}</span>`);
+    state[f].push(pick); save(); render();
+  };
+  step();
+}
+document.querySelector(".films").addEventListener("click", e => {
+  const box = e.target.closest(".fbox"); if (!box) return;
+  if (e.target.matches("[data-act=draw]")) spin(box, box.dataset.film);
+  const redo = e.target.closest("[data-redo]");
+  if (redo) {
+    const f = box.dataset.film, row = +redo.dataset.redo, w = state[f].find(x => x.row === row);
+    if (!confirm(`نشيل ${w.name} ونسحب غيره؟`)) return;
+    state.out.push(row); state[f] = state[f].filter(x => x.row !== row); save(); render(); spin(box, f);
+  }
+});
+$("#reset").addEventListener("click", () => { if (confirm("أكيد بدك تمسح كل النتائج وتبدأ من جديد؟")) { state = { dune: [], doom: [], out: [] }; save(); document.querySelectorAll(".reel").forEach(r => { r.className = "reel"; r.innerHTML = '<span class="nm">جاهزين؟</span>'; }); render(); } });
+
+async function load(key) {
+  const r = await fetch(GS_URL + "?key=" + encodeURIComponent(key));
+  const j = await r.json(); if (!j.ok) throw new Error(j.error);
+  entries = j.entries; render();
+}
+$("#reload").addEventListener("click", async () => { try { await load(sessionStorage.getItem("sahra-key")); } catch (e) { alert("ما قدرنا نحدّث."); } });
+$("#lock").addEventListener("submit", async e => {
+  e.preventDefault(); const key = $("#key").value.trim(), msg = $("#gate-msg");
+  if (!GS_URL) { msg.textContent = "الجدول لسا مش مربوط."; msg.className = "form-msg err"; return; }
+  msg.textContent = "عم نجيب المشاركات…"; msg.className = "form-msg ok";
+  try { await load(key); sessionStorage.setItem("sahra-key", key); $("#gate").hidden = true; $("#board").hidden = false; }
+  catch (err) { msg.textContent = err.message === "key" ? "كلمة السر غلط." : "ما قدرنا نجيب المشاركات، جرّب كمان مرة."; msg.className = "form-msg err"; }
+});
+</script>
+</body>
+</html>

@@ -85,5 +85,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".nav-links a").forEach(a => { if (a.dataset.page === page) a.setAttribute("aria-current", "page"); });
 });
 
+// رابط المسابقة بالقائمة (لحد ما يخلص السحب)
+document.addEventListener("DOMContentLoaded", () => {
+  const links = document.querySelector(".nav-links");
+  if (!links || Date.now() > Date.parse("2026-12-20T00:00:00+04:00") || links.querySelector('[data-page="contest"]')) return;
+  const a = document.createElement("a"); a.href = "contest.html"; a.dataset.page = "contest"; a.className = "nav-contest"; a.textContent = "🎟️ مسابقة";
+  if (document.body.dataset.page === "contest") a.setAttribute("aria-current", "page");
+  links.insertBefore(a, links.querySelector(".nav-support"));
+});
 // عدّاد الزيارات (GoatCounter): الإحصائيات على https://sahrafilm.goatcounter.com
 (() => { const s = document.createElement("script"); s.async = true; s.src = "https://gc.zgo.at/count.js"; s.dataset.goatcounter = "https://sahrafilm.goatcounter.com/count"; document.head.appendChild(s); })();

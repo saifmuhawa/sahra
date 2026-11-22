@@ -215,3 +215,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .support-alt{margin:0;color:var(--muted)}
 .ticket .form-msg{color:#7a4b3e}
 [hidden]{display:none!important}
+
+/* ===== المسابقة ===== */
+.nav-links a.nav-contest{border-color:var(--ticket);color:var(--ticket);font-weight:700}
+.nav-links a.nav-contest[aria-current="page"]{background:var(--ticket);color:#1b0d12}
+.promo{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:18px 0 4px;padding:18px 22px;border-radius:20px;text-decoration:none;color:var(--cream);border:1px solid var(--ticket);background:linear-gradient(100deg,rgba(226,180,87,.16),rgba(200,50,60,.14))}
+.promo:hover{border-color:var(--cream)}
+.promo .pi{font-size:42px;line-height:1}
+.promo .pt{flex:1 1 240px;display:grid;gap:2px}
+.promo .pt b{font-family:var(--display);font-weight:400;font-size:clamp(24px,3.4vw,32px);line-height:1.2}
+.promo .pt small{color:var(--muted);font-size:15px}
+.promo .go{background:var(--ticket);color:#1b0d12;font-weight:700;border-radius:10px;padding:9px 16px}

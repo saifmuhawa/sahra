@@ -28,6 +28,11 @@
     <h1>كل اللي بدك ياه <span>لسهرة فيلم</span></h1>
     <p>ترشيح فيلم واحد للّيلة، لعبتين "خمّن الفيلم" و"خمّن الأنمي" مع صحابك، وأغاني الأفلام اللي علقت براسك. والأفلام بتتحدّث لحالها كل ساعة.</p>
   </header>
+  <a class="promo" href="contest.html" id="promo">
+    <span class="pi" aria-hidden="true">🎟️</span>
+    <span class="pt"><b>مسابقة: فز بتذاكر <bdi>Dune</bdi>&nbsp;و<bdi>Doomsday</bdi>!</b><small>6 تذاكر سينما مجاناً من سهرة و<bdi dir="ltr">@saiflex.u</bdi>. آخر يوم 11 ديسمبر.</small></span>
+    <span class="go">شارك ←</span>
+  </a>
   <div class="cards">
     <a class="card" href="tonight.html"><span class="hall-no">صالة ١</span><h2>شو نحضر الليلة؟</h2><p>جاوب ٣ أسئلة وخذ فيلم واحد بيناسب مزاجك ووقتك واللي قاعدين معك.</p><span class="go">ابدأ ←</span></a>
     <a class="card" href="game.html"><span class="hall-no">صالة ٢</span><h2>خمّن الفيلم</h2><p>الحكم بيعمل غرفة بباركود، والفريقين بيدخلوا من تلفوناتهم ويسألوا لحد ما حدا يعرف الفيلم.</p><span class="go">اعمل غرفة ←</span></a>
@@ -56,6 +61,7 @@
 <script src="curated.js"></script>
 <script src="common.js"></script>
 <script>
+if (Date.now() > Date.parse("2026-12-20T00:00:00+04:00")) document.getElementById("promo")?.remove();
 function strip(id, list, sort) {
   const box = document.getElementById(id);
   let fs = FILMS.filter(f => (f.l || []).includes(list));

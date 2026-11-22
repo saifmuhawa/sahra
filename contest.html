@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مسابقة سهرة: فز بتذاكر Dune و Avengers: Doomsday</title>
+<meta name="description" content="6 تذاكر سينما مجاناً: 3 لـ Dune: Part Three و3 لـ Avengers: Doomsday. سجّل بالسحب من موقع سهرة.">
+<meta property="og:title" content="🎬 فز بتذاكر Dune و Avengers: Doomsday من سهرة">
+<meta property="og:description" content="6 فائزين، كل واحد تذكرة. المشاركة مجانية وبتاخذ دقيقة.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.c-hero{padding:34px 0 4px;display:grid;gap:10px;text-align:center;justify-items:center}
+.c-hero h1{font-size:clamp(34px,6vw,58px)}
+.c-hero h1 span{color:var(--ticket)}
+.c-hero p{margin:0;color:var(--muted);max-width:56ch}
+.c-from{font-size:15px;color:var(--cream);border:1px solid var(--ticket);background:rgba(226,180,87,.1);border-radius:999px;padding:4px 16px}
+.c-from b{color:var(--ticket)}
+.ig-chip{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#fff;font-weight:700;font-size:15px;padding:8px 18px;border-radius:999px;background:linear-gradient(45deg,#f09433,#dc2743 50%,#bc1888)}
+.ig-chip:hover{filter:brightness(1.1)}
+.count{display:flex;gap:10px;justify-content:center;direction:ltr;flex-wrap:wrap;margin-top:8px}
+.count div{min-width:78px;background:var(--velvet-3);border:1px solid var(--line);border-radius:14px;padding:10px 8px 6px;display:grid;justify-items:center}
+.count b{font-family:var(--display);font-weight:400;font-size:clamp(34px,6vw,48px);line-height:1;color:var(--cream)}
+.count small{font-size:13px;color:var(--muted);direction:rtl}
+.count-cap{margin:0;color:var(--muted);font-size:14px}
+.prizes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.prize{border-top:6px solid var(--acc)}
+.prize .ticket-top span:last-child{color:var(--acc-d)}
+.prize h3{font-size:clamp(26px,3.6vw,34px)}
+.prize .big{font-family:var(--display);font-size:56px;line-height:1;color:var(--acc-d)}
+.p-dune{--acc:#d9a35b;--acc-d:#9a6421}
+.p-doom{--acc:#3f8f5a;--acc-d:#2c6d42}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:start;background:var(--velvet-3);border:1px solid var(--line);border-radius:14px;padding:14px}
+.steps li::before{counter-increment:s;content:counter(s);font-family:var(--display);font-size:24px;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--seat);color:#fff}
+.steps li.extra::before{content:"+";background:var(--ticket);color:#1b0d12}
+.steps h3{font-size:22px}
+.steps p{margin:2px 0 0;color:var(--muted)}
+.steps .actions{margin-top:8px}
+.phone{display:flex;direction:ltr;border:1.5px solid var(--line);border-radius:12px;background:var(--velvet);overflow:hidden}
+.phone:focus-within{border-color:var(--ticket)}
+.phone span{padding:11px 12px;background:var(--velvet-3);color:var(--muted);border-inline-end:1px solid var(--line);font-weight:700}
+.field .phone input{border:0;border-radius:0;background:transparent}
+.field select{font:inherit;color:var(--cream);background:var(--velvet);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:17px;width:100%}
+.field select:focus{border-color:var(--ticket);outline:none}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts label{position:relative;font-weight:500;border:1px solid var(--line);background:var(--velvet-3);padding:8px 16px;border-radius:999px;cursor:pointer}
+.field .opts input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;pointer-events:none}
+.opts label:has(input:checked){background:var(--ticket);color:#1b0d12;border-color:var(--ticket);font-weight:700}
+.opts label:has(input:focus-visible){outline:2px solid var(--ticket);outline-offset:2px}
+.drop{display:grid;gap:8px;justify-items:center;text-align:center;border:1.5px dashed var(--line);border-radius:14px;padding:18px;cursor:pointer;background:var(--velvet)}
+.drop:hover,.drop.on{border-color:var(--ticket)}
+.drop img{max-height:160px;max-width:100%;border-radius:10px}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.agree{display:flex;gap:10px;align-items:flex-start;font-weight:500}
+.agree input{width:20px;height:20px;margin-top:4px;accent-color:var(--seat);flex:none}
+.done{display:grid;gap:12px;padding:20px;border-radius:16px;border:1px solid var(--good);background:rgba(95,191,138,.08)}
+.done h2{font-size:32px}
+.done p{margin:0}
+.closed{display:grid;gap:8px;padding:20px;border-radius:16px;border:1px solid var(--ticket);background:rgba(226,180,87,.08);text-align:center}
+.closed h2{font-size:30px}
+.closed p{margin:0;color:var(--muted)}
+.terms{margin:0;padding-inline-start:22px;display:grid;gap:8px}
+.terms li::marker{color:var(--ticket)}
+.share{display:flex;flex-wrap:wrap;gap:8px}
+.btn-wa{background:#1fa855;color:#fff}
+bdi{white-space:nowrap}
+</style>
+</head>
+<body data-page="contest">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <div class="nav-links">
+      <a href="tonight.html" data-page="tonight">شو نحضر الليلة؟</a>
+      <a href="game.html" data-page="game">خمّن الفيلم</a>
+      <a href="anime.html" data-page="anime">خمّن الأنمي</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+      <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
+      <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="c-hero">
+    <span class="c-from">🎟️ مسابقة من موقع <b>سهرة</b> وحساب <bdi dir="ltr">@saiflex.u</bdi></span>
+    <h1>🎬 فز بتذاكر <span>Dune</span> و<span>Doomsday</span>!</h1>
+    <p>6 تذاكر سينما علينا: 3 تذاكر لفيلم <bdi>Dune: Part Three</bdi>، و3 تذاكر لفيلم <bdi>Avengers: Doomsday</bdi>. المشاركة مجانية وبتاخذ دقيقة.</p>
+    <div class="count" id="count" role="timer" aria-live="off">
+      <div><b id="cd-s">00</b><small>ثانية</small></div>
+      <div><b id="cd-m">00</b><small>دقيقة</small></div>
+      <div><b id="cd-h">00</b><small>ساعة</small></div>
+      <div><b id="cd-d">00</b><small>يوم</small></div>
+    </div>
+    <p class="count-cap" id="count-cap">آخر يوم للمشاركة: الجمعة 11 ديسمبر، الساعة 11:59 بالليل بتوقيت الإمارات</p>
+    <a class="ig-chip" href="https://www.instagram.com/saiflex.u/" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg><span>تابعنا على إنستغرام <bdi dir="ltr">@saiflex.u</bdi></span></a>
+  </header>
+
+  <section class="hall" aria-labelledby="h-prize">
+    <div class="hall-head"><span class="hall-no">الجائزة</span><h2 id="h-prize">6 فائزين، كل واحد تذكرة</h2></div>
+    <div class="prizes">
+      <article class="ticket prize p-dune">
+        <div class="ticket-top"><span>سهرة · تذكرة سينما</span><span>17 ديسمبر</span></div>
+        <div class="big">3</div>
+        <h3>Dune: Part Three</h3>
+        <p class="why">3 فائزين، كل واحد تذكرة للفيلم بسينما بالإمارات.</p>
+      </article>
+      <article class="ticket prize p-doom">
+        <div class="ticket-top"><span>سهرة · تذكرة سينما</span><span>17 ديسمبر</span></div>
+        <div class="big">3</div>
+        <h3>Avengers: Doomsday</h3>
+        <p class="why">3 فائزين، كل واحد تذكرة للفيلم بسينما بالإمارات.</p>
+      </article>
+    </div>
+    <p class="note">الفيلمين بينزلوا بصالات الإمارات يوم 17 ديسمبر. بعد السحب بنحجز لكل فائز تذكرته بالسينما والوقت اللي بيناسبه.</p>
+  </section>
+
+  <section class="hall" aria-labelledby="h-steps">
+    <div class="hall-head"><span class="hall-no">كيف</span><h2 id="h-steps">كيف تشارك؟</h2></div>
+    <ol class="steps">
+      <li><div><h3>عبّي الاستمارة تحت</h3><p>اسمك، إيميلك، رقمك، ويوزر الإنستغرام تبعك.</p></div></li>
+      <li><div><h3>تابع <bdi dir="ltr">@saiflex.u</bdi> على إنستغرام</h3><p>بنتأكد من المتابعة وقت السحب.</p>
+        <div class="actions"><a class="btn btn-ghost" href="https://www.instagram.com/saiflex.u/" target="_blank" rel="noopener">افتح الحساب ←</a></div></div></li>
+      <li class="extra"><div><h3>فرصة إضافية: العب بسهرة</h3><p>العب أي إشي بالموقع، خذ سكرين شوت، وارفعها بالاستمارة. اسمك بيدخل السحب مرتين.</p>
+        <div class="actions"><a class="btn btn-ghost" href="tonight.html" target="_blank">شو نحضر الليلة؟</a><a class="btn btn-ghost" href="game.html" target="_blank">خمّن الفيلم</a><a class="btn btn-ghost" href="anime.html" target="_blank">خمّن الأنمي</a></div></div></li>
+    </ol>
+  </section>
+
+  <section class="hall" id="enter" aria-labelledby="h-form">
+    <div class="hall-head"><span class="hall-no">سجّل</span><h2 id="h-form">استمارة المشاركة</h2></div>
+
+    <div class="closed" id="closed" hidden>
+      <h2>انتهت المسابقة 🎟️</h2>
+      <p>شكراً لكل اللي شاركوا! السحب لايف على إنستغرام <bdi dir="ltr">@saiflex.u</bdi> يوم الأحد 13 ديسمبر.</p>
+    </div>
+
+    <div class="done" id="done" hidden>
+      <h2>إنت بالسحب! 🎟️</h2>
+      <p id="done-msg">وصلت مشاركتك. السحب لايف على إنستغرام <bdi dir="ltr">@saiflex.u</bdi> يوم 13 ديسمبر، فتأكد إنك متابع.</p>
+      <p>ولحد ذلك الوقت، شو رأيك تجرّب الموقع؟</p>
+      <div class="actions"><a class="btn btn-gold" href="tonight.html">شو نحضر الليلة؟ ←</a><a class="btn btn-ghost" href="game.html">اعمل غرفة خمّن الفيلم مع صحابك</a></div>
+    </div>
+
+    <form id="cf" class="form" novalidate>
+      <div class="field">
+        <label for="c-name">الاسم الكامل</label>
+        <input id="c-name" name="name" type="text" autocomplete="name" required maxlength="80" placeholder="مثلاً: سيف محمد">
+      </div>
+      <div class="field">
+        <label for="c-email">البريد الإلكتروني</label>
+        <input id="c-email" name="email" type="email" dir="ltr" autocomplete="email" required maxlength="120" placeholder="name@example.com">
+      </div>
+      <div class="field">
+        <label for="c-phone">رقم الجوال</label>
+        <div class="phone"><span>+971</span><input id="c-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" required maxlength="12" placeholder="5X XXX XXXX"></div>
+        <small>رقم إماراتي، بنتواصل معك عليه إذا ربحت.</small>
+      </div>
+      <div class="field">
+        <label for="c-ig">يوزر الإنستغرام</label>
+        <input id="c-ig" name="ig" type="text" dir="ltr" autocapitalize="off" autocomplete="off" spellcheck="false" required maxlength="31" placeholder="@username">
+      </div>
+      <div class="field">
+        <label for="c-em">وين ساكن؟</label>
+        <select id="c-em" name="emirate" required>
+          <option value="">اختار الإمارة</option>
+          <option>أبوظبي</option><option>العين</option><option>دبي</option><option>الشارقة</option><option>عجمان</option><option>أم القيوين</option><option>رأس الخيمة</option><option>الفجيرة</option>
+        </select>
+      </div>
+      <fieldset class="field" style="border:0;padding:0;margin:0">
+        <legend style="font-weight:700;margin-bottom:6px">أي فيلم بدك تحضر؟</legend>
+        <div class="opts">
+          <label><input type="radio" name="film" value="dune">Dune: Part Three</label>
+          <label><input type="radio" name="film" value="doom">Avengers: Doomsday</label>
+          <label><input type="radio" name="film" value="both" checked>ما بتفرق، الاثنين</label>
+        </div>
+        <small>"الاثنين" بيدخلك بسحب الفيلمين. وبكل الأحوال، كل شخص بيربح تذكرة وحدة بس.</small>
+      </fieldset>
+      <div class="field">
+        <span style="font-weight:700">سكرين شوت من سهرة <small>(اختياري، فرصة إضافية)</small></span>
+        <label class="drop" id="drop" for="c-shot">
+          <span id="drop-txt">اكبس هون واختار صورة (JPG أو PNG، لحد 10 ميغا)</span>
+          <img id="drop-img" alt="معاينة الصورة" hidden>
+          <input id="c-shot" type="file" accept="image/png,image/jpeg">
+        </label>
+      </div>
+      <label class="agree"><input type="checkbox" id="c-agree" required><span>عمري 18 سنة أو أكثر، ساكن بالإمارات، وموافق على <a href="#terms">الشروط</a>.</span></label>
+      <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="form-end">
+        <button class="btn btn-red" type="submit" id="c-send">سجّلني بالسحب 🎟️</button>
+        <p class="form-msg" id="c-status" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+  </section>
+
+  <section class="hall" id="terms" aria-labelledby="h-terms">
+    <div class="hall-head"><span class="hall-no">الشروط</span><h2 id="h-terms">الشروط باختصار</h2></div>
+    <ul class="terms">
+      <li>الجائزة 6 تذاكر سينما: 3 تذاكر لفيلم <bdi>Dune: Part Three</bdi>، و3 تذاكر لفيلم <bdi>Avengers: Doomsday</bdi>. يعني 6 فائزين، وكل فائز تذكرة وحدة بس.</li>
+      <li>المسابقة لساكني الإمارات من عمر 18 سنة وفوق، والمشاركة مجانية.</li>
+      <li>مشاركة وحدة لكل رقم جوال ولكل إيميل.</li>
+      <li>لازم تكون متابع <bdi dir="ltr">@saiflex.u</bdi> على إنستغرام وقت السحب، وبنتأكد من هاد.</li>
+      <li>كل سكرين شوت صحيح من موقع سهرة بيعطيك فرصة إضافية.</li>
+      <li>آخر موعد للمشاركة الجمعة 11 ديسمبر 2026 الساعة 11:59 بالليل بتوقيت الإمارات.</li>
+      <li>السحب عشوائي ولايف على إنستغرام يوم 13 ديسمبر. بنتواصل مع الفائزين على الرقم أو الإيميل، وإذا الفائز ما رد خلال 48 ساعة بنسحب غيره.</li>
+      <li>بياناتك بتُستخدم بس لهاي المسابقة، وبنمسحها بعد ما نسلّم التذاكر.</li>
+      <li>المسابقة من موقع سهرة وحساب <bdi dir="ltr">@saiflex.u</bdi> على إنستغرام، وما إلها أي علاقة رسمية مع <bdi>Marvel</bdi> أو <bdi>Warner Bros.</bdi> أو <bdi>Legendary</bdi> أو أي سينما.</li>
+    </ul>
+  </section>
+
+  <section class="hall" aria-labelledby="h-share">
+    <div class="hall-head"><span class="hall-no">شارك</span><h2 id="h-share">خبّر صحابك</h2><p>ابعتلهم الرابط، يمكن واحد منكم يربح وتروحوا سوا.</p></div>
+    <div class="share">
+      <a class="btn btn-wa" id="sh-wa" target="_blank" rel="noopener">شارك على واتساب</a>
+      <button class="btn btn-gold" type="button" id="sh-copy">انسخ الرابط</button>
+      <button class="btn btn-ghost" type="button" id="sh-native" hidden>شارك…</button>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>مسابقة من موقع سهرة · <a href="https://www.instagram.com/saiflex.u/" target="_blank" rel="noopener" dir="ltr">@saiflex.u</a> · <a href="feedback.html">التحسينات والمقترحات</a> · <a href="support.html">ادعمنا</a></span>
+  </div>
+</footer>
+<script src="common.js"></script>
+<script>
+// رابط Google Apps Script (الاستمارة بتبعت عليه، وهو بيحط المشاركة بجدول سيف وبيحفظ الصورة على Drive)
+const GS_URL = "https://script.google.com/macros/s/AKfycbwLTQzPc1B6H1t-KEAMAG_4LPW78QijvmZKOgaLFqWrBBfKMePWNMNvwGOGli8ZD_rwMA/exec";
+const END = Date.parse("2026-12-11T23:59:59+04:00");
+const DONE_KEY = "sahra-contest-2026";
+
+// العداد التنازلي
+const pad = n => String(n).padStart(2, "0");
+function tick() {
+  const left = Math.max(0, END - Date.now()), s = Math.floor(left / 1000);
+  $("#cd-d").textContent = pad(Math.floor(s / 86400)); $("#cd-h").textContent = pad(Math.floor(s / 3600) % 24);
+  $("#cd-m").textContent = pad(Math.floor(s / 60) % 60); $("#cd-s").textContent = pad(s % 60);
+  if (!left) { close(); return false; }
+  return true;
+}
+function close() {
+  $("#cf").hidden = true; $("#closed").hidden = false; $("#count-cap").textContent = "انتهت المسابقة. السحب لايف يوم 13 ديسمبر.";
+}
+if (tick()) { const t = setInterval(() => { if (!tick()) clearInterval(t); }, 1000); }
+
+// إذا شارك قبل من هاد الجهاز
+try { if (localStorage.getItem(DONE_KEY) && Date.now() < END) { $("#cf").hidden = true; $("#done").hidden = false; } } catch (e) {}
+
+// الصورة: بنصغّرها قبل ما نبعثها (أسرع على النت)
+let shot = null;
+const fileIn = $("#c-shot"), drop = $("#drop"), dropImg = $("#drop-img"), dropTxt = $("#drop-txt");
+function shrink(file) {
+  return new Promise((ok, no) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      ok(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); no(); };
+    img.src = url;
+  });
+}
+fileIn.addEventListener("change", async () => {
+  const f = fileIn.files[0]; shot = null; dropImg.hidden = true; drop.classList.remove("on");
+  if (!f) { dropTxt.textContent = "اكبس هون واختار صورة (JPG أو PNG، لحد 10 ميغا)"; return; }
+  if (!/^image\/(png|jpeg)$/.test(f.type)) { dropTxt.textContent = "لازم تكون الصورة JPG أو PNG."; fileIn.value = ""; return; }
+  if (f.size > 10 * 1024 * 1024) { dropTxt.textContent = "الصورة أكبر من 10 ميغا، اختار وحدة أصغر."; fileIn.value = ""; return; }
+  try {
+    const data = await shrink(f); shot = { type: "image/jpeg", data: data.split(",")[1] };
+    dropImg.src = data; dropImg.hidden = false; drop.classList.add("on"); dropTxt.textContent = "✓ " + f.name + " (اكبس لتغيّرها)";
+  } catch (e) { dropTxt.textContent = "ما قدرنا نفتح الصورة، جرّب وحدة ثانية."; fileIn.value = ""; }
+});
+
+// الإرسال
+const form = $("#cf"), F = form.elements, status = $("#c-status"), btn = $("#c-send");
+const say = (t, ok) => { status.textContent = t; status.className = "form-msg " + (ok ? "ok" : "err"); };
+const phoneOf = v => { let d = v.replace(/\D/g, ""); if (d.startsWith("00971")) d = d.slice(5); else if (d.startsWith("971")) d = d.slice(3); if (d.startsWith("0")) d = d.slice(1); return d; };
+const ERR = {
+  dup: "هاد الرقم أو الإيميل مشارك من قبل. مشاركة وحدة بس لكل شخص 😊",
+  closed: "انتهت المسابقة، ما عاد في مشاركات.",
+  big: "الصورة كبيرة كثير، جرّب وحدة أصغر.",
+  phone: "رقم الجوال مش مزبوط.", email: "البريد الإلكتروني مش مزبوط.", ig: "يوزر الإنستغرام مش مزبوط.", name: "اكتب اسمك الكامل."
+};
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = F["name"].value.trim(), email = F["email"].value.trim(), phone = phoneOf(F["phone"].value);
+  const ig = F["ig"].value.trim().replace(/^@+/, ""), emirate = F["emirate"].value, film = F["film"].value;
+  if (name.length < 3) { say("اكتب اسمك الكامل."); F["name"].focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say("البريد الإلكتروني مش مزبوط."); F["email"].focus(); return; }
+  if (!/^5\d{8}$/.test(phone)) { say("اكتب رقم إماراتي من 9 أرقام بيبلّش بـ 5، مثل 501234567."); F["phone"].focus(); return; }
+  if (!/^[A-Za-z0-9._]{1,30}$/.test(ig)) { say("يوزر الإنستغرام فيه أحرف إنجليزية وأرقام ونقطة وشرطة تحتية بس."); F["ig"].focus(); return; }
+  if (!emirate) { say("اختار الإمارة اللي ساكن فيها."); F["emirate"].focus(); return; }
+  if (!$("#c-agree").checked) { say("لازم توافق على الشروط."); $("#c-agree").focus(); return; }
+  if (F["botcheck"].checked) return;
+  if (Date.now() > END) { close(); return; }
+  if (!GS_URL) { say("الاستمارة لسا عم تتجهّز، جرّب كمان شوي."); return; }
+  btn.disabled = true; say(shot ? "عم نرفع الصورة ونسجّلك…" : "عم نسجّلك…", true);
+  try {
+    // text/plain بدون headers عشان ما يصير CORS preflight
+    const r = await fetch(GS_URL, { method: "POST", body: JSON.stringify({ name, email, phone, ig, emirate, film, agree: true, shot, hp: F["botcheck"].checked }) });
+    const j = await r.json();
+    if (!j.ok) { say(ERR[j.error] || "في إشي مش مزبوط، راجع المعلومات وجرّب كمان مرة."); return; }
+    try { localStorage.setItem(DONE_KEY, "1"); } catch (e) {}
+    form.hidden = true; $("#done").hidden = false;
+    if (shot) $("#done-msg").insertAdjacentHTML("beforeend", " ووصلت الصورة كمان، يعني اسمك بالسحب مرتين.");
+    $("#done").scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (err) { say("ما قدرنا نسجّلك هلأ. تأكد من النت وجرّب كمان مرة."); }
+  finally { btn.disabled = false; }
+});
+
+// المشاركة
+const SHARE_URL = location.origin + location.pathname;
+const SHARE_TXT = "🎬 مسابقة من موقع سهرة و @saiflex.u: 6 تذاكر مجاناً لأفلام Dune: Part Three و Avengers: Doomsday! سجّل من هون:";
+$("#sh-wa").href = "https://wa.me/?text=" + encodeURIComponent(SHARE_TXT + " " + SHARE_URL);
+$("#sh-copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(SHARE_URL); $("#sh-copy").textContent = "✓ انتسخ الرابط"; }
+  catch (e) { prompt("انسخ الرابط:", SHARE_URL); }
+  setTimeout(() => $("#sh-copy").textContent = "انسخ الرابط", 2000);
+});
+if (navigator.share) { const b = $("#sh-native"); b.hidden = false; b.addEventListener("click", () => navigator.share({ title: document.title, text: SHARE_TXT, url: SHARE_URL }).catch(() => {})); }
+</script>
+</body>
+</html>
