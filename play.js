@@ -164,8 +164,8 @@ function lobbyInit() {
   catch (e) { box.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(url)}" alt="باركود الغرفة" width="220" height="220">`; }
 }
 $("#l-share").addEventListener("click", async () => {
-  const url = roomUrl(code), text = "تعال العب " + GAME_TITLE + " بسهرة! كود الغرفة " + code;
-  try { if (navigator.share) { await navigator.share({title: "سهرة", text, url}); return; } } catch (e) { return; }
+  const url = roomUrl(code), text = "تعال العب " + GAME_TITLE + " بسهرة فيلم! كود الغرفة " + code;
+  try { if (navigator.share) { await navigator.share({title: "سهرة فيلم", text, url}); return; } } catch (e) { return; }
   try { await navigator.clipboard.writeText(url); toast("انسخ الرابط ✓"); } catch (e) { prompt("انسخ الرابط:", url); }
 });
 $("#j-close").addEventListener("click", () => {

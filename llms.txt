@@ -1,0 +1,18 @@
+# سهرة فيلم (Sahra Film)
+
+> سهرة فيلم موقع عربي مجاني للأفلام والأنمي، باللهجة الأردنية، من صانع المحتوى saiflex (إنستغرام @saiflex.u). الموقع بيساعدك تختار فيلم للّيلة، وفيه ألعاب جماعية عن الأفلام والأنمي، وأغاني الأفلام، وشو بينعرض هلأ بسينمات الإمارات.
+
+Sahra Film (سهرة فيلم) is a free Arabic movie and anime website by content creator saiflex (Instagram @saiflex.u), focused on audiences in the UAE and the Arab world.
+
+## الصفحات
+- [الصفحة الرئيسية](https://sahra-zblk.onrender.com/): أفلام بالسينما هلأ بالإمارات، والجاية قريباً، والأكثر رواجاً.
+- [شو نحضر الليلة؟](https://sahra-zblk.onrender.com/tonight.html): 3 أسئلة عن المزاج والوقت واللي قاعدين معك، وبيطلعلك فيلم واحد.
+- [خمّن الفيلم](https://sahra-zblk.onrender.com/game.html): لعبة جماعية بالتلفونات. الحكم بيعمل غرفة بكود وباركود، وفريقين بيخمّنوا الفيلم بالهنتات.
+- [خمّن الأنمي](https://sahra-zblk.onrender.com/anime.html): نفس اللعبة للأنمي، مع 15 هنت صعبة ومتوسطة وسهلة.
+- [أغاني الأفلام](https://sahra-zblk.onrender.com/music.html): ابحث عن أي فيلم واسمع أغانيه وموسيقاه وتريلره.
+- [مسابقة سهرة فيلم](https://sahra-zblk.onrender.com/contest.html): 6 تذاكر سينما بدبي مول لفيلمي Dune: Part Three و Avengers: Doomsday، آخر موعد 11 ديسمبر 2026.
+
+## عن الموقع
+- الاسم: سهرة فيلم (ويعرف كمان بـ "سهرة" و "Sahra Film")
+- صاحب الموقع: saiflex — https://www.instagram.com/saiflex.u/
+- مجاني وبدون إعلانات.

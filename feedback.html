@@ -3,7 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>التحسينات والمقترحات · سهرة</title>
+<title>التحسينات والمقترحات | سهرة فيلم</title>
+<meta name="description" content="عندك فكرة أو لقيت مشكلة بموقع سهرة فيلم؟ ابعتلنا اقتراحك.">
+<link rel="canonical" href="https://sahra-zblk.onrender.com/feedback.html">
+<meta property="og:site_name" content="سهرة فيلم">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_AE">
+<meta property="og:title" content="التحسينات والمقترحات | سهرة فيلم">
+<meta property="og:description" content="عندك فكرة أو لقيت مشكلة بموقع سهرة فيلم؟ ابعتلنا اقتراحك.">
+<meta property="og:url" content="https://sahra-zblk.onrender.com/feedback.html">
+<meta property="og:image" content="https://sahra-zblk.onrender.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#170a0f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
@@ -12,7 +26,7 @@
 <body data-page="feedback">
 <nav class="nav" aria-label="أقسام الموقع">
   <div class="nav-in">
-    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة</a>
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة <b>فيلم</b></a>
     <div class="nav-links">
       <a href="tonight.html" data-page="tonight">شو نحضر الليلة؟</a>
       <a href="game.html" data-page="game">خمّن الفيلم</a>
@@ -26,7 +40,7 @@
 <main class="wrap">
   <header class="page-head">
     <h1>التحسينات والمقترحات</h1>
-    <p>عندك فكرة تخلّي سهرة أحلى؟ لقيت إشي مش زابط؟ اكتبلنا، وكل رسالة بتوصلنا وبنقراها.</p>
+    <p>عندك فكرة تخلّي سهرة فيلم أحلى؟ لقيت إشي مش زابط؟ اكتبلنا، وكل رسالة بتوصلنا وبنقراها.</p>
   </header>
   <section class="hall" aria-label="نموذج الاقتراحات">
     <form id="fb" class="form" novalidate>
@@ -53,7 +67,7 @@
 </main>
 <footer>
   <div class="wrap">
-    <span>سهرة · فكرة وإعداد saiflex · <a href="feedback.html">التحسينات والمقترحات</a> · <a href="support.html">ادعمنا</a></span>
+    <span>سهرة فيلم · فكرة وإعداد saiflex · <a href="feedback.html">التحسينات والمقترحات</a> · <a href="support.html">ادعمنا</a></span>
   </div>
 </footer>
 <script src="common.js"></script>
@@ -74,7 +88,7 @@ form.addEventListener("submit", async e => {
   try {
     const r = await fetch("https://api.web3forms.com/submit", {
       method: "POST", headers: { "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify({ access_key: W3F_KEY, subject: "سهرة: اقتراح أو شكوى جديدة من " + name, from_name: "موقع سهرة", name, email, message, page: document.referrer || "" })
+      body: JSON.stringify({ access_key: W3F_KEY, subject: "سهرة فيلم: اقتراح أو شكوى جديدة من " + name, from_name: "موقع سهرة فيلم", name, email, message, page: document.referrer || "" })
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok || j.success === false) throw new Error(j.message || r.status);
