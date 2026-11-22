@@ -84,3 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const page = document.body.dataset.page;
   document.querySelectorAll(".nav-links a").forEach(a => { if (a.dataset.page === page) a.setAttribute("aria-current", "page"); });
 });
+
+// عدّاد الزيارات (GoatCounter): الإحصائيات على https://sahrafilm.goatcounter.com
+(() => { const s = document.createElement("script"); s.async = true; s.src = "https://gc.zgo.at/count.js"; s.dataset.goatcounter = "https://sahrafilm.goatcounter.com/count"; document.head.appendChild(s); })();
