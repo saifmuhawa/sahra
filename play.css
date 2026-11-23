@@ -166,3 +166,18 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:16px}
 .card-prev img{width:100%;height:100%;object-fit:cover;display:block}
 a.bigbtn{text-align:center;text-decoration:none}
 :focus-visible{outline:3px solid var(--ticket);outline-offset:2px}
+/* كتيّب التعليمات */
+.guide-open{font-size:20px;padding:12px}
+dialog.guide{width:min(440px,calc(100vw - 28px));border:1px solid var(--line);border-radius:26px;padding:18px;background:linear-gradient(180deg,var(--velvet-3),var(--velvet));color:var(--cream);box-shadow:0 30px 80px #000}
+dialog.guide::backdrop{background:rgba(10,4,7,.78);backdrop-filter:blur(4px)}
+dialog.guide[open]{display:grid;gap:16px}
+.g-top{display:flex;justify-content:space-between;align-items:center}
+.g-step{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.g-page{text-align:center;display:grid;gap:10px;min-height:250px;align-content:center}
+.g-page.in{animation:fadeup .28s ease}
+.g-ico{font-size:64px;line-height:1}
+.g-page h2{font-size:32px;color:var(--ticket);margin:0}
+.g-page p{margin:0;font-size:18px;line-height:1.8;color:var(--cream)}
+.g-dots{display:flex;justify-content:center;gap:8px}
+.g-dots button{width:10px;height:10px;border-radius:50%;border:0;padding:0;background:var(--line);cursor:pointer}
+.g-dots button[aria-current="true"]{background:var(--ticket);width:26px;border-radius:999px}

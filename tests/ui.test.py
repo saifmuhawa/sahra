@@ -19,13 +19,15 @@ async def main():
         errs = []
         for name, pg in (("judge", J), ("A", A), ("B", B)):
             pg.on("pageerror", lambda e, n=name: errs.append(f"{n}: {e}"))
-        await J.goto(BASE + "/game.html")
+        await J.goto(BASE + "/game.html"); await J.evaluate("localStorage.setItem('sahra-guide-v2','1')"); await J.goto(BASE + "/game.html")
         await J.click("#create-btn")
         await J.wait_for_selector("#s-lobby:not([hidden])")
         code = (await J.text_content("#l-code")).strip()
         ok(len(code) == 4, f"الحكم عمل غرفة {code}")
         for pg, nm in ((A, "سيف"), (B, "ليث")):
             await pg.goto(f"{BASE}/game.html?room={code}")
+            await pg.wait_for_selector("dialog.guide[open]")
+            await pg.click("#guide-skip")
             await pg.wait_for_selector("#s-name:not([hidden])")
             await pg.fill("#name-in", nm)
             await pg.click("#name-form button")

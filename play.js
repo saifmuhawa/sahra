@@ -429,3 +429,59 @@ window.addEventListener("DOMContentLoaded", async () => {
   goHome();
 });
 document.addEventListener("visibilitychange", () => { if (!document.hidden && role && !live) { poll(); if (!ws) openSocket(); } });
+
+// ===== كتيّب التعليمات: بيطلع أول مرة قبل اللعب، وبيضل موجود بزر "كيف بنلعب؟" =====
+const GUIDE_KEY = "sahra-guide-v2";
+const GUIDE = [
+  ["🎬", "سهرة " + (KIND === "anime" ? "أنمي" : "أفلام") + " بخطوات بسيطة", "واحد منكم بيكون الحكم، والباقي بينقسموا فريقين متساويين. كل واحد بيلعب من جواله."],
+  ["👑", "الحكم بيعمل غرفة", "بيكبس «أنا الحكم» وبيطلعله كود من 4 أرقام وباركود. الحكم بيختار " + THING + " وبيشوف كل معلوماته، والمتسابقين ما بيشوفوا إشي."],
+  ["📱", "المتسابقين بيدخلوا", "صوّروا الباركود أو اكتبوا الكود، وبعدين اكتبوا أسماءكم. الحكم بيرتّب الفرق، ولازم يكونوا بنفس العدد."],
+  ["⏱️", "سؤال واحد بالدور", "كل فريق إله 30 ثانية يسأل الحكم سؤال واحد، والحكم بيجاوب. إذا خلص الوقت قبل السؤال، راح الدور عليكم وانتقل للفريق الثاني."],
+  ["💡", "التلميحات إلكم بس", "اكبسوا «بدنا تلميح» وقت ما بدكم. التلميح بيطلع على جوالات فريقكم بس، وبيبلّش من الصعب للسهل."],
+  ["🏆", "مين بيفوز؟", "اللي بيعرف " + THING + " بياخذ نقطة. بآخر السهرة الأعلى نقاط بيفوز، ولو تعادلتوا بيفوز الفريق اللي طلب تلميحات أقل. وبتطلعلكم صورة النتيجة للستوري!"],
+];
+let guidePage = 0, guideAfter = null;
+function guideInit() {
+  const d = el("dialog", {class: "guide", id: "guide", "aria-labelledby": "guide-t"});
+  d.innerHTML = `<div class="g-top"><span class="g-step" id="guide-step"></span><button type="button" class="linkbtn" id="guide-skip">تخطّى</button></div>
+    <div class="g-page" aria-live="polite"><div class="g-ico" id="guide-ico"></div><h2 id="guide-t"></h2><p id="guide-p"></p></div>
+    <div class="g-dots" id="guide-dots">${GUIDE.map((_, i) => `<button type="button" aria-label="الصفحة ${i + 1}" data-gp="${i}"></button>`).join("")}</div>
+    <div class="row2"><button type="button" class="bigbtn ghost" id="guide-prev">رجوع</button><button type="button" class="bigbtn gold" id="guide-next">التالي</button></div>`;
+  document.body.appendChild(d);
+  d.querySelector("#guide-skip").addEventListener("click", guideClose);
+  d.querySelector("#guide-prev").addEventListener("click", () => guideGo(guidePage - 1));
+  d.querySelector("#guide-next").addEventListener("click", () => guidePage < GUIDE.length - 1 ? guideGo(guidePage + 1) : guideClose());
+  d.querySelector("#guide-dots").addEventListener("click", e => { const b = e.target.closest("[data-gp]"); if (b) guideGo(+b.dataset.gp); });
+  d.addEventListener("cancel", e => { e.preventDefault(); guideClose(); });
+  let sx = null; // سحب يمين/يسار على الجوال
+  d.addEventListener("touchstart", e => { sx = e.touches[0].clientX; }, {passive: true});
+  d.addEventListener("touchend", e => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 50) guideGo(guidePage + (dx > 0 ? 1 : -1)); });
+  const btn = el("button", {type: "button", class: "bigbtn ghost guide-open", id: "guide-open"}, "📖 كيف بنلعب؟");
+  btn.addEventListener("click", () => guideOpen());
+  $("#s-home .hero-g").after(btn);
+}
+function guideGo(i) {
+  guidePage = Math.max(0, Math.min(GUIDE.length - 1, i));
+  const [ico, t, p] = GUIDE[guidePage];
+  $("#guide-ico").textContent = ico; $("#guide-t").textContent = t; $("#guide-p").textContent = p;
+  $("#guide-step").textContent = (guidePage + 1) + " من " + GUIDE.length;
+  document.querySelectorAll("#guide-dots button").forEach((b, k) => b.setAttribute("aria-current", k === guidePage));
+  $("#guide-prev").disabled = guidePage === 0;
+  $("#guide-next").textContent = guidePage === GUIDE.length - 1 ? "يلا نلعب 🎮" : "التالي";
+  const pg = document.querySelector(".g-page"); pg.classList.remove("in"); void pg.offsetWidth; pg.classList.add("in");
+}
+function guideOpen(after) {
+  guideAfter = after || null;
+  guideGo(0);
+  const d = $("#guide");
+  try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
+  $("#guide-next").focus();
+}
+function guideClose() {
+  put(GUIDE_KEY, 1);
+  const d = $("#guide"); try { d.close(); } catch (e) { d.removeAttribute("open"); }
+  const f = guideAfter; guideAfter = null; if (f) f();
+}
+guideInit();
+// أول مرة بيفوت حدا على اللعبة: الكتيّب قبل أي إشي
+window.addEventListener("DOMContentLoaded", () => { if (!get(GUIDE_KEY)) guideOpen(); });
