@@ -17,7 +17,12 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
   "vars": {
     // لما يصير عندنا دومين خاص، بنحطه هون وكل الروابط الثانية بتتحوّل عليه
-    "CANONICAL_HOST": ""
+    "CANONICAL_HOST": "sahrafilm.com"
   },
+  // الدومين الخاص: Cloudflare بيربطه لحاله وقت النشر
+  "routes": [
+    { "pattern": "sahrafilm.com", "custom_domain": true },
+    { "pattern": "www.sahrafilm.com", "custom_domain": true }
+  ],
   "observability": { "enabled": true }
 }

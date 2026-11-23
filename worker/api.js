@@ -268,7 +268,7 @@ export function parseHints(text) {
 
 // ===== ويكيبيديا: ملخص القصة ومعلومات الإنتاج عشان الذكاء الاصطناعي يكتب تلميحات أدق =====
 // نص ويكيبيديا برخصة CC BY-SA 4.0، وبنستخدمه كمصدر للذكاء الاصطناعي بس (مذكور بصفحة المصادر)
-const WIKI_UA = { "user-agent": "SahraFilm/2.0 (https://sahra-zblk.onrender.com; party film game)" };
+const WIKI_UA = { "user-agent": "SahraFilm/2.0 (https://sahrafilm.com; party film game)" };
 function section(text, names) {
   const parts = String(text || "").split(/\n(?===+ [^=]+ ==+\n)/);
   for (const p of parts) { const h = (p.match(/^==+ ([^=]+?) ==+/) || [])[1]; if (h && names.some(n => h.toLowerCase().includes(n))) return p.replace(/^==+[^\n]*\n/, "").replace(/\n==+[^\n]*==+\n/g, "\n").trim(); }

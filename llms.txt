@@ -5,11 +5,11 @@
 Sahra Film (سهرة فيلم) is a free Arabic movie and anime website by content creator saiflex (Instagram @saiflex.u), focused on audiences in the UAE and the Arab world.
 
 ## الصفحات
-- [الصفحة الرئيسية](https://sahra-zblk.onrender.com/): أفلام بالسينما هلأ بالإمارات، والجاية قريباً، والأكثر رواجاً.
-- [خمّن الفيلم](https://sahra-zblk.onrender.com/game.html): لعبة جماعية بالتلفونات. الحكم بيعمل غرفة بكود وباركود، وفريقين بيخمّنوا الفيلم بالهنتات.
-- [خمّن الأنمي](https://sahra-zblk.onrender.com/anime.html): نفس اللعبة للأنمي، مع 15 هنت صعبة ومتوسطة وسهلة.
-- [أغاني الأفلام](https://sahra-zblk.onrender.com/music.html): ابحث عن أي فيلم واسمع أغانيه وموسيقاه وتريلره.
-- [مسابقة سهرة فيلم](https://sahra-zblk.onrender.com/contest.html): 6 تذاكر سينما بدبي مول لفيلمي Dune: Part Three و Avengers: Doomsday، آخر موعد 11 ديسمبر 2026.
+- [الصفحة الرئيسية](https://sahrafilm.com/): أفلام بالسينما هلأ بالإمارات، والجاية قريباً، والأكثر رواجاً.
+- [خمّن الفيلم](https://sahrafilm.com/game.html): لعبة جماعية بالتلفونات. الحكم بيعمل غرفة بكود وباركود، وفريقين بيخمّنوا الفيلم بالهنتات.
+- [خمّن الأنمي](https://sahrafilm.com/anime.html): نفس اللعبة للأنمي، مع 15 هنت صعبة ومتوسطة وسهلة.
+- [أغاني الأفلام](https://sahrafilm.com/music.html): ابحث عن أي فيلم واسمع أغانيه وموسيقاه وتريلره.
+- [مسابقة سهرة فيلم](https://sahrafilm.com/contest.html): 6 تذاكر سينما بدبي مول لفيلمي Dune: Part Three و Avengers: Doomsday، آخر موعد 11 ديسمبر 2026.
 
 ## عن الموقع
 - الاسم: سهرة فيلم (ويعرف كمان بـ "سهرة" و "Sahra Film")

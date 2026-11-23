@@ -36,4 +36,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://sahra-zblk.onrender.com/sitemap.xml
+Sitemap: https://sahrafilm.com/sitemap.xml
