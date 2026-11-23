@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+worker
+tests
+.wrangler
+wrangler.jsonc
+package.json
+package-lock.json
+api.mjs
+sync.mjs
+.assetsignore
+.gitignore
+.dev.vars

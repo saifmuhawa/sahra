@@ -1,14 +1,14 @@
 /* لعبة الغرف المشتركة بين خمّن الفيلم وخمّن الأنمي. الصفحة بتعرّف KIND و THING و GAME_TITLE و loadInfo و subLine */
-const API = "https://sahra-api-kxww.onrender.com";
-fetch(API + "/health").catch(() => {});
+const API = "/api";
 const LS_J = "sahra-judge-" + KIND, LS_P = "sahra-player-" + KIND;
 const get = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
 const put = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-const WAIT = "(أول مرة ممكن تاخذ لحد دقيقة، السيرفر بيصحى)";
+const WAIT = "";
 const LVL = {hard: ["صعب", "🔴"], mid: ["متوسط", "🟡"], easy: ["سهل", "🟢"]};
 const TCLS = ["t0", "t1"];
 
-let role = null, code = null, key = null, pid = null, S = null, lastV = -1, timer = null, infoKey = null, busy = false;
+let role = null, code = null, key = null, pid = null, S = null, lastV = -1, infoKey = null, busy = false;
+let ws = null, wsTimer = null, pollTimer = null, pingTimer = null, wsTries = 0, offset = 0, live = false;
 
 async function call(path, body) {
   const opt = body ? {method: "POST", headers: {"content-type": "text/plain"}, body: JSON.stringify(body)} : {cache: "no-store"};
@@ -22,56 +22,120 @@ const roomUrl = c => location.origin + location.pathname + "?room=" + c;
 const teamName = t => S?.teams?.[t] || ["الفريق الأحمر", "الفريق الذهبي"][t];
 const teamOf = t => (S?.players || []).filter(p => p.team === t);
 function vsLine() { const a = teamOf(0).length, b = teamOf(1).length; return `<span class="tdot t0"></span>${a} ضد ${b}<span class="tdot t1"></span>`; }
-function setCodes() { ["#k-code", "#g-code", "#r-code"].forEach(s => $(s).textContent = "غرفة " + code); ["#k-vs", "#g-vs", "#r-vs"].forEach(s => $(s).innerHTML = vsLine()); }
+function setCodes() { ["#k-code", "#g-code", "#r-code", "#f-code"].forEach(s => { const e = $(s); if (e) e.textContent = "غرفة " + code; }); ["#k-vs", "#g-vs", "#r-vs", "#f-vs"].forEach(s => { const e = $(s); if (e) e.innerHTML = vsLine(); }); }
+const hintsWord = n => n === 0 ? "ولا تلميح" : n === 1 ? "تلميح واحد" : n === 2 ? "تلميحين" : n >= 3 && n <= 10 ? n + " تلميحات" : n + " تلميح";
 
-// ===== الاستطلاع =====
-function startPoll() { stopPoll(); lastV = -1; poll(); timer = setInterval(poll, role === "judge" ? 2000 : 1500); }
-function stopPoll() { if (timer) clearInterval(timer); timer = null; }
+// ===== الاتصال المباشر (WebSocket) مع احتياط بالاستطلاع =====
+function connect() {
+  disconnect();
+  lastV = -1;
+  openSocket();
+  pollTimer = setInterval(() => { if (!live) poll(); }, 3000);
+  poll();
+}
+function disconnect() {
+  live = false;
+  [wsTimer, pingTimer].forEach(t => t && clearTimeout(t));
+  if (pollTimer) clearInterval(pollTimer);
+  wsTimer = pingTimer = pollTimer = null;
+  if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} ws = null; }
+}
+function openSocket() {
+  const q = role === "judge" ? "key=" + encodeURIComponent(key) : "pid=" + encodeURIComponent(pid);
+  try { ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + API + "/room/ws?code=" + code + "&" + q); }
+  catch (e) { return retrySocket(); }
+  ws.onopen = () => { live = true; wsTries = 0; ping(); };
+  ws.onmessage = e => { if (e.data === "pong") return; try { apply(JSON.parse(e.data)); } catch (err) {} };
+  ws.onclose = ev => { live = false; ws = null; if (ev.code === 4000) return roomGone(); if (ev.code === 4001) { if (role === "player") { S && (S.me = null); return render(true); } } retrySocket(); };
+  ws.onerror = () => {};
+}
+function ping() { pingTimer = setTimeout(() => { try { ws && ws.readyState === 1 && ws.send("ping"); } catch (e) {} ping(); }, 25000); }
+function retrySocket() { if (!role) return; wsTimer = setTimeout(openSocket, Math.min(10000, 800 * 2 ** wsTries++)); }
 let pollErr = 0;
 async function poll() {
   try {
     const q = role === "judge" ? "key=" + encodeURIComponent(key) : "pid=" + encodeURIComponent(pid);
     const st = await call("/room/state?code=" + code + "&" + q);
     pollErr = 0;
-    if (st.kind && st.kind !== KIND) { location.href = (st.kind === "anime" ? "anime.html" : "game.html") + "?room=" + code; return; }
-    const changed = st.v !== lastV; S = st; lastV = st.v;
-    render(changed);
+    apply(st);
   } catch (e) {
     if (e.status === 404) return roomGone();
-    if (++pollErr === 4) toast("الاتصال ضعيف… عم نحاول");
+    if (++pollErr === 3) toast("الاتصال ضعيف… عم نحاول");
   }
 }
+function apply(st) {
+  if (!role) return;
+  if (st.kind && st.kind !== KIND) { location.href = (st.kind === "anime" ? "anime.html" : "game.html") + "?room=" + code; return; }
+  if (st.v < lastV) return; // نسخة أقدم وصلت متأخرة
+  if (st.now) offset = st.now - Date.now();
+  const prev = S;
+  const changed = st.v !== lastV; S = st; lastV = st.v;
+  if (prev && st.lastPass && st.lastPass.at !== prev.lastPass?.at) announcePass(st.lastPass);
+  render(changed);
+}
 function roomGone() {
-  stopPoll();
+  disconnect();
   if (role === "judge") put(LS_J, null); else put(LS_P, null);
   role = null; S = null;
   goHome("الغرفة خلصت أو انسكّرت. اعمل غرفة جديدة أو ادخل كود ثاني.");
 }
 function toast(t) { const m = el("div", {class: "toast", role: "status"}, esc(t)); document.body.appendChild(m); setTimeout(() => m.remove(), 2600); }
 
+// ===== المؤقت: السيرفر بيحدد متى بيخلص الدور، والجوال بيعدّ لتحت =====
+const serverNow = () => Date.now() + offset;
+function secsLeft() {
+  if (!S || S.stage !== "play") return null;
+  if (S.paused) return Math.ceil((S.left || 0) / 1000);
+  if (!S.turnEnds) return null;
+  return Math.max(0, Math.ceil((S.turnEnds - serverNow()) / 1000));
+}
+let buzzedFor = null;
+setInterval(() => {
+  const s = secsLeft();
+  document.querySelectorAll("[data-cd]").forEach(e => {
+    if (s == null) { e.textContent = ""; return; }
+    e.textContent = s;
+    e.classList.toggle("hot", !S.paused && s <= 5);
+  });
+  document.querySelectorAll("[data-ring]").forEach(e => {
+    const frac = s == null ? 0 : Math.max(0, Math.min(1, ((S.paused ? S.left : S.turnEnds - serverNow()) || 0) / (S.turnSec * 1000)));
+    e.style.setProperty("--p", frac);
+  });
+  // اهتزاز آخر 5 ثواني لفريق الدور
+  if (role === "player" && S?.me && S.stage === "play" && !S.paused && S.turn === S.me.team && s != null && s <= 5 && s > 0) {
+    const k = S.turnEnds; if (buzzedFor !== k) { buzzedFor = k; navigator.vibrate?.([80, 60, 80]); }
+  }
+}, 200);
+function announcePass(lp) {
+  if (lp.why !== "timeout") return;
+  if (role === "player" && S?.me) toast(lp.team === S.me.team ? "⏱️ خلص الوقت، راحت عليكم!" : "⏱️ خلص وقت " + teamName(lp.team) + "، دوركم!");
+  else toast("⏱️ خلص وقت " + teamName(lp.team) + "، الدور انتقل");
+  if (role === "player" && S?.me && lp.team !== S.me.team) navigator.vibrate?.(200);
+}
+
 function render(changed) {
   if (role === "judge") return renderJudge(changed);
-  if (!S.me) { stopPoll(); put(LS_P, null); show("s-name"); $("#name-code").textContent = "غرفة " + code; $("#name-msg").textContent = "الحكم طلّعك من الغرفة، أو انتهت جلستك. ادخل من جديد."; return; }
+  if (!S.me) { disconnect(); put(LS_P, null); show("s-name"); $("#name-code").textContent = "غرفة " + code; $("#name-msg").textContent = "الحكم طلّعك من الغرفة، أو انتهت جلستك. ادخل من جديد."; return; }
   renderPlayer(changed);
 }
 
 // ===== البداية =====
 function goHome(msg) {
-  stopPoll(); show("s-home"); $("#home-msg").textContent = msg || "";
+  disconnect(); show("s-home"); $("#home-msg").textContent = msg || "";
   const j = get(LS_J), p = get(LS_P);
   const box = $("#resume"); box.innerHTML = "";
   if (j) box.insertAdjacentHTML("beforeend", `<button class="bigbtn ghost" type="button" id="resume-j">👑 رجوع لغرفتك ${esc(j.code)}</button>`);
   if (p) box.insertAdjacentHTML("beforeend", `<button class="bigbtn ghost" type="button" id="resume-p">🎮 رجوع لغرفة ${esc(p.code)} باسم ${esc(p.name)}</button>`);
   box.hidden = !j && !p;
-  $("#resume-j")?.addEventListener("click", () => { role = "judge"; code = j.code; key = j.key; show("s-lobby"); lobbyInit(); startPoll(); });
-  $("#resume-p")?.addEventListener("click", () => { role = "player"; code = p.code; pid = p.pid; show("s-player"); startPoll(); });
+  $("#resume-j")?.addEventListener("click", () => { role = "judge"; code = j.code; key = j.key; show("s-lobby"); lobbyInit(); connect(); });
+  $("#resume-p")?.addEventListener("click", () => { role = "player"; code = p.code; pid = p.pid; show("s-player"); connect(); });
 }
 $("#create-btn").addEventListener("click", async () => {
-  const b = $("#create-btn"); b.disabled = true; $("#home-msg").textContent = "عم نعمل الغرفة… " + WAIT;
+  const b = $("#create-btn"); b.disabled = true; $("#home-msg").textContent = "عم نعمل الغرفة…";
   try {
     const r = await call("/room/create", {kind: KIND});
     role = "judge"; code = r.code; key = r.key; put(LS_J, {code, key});
-    $("#home-msg").textContent = ""; show("s-lobby"); lobbyInit(); startPoll();
+    $("#home-msg").textContent = ""; show("s-lobby"); lobbyInit(); connect();
   } catch (e) { $("#home-msg").textContent = "ما زبطت، جرّب كمان مرة."; }
   b.disabled = false;
 });
@@ -83,13 +147,13 @@ $("#code-form").addEventListener("submit", async e => {
   await openJoin(c);
 });
 async function openJoin(c) {
-  $("#home-msg").textContent = "عم ندوّر على الغرفة… " + WAIT;
+  $("#home-msg").textContent = "عم ندوّر على الغرفة…";
   try {
     const st = await call("/room/state?code=" + c);
     if (st.kind !== KIND) { location.href = (st.kind === "anime" ? "anime.html" : "game.html") + "?room=" + c; return; }
     code = c; $("#home-msg").textContent = "";
     const p = get(LS_P);
-    if (p && p.code === c && st.players.some(x => x.id === p.pid)) { role = "player"; pid = p.pid; show("s-player"); startPoll(); return; }
+    if (p && p.code === c && st.players.some(x => x.id === p.pid)) { role = "player"; pid = p.pid; show("s-player"); connect(); return; }
     show("s-name"); $("#name-code").textContent = "غرفة " + c; $("#name-msg").textContent = ""; $("#name-in").value = p?.name || ""; $("#name-in").focus();
   } catch (e) { show("s-home"); $("#home-msg").textContent = e.status === 404 ? "ما في غرفة بهالكود. تأكد منه." : "ما قدرنا نوصل للسيرفر، جرّب كمان مرة."; }
 }
@@ -101,11 +165,30 @@ $("#name-form").addEventListener("submit", async e => {
     const old = get(LS_P);
     const r = await call("/room/join", {code, name, pid: old && old.code === code ? old.pid : undefined});
     role = "player"; pid = r.pid; put(LS_P, {code, pid, name});
-    show("s-player"); startPoll();
+    show("s-player"); connect();
   } catch (err) { $("#name-msg").textContent = err.status === 404 ? "الغرفة مش موجودة." : err.message === "full" ? "الغرفة مليانة." : "ما زبطت، جرّب كمان مرة."; }
   b.disabled = false;
 });
 document.querySelectorAll("[data-home]").forEach(b => b.addEventListener("click", () => goHome()));
+
+// ===== أجزاء مشتركة =====
+function scoreBar() {
+  const s = S.score || [0, 0], h = S.hintsTotal || [0, 0];
+  return `<div class="scorebar" aria-label="النتيجة">
+    <div class="sb t0"><b>${esc(teamName(0))}</b><span class="pts">${s[0]}</span><small>💡 ${h[0]}</small></div>
+    <div class="sb-mid">النتيجة</div>
+    <div class="sb t1"><b>${esc(teamName(1))}</b><span class="pts">${s[1]}</span><small>💡 ${h[1]}</small></div>
+  </div>`;
+}
+function turnCard(myTeam) {
+  const t = S.turn, mine = myTeam === t;
+  const head = myTeam == null ? `دور ${esc(teamName(t))}` : mine ? "دوركم! 🎤" : `دور ${esc(teamName(t))}`;
+  const sub = S.paused ? "⏸ الحكم وقّف الوقت" : myTeam == null ? "سؤال واحد للحكم قبل ما يخلص الوقت" : mine ? "اسألوا الحكم سؤال واحد قبل ما يخلص الوقت" : "استنوا، دوركم بعدهم";
+  return `<div class="turn ${TCLS[t]}${mine ? " mine" : ""}${S.paused ? " paused" : ""}">
+    <div class="ring" data-ring><span class="cd" data-cd></span></div>
+    <div class="turn-txt"><h2>${head}</h2><p>${sub}</p></div>
+  </div>`;
+}
 
 // ===== المتسابق =====
 $("#p-leave").addEventListener("click", async () => {
@@ -123,28 +206,58 @@ function renderPlayer(changed) {
   const body = $("#p-body");
   const teamsHtml = `<div class="teams">${[0, 1].map(x => teamBox(x, false)).join("")}</div>`;
   if (S.stage === "lobby") {
-    body.innerHTML = `<div class="card-g center big-status ${TCLS[t]}-glow"><p class="lbl">إنت بـ</p><h2 class="tname ${TCLS[t]}">${esc(teamName(t))}</h2><p>استنى الحكم يبلّش اللعبة<span class="dots"></span></p></div>${teamsHtml}`;
+    body.innerHTML = `<div class="card-g center big-status ${TCLS[t]}-glow"><p class="lbl">إنت بـ</p><h2 class="tname ${TCLS[t]}">${esc(teamName(t))}</h2><p>استنى الحكم يبلّش اللعبة<span class="dots"></span></p></div>
+      <div class="card-g rules"><b>كيف بنلعب؟</b><p>كل فريق إله ${S.turnSec} ثانية يسأل الحكم سؤال واحد، وإذا خلص الوقت بيروح الدور عليه. بتقدروا تطلبوا تلميحات قد ما بدكم، وبتوصلكم إنتو بس. ولو تعادلتوا بالنقاط، بيفوز الفريق اللي طلب تلميحات أقل.</p></div>${teamsHtml}`;
   } else if (S.stage === "pick") {
-    body.innerHTML = `<div class="card-g center big-status"><div class="spin">🎬</div><h2>الحكم عم يختار ${THING}<span class="dots"></span></h2><p>جهّزوا أسئلتكم!</p></div>${teamsHtml}`;
+    body.innerHTML = `${S.round ? scoreBar() : ""}<div class="card-g center big-status"><div class="spin">🎬</div><h2>الحكم عم يختار ${THING}<span class="dots"></span></h2><p>جهّزوا أسئلتكم!</p></div>${teamsHtml}`;
   } else if (S.stage === "play") {
-    const hs = S.shown.slice().reverse();
-    const fresh = S.shown.length > seenHints;
-    body.innerHTML = `<div class="card-g center"><h2>الحكم اختار ${THING}! 🎯</h2><p>اسألوا الحكم أسئلة وخمّنوا. الهنتات بتطلع هون لما الحكم يكشفها.</p></div>
-      <div class="hint-feed">${hs.length ? hs.map((h, k) => `<div class="hcard ${h.lvl}${fresh && k === 0 ? " pop" : ""}"><span class="hl">${LVL[h.lvl][1]} هنت ${LVL[h.lvl][0]}</span><p>${esc(h.text)}</p></div>`).join("") : `<p class="note center">لسا ما في هنتات. الحكم بيكشفها لما تقربوا.</p>`}</div>${teamsHtml}`;
+    const hs = (S.myHints || []).slice().reverse();
+    const fresh = (S.myHints || []).length > seenHints;
+    const other = 1 - t, left = S.hintsLeft?.[t] ?? 0;
+    body.innerHTML = `${scoreBar()}${turnCard(t)}
+      <button class="bigbtn hintbtn" type="button" id="p-hint"${left ? "" : " disabled"}>💡 بدنا تلميح</button>
+      <p class="note center">التلميح بيوصل لفريقكم بس. هالجولة: إنتو ${hintsWord(S.roundHints[t])} · ${esc(teamName(other))} ${hintsWord(S.roundHints[other])}</p>
+      <div class="hint-feed">${hs.length ? hs.map((h, k) => `<div class="hcard ${h.lvl}${fresh && k === 0 ? " pop" : ""}"><span class="hl">${LVL[h.lvl][1]} تلميح ${LVL[h.lvl][0]}</span><p>${esc(h.text)}</p></div>`).join("") : `<p class="note center">لسا ما طلبتوا تلميحات. كل ما تطلبوا أقل، أحسن لكم بالتعادل.</p>`}</div>${teamsHtml}`;
     if (fresh && navigator.vibrate) navigator.vibrate(120);
-    seenHints = S.shown.length;
+    seenHints = (S.myHints || []).length;
+    $("#p-hint")?.addEventListener("click", askHint);
   } else if (S.stage === "reveal") {
     seenHints = 0;
-    body.innerHTML = revealHtml(t) + teamsHtml;
+    body.innerHTML = revealHtml(t) + scoreBar() + `<p class="note center">استنوا الحكم يختار ${THING} الجاي أو يخلّص السهرة</p>` + teamsHtml;
+  } else if (S.stage === "final") {
+    seenHints = 0;
+    body.innerHTML = finalHtml(t);
+    mountCard();
   }
+}
+async function askHint() {
+  const b = $("#p-hint"); if (!b || b.disabled) return;
+  b.disabled = true; b.textContent = "عم نجيب التلميح…";
+  try { await call("/room/hint", {code, pid}); toast("💡 وصلكم تلميح"); if (!live) poll(); }
+  catch (e) { toast(e.message === "none" ? "خلصت التلميحات لهالجولة" : e.message === "slow" ? "استنى ثانية، التلميح عالطريق" : "ما زبطت، جرّب كمان مرة"); b.disabled = false; b.textContent = "💡 بدنا تلميح"; }
 }
 function revealHtml(myTeam) {
   const f = S.film || {};
   const w = S.winner;
   const head = w === 0 || w === 1 ? `🏆 ${esc(teamName(w))} عرفه!` : "ما حدا عرفه 😅";
-  const mine = myTeam == null || w == null || w < 0 ? "" : w === myTeam ? `<p class="win-me">فريقك ربح! 🎉</p>` : `<p class="note">المرة الجاي إلكم 💪</p>`;
+  const mine = myTeam == null || w == null || w < 0 ? "" : w === myTeam ? `<p class="win-me">فريقك أخذ النقطة! 🎉</p>` : `<p class="note">المرة الجاي إلكم 💪</p>`;
   const poster = f.p ? `<img class="rposter" src="${IMG}w342${f.p}" alt="">` : "";
   return `<div class="card-g center reveal-card ${w === 0 || w === 1 ? TCLS[w] + "-glow" : ""}"><p class="lbl">${THING} كان</p>${poster}<h2 class="rtitle">${esc(f.ar || f.en || "")}</h2><div class="en" dir="ltr">${esc(f.en || "")}${f.y ? " · " + f.y : ""}</div><h3 class="rwin">${head}</h3>${mine}</div>`;
+}
+function finalText() {
+  const F = S.final || {winner: -1, reason: "draw"};
+  if (F.winner < 0) return {head: "تعادل! 🤝", sub: "نفس النقاط ونفس عدد التلميحات"};
+  return {head: `🏆 ${teamName(F.winner)} فاز بالسهرة!`, sub: F.reason === "hints" ? "تعادلوا بالنقاط، وفاز لأنه طلب تلميحات أقل" : ""};
+}
+function finalHtml(myTeam) {
+  const F = S.final || {winner: -1}, ft = finalText();
+  const mine = myTeam == null || F.winner < 0 ? "" : F.winner === myTeam ? `<p class="win-me">فريقك فاز! 🎉</p>` : `<p class="note">المرة الجاي إلكم 💪</p>`;
+  const rows = (S.rounds || []).map(r => `<li><span class="tdot ${r.winner >= 0 ? TCLS[r.winner] : "none"}"></span><b>${esc(r.ar || r.en)}</b><small>${r.winner >= 0 ? esc(teamName(r.winner)) : "ما حدا عرفه"}</small></li>`).join("");
+  return `<div class="card-g center reveal-card ${F.winner >= 0 ? TCLS[F.winner] + "-glow" : ""}"><p class="lbl">نتيجة السهرة</p><h2 class="rtitle">${esc(ft.head)}</h2>${ft.sub ? `<p class="note">${esc(ft.sub)}</p>` : ""}${mine}</div>
+    ${scoreBar()}
+    ${rows ? `<div class="card-g"><b>اللي لعبناه</b><ul class="rounds">${rows}</ul></div>` : ""}
+    <div class="card-g center story-box"><b>كرت النتيجة للستوري 📸</b><div class="card-prev" id="card-prev"><p class="note">عم نجهّز الكرت…</p></div>
+      <div class="row2"><button class="bigbtn gold" type="button" id="card-share">شارك</button><a class="bigbtn ghost" id="card-dl" download="sahra-result.png">حمّل الصورة</a></div></div>`;
 }
 function teamBox(t, judge) {
   const ps = teamOf(t);
@@ -152,10 +265,46 @@ function teamBox(t, judge) {
     ${ps.length ? ps.map(p => `<div class="pchip${p.on ? "" : " off"}"><span class="pn">${esc(p.name)}${!judge && S.me && p.id === S.me.id ? " (إنت)" : ""}</span>${judge ? `<span class="pbtns"><button type="button" class="mini" data-move="${p.id}" aria-label="انقل ${esc(p.name)} للفريق الثاني">⇄</button><button type="button" class="mini" data-kick="${p.id}" aria-label="طلّع ${esc(p.name)}">✕</button></span>` : ""}</div>`).join("") : `<p class="note">ما في حدا لسا</p>`}</div>`;
 }
 
+// ===== كرت الستوري =====
+let cardFor = null, cardBlob = null;
+async function mountCard() {
+  const box = $("#card-prev"); if (!box) return;
+  const sig = S.v + ":" + (S.rounds || []).length;
+  const wire = () => {
+    $("#card-share")?.addEventListener("click", shareCard);
+  };
+  if (cardFor === sig && cardBlob) { showCard(); wire(); return; }
+  cardFor = sig; cardBlob = null;
+  try {
+    const ft = finalText();
+    cardBlob = await makeStoryCard({
+      game: GAME_TITLE, thing: THING, teams: [teamName(0), teamName(1)], score: S.score, hints: S.hintsTotal,
+      winner: S.final?.winner ?? -1, head: ft.head, sub: ft.sub, rounds: S.rounds || [], host: location.host,
+    });
+    showCard();
+  } catch (e) { box.innerHTML = `<p class="warn">ما قدرنا نجهّز الكرت على هالجوال.</p>`; }
+  wire();
+}
+function showCard() {
+  const box = $("#card-prev"); if (!box || !cardBlob) return;
+  const url = URL.createObjectURL(cardBlob);
+  box.innerHTML = `<img src="${url}" alt="كرت نتيجة السهرة">`;
+  const dl = $("#card-dl"); if (dl) dl.href = url;
+}
+async function shareCard() {
+  if (!cardBlob) return;
+  const file = new File([cardBlob], "sahra-result.png", {type: "image/png"});
+  try {
+    if (navigator.canShare && navigator.canShare({files: [file]})) { await navigator.share({files: [file], title: "نتيجة سهرة فيلم", text: "لعبنا " + GAME_TITLE + " على سهرة فيلم 🎬 @saiflex.u"}); return; }
+  } catch (e) { if (e.name === "AbortError") return; }
+  $("#card-dl")?.click();
+  toast("حمّلنا الصورة، نزّلها ستوري من الاستديو");
+}
+
 // ===== الحكم =====
 async function act(type, extra = {}) {
   const st = await call("/room/act", Object.assign({code, key, type}, extra));
-  S = st; lastV = st.v; render(true); return st;
+  apply(st); return st;
 }
 function lobbyInit() {
   $("#l-code").textContent = code;
@@ -177,6 +326,7 @@ $("#l-teams").addEventListener("click", async e => {
   if (b.dataset.move) await act("move", {pid: b.dataset.move}).catch(() => {});
   if (b.dataset.kick) await act("kick", {pid: b.dataset.kick}).catch(() => {});
 });
+$("#l-sec").addEventListener("click", e => { const b = e.target.closest("[data-sec]"); if (b) act("turnsec", {sec: +b.dataset.sec}).catch(() => {}); });
 $("#l-shuffle").addEventListener("click", () => act("shuffle").catch(() => {}));
 $("#l-start").addEventListener("click", async () => {
   try { await act("start"); } catch (e) { $("#l-msg").textContent = "لازم الفريقين يكونوا بنفس العدد."; }
@@ -189,43 +339,54 @@ function renderJudge(changed) {
   if (st === "lobby") {
     if ($("#s-lobby").hidden) { show("s-lobby"); lobbyInit(); }
     $("#l-teams").innerHTML = [0, 1].map(t => teamBox(t, true)).join("");
+    $("#l-sec").querySelectorAll("[data-sec]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.sec === S.turnSec));
     const a = teamOf(0).length, b = teamOf(1).length;
     const ok = a > 0 && a === b;
     $("#l-start").disabled = !ok;
     $("#l-msg").textContent = !a && !b ? "استنى المتسابقين يدخلوا…" : ok ? (a === 1 ? "متنافسين وجهاً لوجه ✓" : `فريقين متساويين، ${a} ضد ${b} ✓`) : `لازم الفريقين يكونوا بنفس العدد (هلأ ${a} ضد ${b}). اضغط ⇄ عشان تنقل حدا.`;
   } else if (st === "pick") {
     if ($("#s-pick").hidden) { show("s-pick"); $("#sugg").innerHTML = ""; $("#pick-in").value = ""; infoKey = null; }
+    $("#k-score").innerHTML = S.round ? scoreBar() : "";
   } else if (st === "play") {
     if ($("#s-play").hidden) { show("s-play"); setTab("hints"); }
     if (changed) renderPlay();
   } else if (st === "reveal") {
     if ($("#s-reveal").hidden) show("s-reveal");
-    if (changed) $("#r-body").innerHTML = revealHtml(null);
+    if (changed) $("#r-body").innerHTML = revealHtml(null) + scoreBar();
+  } else if (st === "final") {
+    if ($("#s-final").hidden) show("s-final");
+    if (changed) { $("#f-body").innerHTML = finalHtml(null); mountCard(); }
   }
 }
 function renderPlay() {
   const f = S.film; if (!f) return;
+  $("#g-turn").innerHTML = scoreBar() + turnCard(null) + `<div class="row2 turnbtns">
+      <button type="button" class="bigbtn ${TCLS[1 - S.turn]}" id="g-pass">✓ جاوبت، دور ${esc(teamName(1 - S.turn))}</button>
+      <button type="button" class="bigbtn ghost" id="g-pause">${S.paused ? "▶ كمّل الوقت" : "⏸ وقّف الوقت"}</button></div>`;
   $("#g-head").innerHTML = `${f.p ? `<img src="${IMG}w154${f.p}" alt="">` : `<div class="noposter"></div>`}<div><h2>${esc(f.ar || f.en)}</h2><div class="en" dir="ltr">${esc(f.en)}${f.y ? " · " + f.y : ""}</div><p class="note">بس إنت شايف هالمعلومات</p></div>`;
-  const shown = new Set(S.shown.map(h => h.i));
+  const tag = h => h.got.map(t => `<span class="gchip ${TCLS[t]}">${esc(teamName(t))}</span>`).join("");
   const groups = ["hard", "mid", "easy"].map(l => {
-    const items = S.hints.map((h, i) => ({...h, i})).filter(h => h.lvl === l);
-    return `<div class="hgroup ${l}"><h3>${LVL[l][1]} ${LVL[l][0]}</h3>${items.map(h => `<div class="hrow${shown.has(h.i) ? " done" : ""}"><p>${esc(h.text)}</p><button type="button" class="hbtn" data-hint="${h.i}">${shown.has(h.i) ? "✓ انكشف" : "اكشف"}</button></div>`).join("")}</div>`;
+    const items = S.hints.filter(h => h.lvl === l);
+    return `<div class="hgroup ${l}"><h3>${LVL[l][1]} ${LVL[l][0]}</h3>${items.map(h => `<div class="hrow${h.got.length ? " done" : ""}"><p>${esc(h.text)}</p><span class="gots">${tag(h)}</span></div>`).join("")}</div>`;
   }).join("");
-  $("#g-hints").innerHTML = `<p class="note">${S.hintsSrc === "ai" ? "🤖 الهنتات من الذكاء الاصطناعي. " : ""}اكشف الهنت لما المتسابقين يقربوا، وبيطلع على تلفوناتهم فوراً. (${S.shown.length} من ${S.hints.length} انكشفوا)</p>${groups}`;
+  const src = S.hintsSrc === "ai+wiki" ? "🤖 التلميحات من الذكاء الاصطناعي ومعلومات ويكيبيديا. " : S.hintsSrc === "ai" ? "🤖 التلميحات من الذكاء الاصطناعي. " : "";
+  $("#g-hints").innerHTML = `<p class="note">${src}الفرق بتطلب التلميحات من جوالاتها، وكل فريق بيشوف تلميحاته بس. هون بتشوف مين أخذ شو. (${esc(teamName(0))}: ${S.roundHints[0]} · ${esc(teamName(1))}: ${S.roundHints[1]})</p>${groups}`;
   $("#g-who").innerHTML = [0, 1].map(t => `<button type="button" class="bigbtn ${TCLS[t]}" data-win="${t}">${esc(teamName(t))}</button>`).join("");
   const key2 = f.t + f.id;
   if (infoKey !== key2) { infoKey = key2; loadInfo({id: f.id, t: f.t, en: f.en, ar: f.ar, y: f.y, p: f.p}); }
 }
-$("#g-hints").addEventListener("click", async e => {
-  const b = e.target.closest("[data-hint]"); if (!b) return;
-  const i = +b.dataset.hint, done = S.shown.some(h => h.i === i);
-  b.disabled = true;
-  try { await act(done ? "unhint" : "hint", {i}); } catch (err) { b.disabled = false; }
+$("#g-turn").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "g-pass") { b.disabled = true; act("pass").catch(() => { b.disabled = false; }); }
+  if (b.id === "g-pause") act(S.paused ? "resume" : "pause").catch(() => {});
 });
 $("#g-who").addEventListener("click", e => { const b = e.target.closest("[data-win]"); if (b) act("reveal", {winner: +b.dataset.win}).catch(() => {}); });
 $("#g-nobody").addEventListener("click", () => act("reveal", {winner: -1}).catch(() => {}));
 $("#g-change").addEventListener("click", () => act("next").catch(() => {}));
 $("#r-next").addEventListener("click", () => act("next").catch(() => {}));
+$("#r-end").addEventListener("click", () => act("end").catch(() => {}));
+$("#k-end").addEventListener("click", () => act("end").catch(() => {}));
+$("#f-new").addEventListener("click", () => act("newgame").catch(() => {}));
 function setTab(t) { $("#tab-hints").setAttribute("aria-selected", t === "hints"); $("#tab-info").setAttribute("aria-selected", t === "info"); $("#g-hints").hidden = t !== "hints"; $("#g-info").hidden = t !== "info"; }
 $("#tab-hints").addEventListener("click", () => setTab("hints"));
 $("#tab-info").addEventListener("click", () => setTab("info"));
@@ -242,7 +403,7 @@ function suggest(list, note) {
 }
 async function choose(f) {
   if (busy) return; busy = true;
-  $("#sugg").innerHTML = `<p class="note">عم نجهّز ${THING} والهنتات… ${WAIT}</p>`;
+  $("#sugg").innerHTML = `<p class="note">عم نجهّز ${THING} والتلميحات…</p>`;
   try {
     window.PICKED = f;
     await act("film", {t: KIND === "anime" ? f.t : "movie", id: f.id});
@@ -252,7 +413,7 @@ async function choose(f) {
 $("#story-form").addEventListener("submit", async e => {
   e.preventDefault();
   const s = $("#story-in").value.trim(); if (s.length < 8) return;
-  $("#sugg").innerHTML = `<p class="note">🤖 عم يفكّر… ${WAIT}</p>`;
+  $("#sugg").innerHTML = `<p class="note">🤖 عم يفكّر…</p>`;
   let j = null;
   try { j = await call((KIND === "anime" ? "/anime/guess" : "/guess") + "?story=" + encodeURIComponent(s)); } catch (err) {}
   const list = j?.results || [];
@@ -267,3 +428,4 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (rc) { history.replaceState(null, "", location.pathname); show("s-home"); return openJoin(rc); }
   goHome();
 });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && role && !live) { poll(); if (!ws) openSocket(); } });

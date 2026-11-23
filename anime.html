@@ -43,7 +43,7 @@
     <div class="hero-g">
       <div class="logo-g">🍥</div>
       <h1>خمّن الأنمي</h1>
-      <p>الحكم بيعمل غرفة من تلفونه، والمتسابقين بيدخلوا بالكود أو الباركود من تلفوناتهم. فريقين متساويين، والحكم عنده كل المعلومات و15 هنت.</p>
+      <p>الحكم بيعمل غرفة من تلفونه، والمتسابقين بيدخلوا بالكود أو الباركود من تلفوناتهم. فريقين متساويين، كل فريق إله 30 ثانية يسأل سؤال واحد، والتلميحات بتوصل للفريق اللي بطلبها بس.</p>
     </div>
     <button class="bigbtn gold" type="button" id="create-btn">👑 أنا الحكم: اعمل غرفة</button>
     <div class="or"><span>أو</span></div>
@@ -83,6 +83,7 @@
       <p class="note">خلّي المتسابقين يصوّروا الباركود أو يكتبوا الكود بصفحة خمّن الأنمي</p>
       <button class="btn btn-ghost" type="button" id="l-share">🔗 ابعت رابط الغرفة</button>
     </div>
+    <div class="card-g"><p class="lbl" id="l-sec-lbl">وقت كل دور</p><div class="seg" id="l-sec" role="group" aria-labelledby="l-sec-lbl"><button type="button" data-sec="30">30 ثانية</button><button type="button" data-sec="45">45 ثانية</button><button type="button" data-sec="60">دقيقة</button></div></div>
     <div class="teams" id="l-teams"></div>
     <button class="btn btn-ghost shuf" type="button" id="l-shuffle">🔀 وزّع الفرق عشوائياً</button>
     <p class="msg" id="l-msg" role="status"></p>
@@ -92,6 +93,7 @@
   <!-- الحكم: اختار فيلمك -->
   <section class="scr" id="s-pick" hidden>
     <div class="topbar"><span class="pillcode" id="k-code"></span><span class="vs" id="k-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
+    <div id="k-score"></div>
     <div class="hero-g small"><h1>اختار الأنمي</h1><p>المتسابقين ما بيشوفوا إشي من هون.</p></div>
     <form class="card-g" id="pick-form" autocomplete="off">
       <label for="pick-in" class="lbl">اسم الأنمي بالإنجليزي أو الروماجي</label>
@@ -106,20 +108,22 @@
       </form>
     </details>
     <div class="sugg" id="sugg"></div>
+    <button class="linkbtn" type="button" id="k-end">🏁 خلّص السهرة وطلّع النتيجة</button>
   </section>
 
   <!-- الحكم: اللعب -->
   <section class="scr" id="s-play" hidden>
     <div class="topbar"><span class="pillcode" id="g-code"></span><span class="vs" id="g-vs"></span><button class="linkbtn" type="button" id="g-change">غيّر الأنمي</button></div>
+    <div id="g-turn" class="gturn"></div>
     <div class="film-head" id="g-head"></div>
     <div class="tabs" role="tablist">
-      <button type="button" role="tab" class="tab" id="tab-hints" aria-selected="true">💡 الهنتات</button>
+      <button type="button" role="tab" class="tab" id="tab-hints" aria-selected="true">💡 التلميحات</button>
       <button type="button" role="tab" class="tab" id="tab-info" aria-selected="false">📋 كل المعلومات</button>
     </div>
     <div id="g-hints"></div>
     <div id="g-info" hidden><div class="det" id="info"></div></div>
     <div class="who card-g">
-      <p class="lbl">مين عرفه؟</p>
+      <p class="lbl">مين عرفه؟ (بياخذ نقطة)</p>
       <div class="row2" id="g-who"></div>
       <button class="linkbtn" type="button" id="g-nobody">ما حدا عرفه، اكشفه</button>
     </div>
@@ -130,6 +134,14 @@
     <div class="topbar"><span class="pillcode" id="r-code"></span><span class="vs" id="r-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
     <div id="r-body"></div>
     <button class="bigbtn gold" type="button" id="r-next">أنمي جديد ▶</button>
+    <button class="bigbtn ghost" type="button" id="r-end">🏁 خلّص السهرة وطلّع النتيجة</button>
+  </section>
+
+  <!-- الحكم: نتيجة السهرة -->
+  <section class="scr" id="s-final" hidden>
+    <div class="topbar"><span class="pillcode" id="f-code"></span><span class="vs" id="f-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
+    <div id="f-body"></div>
+    <button class="bigbtn gold" type="button" id="f-new">سهرة جديدة ▶</button>
   </section>
 </main>
 <footer>
@@ -144,6 +156,7 @@
 <script>
 const KIND = "anime", THING = "الأنمي", GAME_TITLE = "خمّن الأنمي";
 </script>
+<script src="card.js"></script>
 <script src="play.js"></script>
 <script>
 const subLine = f => (f.t === "tv" ? "مسلسل" : "فيلم") + (f.y ? " · " + f.y : "");
