@@ -70,7 +70,7 @@ async function postJSON(url, body, headers = {}, ms = 12000) {
   if (!r.ok) throw new Error(url.split("/")[2] + " " + r.status + " " + t.slice(0, 200));
   return JSON.parse(t);
 }
-export async function askAI(story, errs = [], mk = PROMPT, check = t => parseCandidates(t).length, ms = 12000) {
+export async function askAI(story, errs = [], mk = PROMPT, check = t => parseCandidates(t).length, ms = 20000) {
   const p = mk(story);
   const ok = (source, text) => (check(text) ? { source, text } : (errs.push(source + ": no json: " + String(text).slice(0, 120)), null));
   if (E.GROQ_API_KEY) {

@@ -42,6 +42,7 @@ export default {
       u.hostname = env.CANONICAL_HOST; u.port = "";
       return Response.redirect(u.toString(), 301);
     }
+    if (u.pathname === "/") { u.pathname = "/index.html"; return env.ASSETS.fetch(new Request(u, req)); }
     if (!u.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     init(env);
