@@ -7,7 +7,6 @@ tests
 wrangler.jsonc
 package.json
 package-lock.json
-api.mjs
 sync.mjs
 .assetsignore
 .gitignore
