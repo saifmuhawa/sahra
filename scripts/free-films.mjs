@@ -7,7 +7,7 @@ import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 
 const OUT_DIR = process.env.OUT_DIR || "data";
 const SEED = process.env.SEED_FILE || "data/films.json"; // أفلام الموقع الحالية عشان ما نخسر ولا فيلم
-const MAX = +process.env.MAX_FILMS || 4000;
+const MAX = +process.env.MAX_FILMS || 4500;
 const UA = { "user-agent": "SahraFilm/2.0 (https://sahrafilm.com; saiflex.u@gmail.com) node-fetch", accept: "application/json" };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
@@ -64,10 +64,12 @@ async function main() {
     ["now", `SELECT DISTINCT ?f WHERE { ?f wdt:P31 wd:Q11424; wdt:P577 ?d. FILTER(?d >= "${dayShift(-75)}"^^xsd:dateTime && ?d <= "${today}"^^xsd:dateTime) ?w schema:about ?f; schema:isPartOf <https://en.wikipedia.org/>. } LIMIT 400`],
     ["up", `SELECT ?f (MIN(?d) AS ?nd) WHERE { ?f wdt:P31 wd:Q11424; wdt:P577 ?d. FILTER(?d > "${today}"^^xsd:dateTime && ?d <= "${dayShift(150)}"^^xsd:dateTime) ?w schema:about ?f; schema:isPartOf <https://en.wikipedia.org/>. } GROUP BY ?f LIMIT 300`],
     ["ar", `SELECT ?f ?sl WHERE { ?f wdt:P364 wd:Q13955; wdt:P31 wd:Q11424; wikibase:sitelinks ?sl. FILTER(?sl >= 8) }`],
-    ["anime", `SELECT DISTINCT ?f WHERE { { ?f wdt:P31 wd:Q20650540 } UNION { ?f wdt:P31 wd:Q11424; wdt:P136 wd:Q20650540 } UNION { ?f wdt:P31 wd:Q11424; wdt:P136 wd:Q1107 } ?f wikibase:sitelinks ?sl. FILTER(?sl >= 12) }`],
+    // أفلام عربية مشهورة عندنا: إلها مقالة بويكيبيديا العربية ومن بلد عربي (مصر، سوريا، لبنان، الأردن، الخليج، المغرب العربي…)
+    ["ar", `SELECT ?f ?sl WHERE { VALUES ?c { wd:Q79 wd:Q858 wd:Q822 wd:Q810 wd:Q851 wd:Q878 wd:Q796 wd:Q1028 wd:Q948 wd:Q262 wd:Q1016 wd:Q842 wd:Q846 wd:Q398 wd:Q817 wd:Q219060 wd:Q1049 wd:Q805 }
+      ?f wdt:P31 wd:Q11424; wdt:P495 ?c; wikibase:sitelinks ?sl. ?a schema:about ?f; schema:isPartOf <https://ar.wikipedia.org/>. }`, 900],
   ];
-  for (const [name, q] of lists) {
-    try { const rows = await sparql(q); rows.forEach(r => { add(qid(r.f), name); if (r.nd) nextDate.set(qid(r.f), r.nd.slice(0, 10)); }); log("list", name, rows.length); }
+  for (const [name, q, top] of lists) {
+    try { let rows = await sparql(q); if (top) rows = rows.sort((a, b) => +b.sl - +a.sl).slice(0, top); rows.forEach(r => { add(qid(r.f), name); if (r.nd) nextDate.set(qid(r.f), r.nd.slice(0, 10)); }); log("list", name, rows.length); }
     catch (e) { console.warn("list failed", name, String(e).slice(0, 200)); }
   }
   const ids = [...pick.keys()];
@@ -119,7 +121,8 @@ async function main() {
   log("details from Wikidata done");
 
   // ٤. ويكيبيديا الإنجليزية: ترتيب الممثلين من صندوق المعلومات + القصة. والعربية: الملخص
-  const films = [...F.values()].filter(f => f.en);
+  // أفلام الأنمي بتنلعب بلعبة خمّن الأنمي، فبنشيلها من الأفلام
+  const films = [...F.values()].filter(f => f.en && !(f.g.has(16) && (f.lang === "ja" || f.countries.includes("JP"))));
   let infobox = 0, plots = 0, arOv = 0;
   const T0 = Date.now(), BUDGET = +process.env.WIKI_MINUTES || 22;
   let reused = 0, done = 0;
@@ -196,7 +199,7 @@ async function main() {
   // تقرير التغطية
   const kept = films.filter(f => keep.has(f.id)); const P = fn => Math.round(100 * kept.filter(fn).length / kept.length) + "%";
   const report = { films: kept.length, arTitle: P(f => f.ar), date: P(f => f.rd), runtime: P(f => f.rt), genres: P(f => f.g.size), director: P(f => f.dir.length), cast5: P(f => f.cast.length >= 5), chars3: P(f => f.cast.filter(c => c.ch).length >= 3), ovAr: P(f => f.ovAr || f.ard), plotEn: P(f => f.plotEn), trailer: P(f => f.tr), boxOffice: P(f => f.revenue), imdb: P(f => f.imdb),
-    lists: Object.fromEntries(["now", "up", "trend", "pop", "top", "ar", "anime"].map(l => [l, kept.filter(f => f.l.includes(l)).length])) };
+    lists: Object.fromEntries(["now", "up", "trend", "pop", "top", "ar"].map(l => [l, kept.filter(f => f.l.includes(l)).length])) };
   await writeFile(`${OUT_DIR}/films.json`, JSON.stringify({ updated: new Date().toISOString(), source: "Wikidata + Wikipedia", count: list.length, films: list }));
   await writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 1));
   log("written", list.length, "films,", n, "detail files");
