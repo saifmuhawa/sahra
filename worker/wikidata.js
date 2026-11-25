@@ -26,7 +26,7 @@ const FILM_TYPES = "wd:Q11424 wd:Q29168811 wd:Q20650540 wd:Q24862 wd:Q506240 wd:
 // بحث بالاسم (إنجليزي أو عربي): أفلام بس
 export async function wdSearch(q) {
   const ar = /[؀-ۿ]/.test(q);
-  const s = await getJSON(`https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&type=item&limit=20&uselang=${ar ? "ar" : "en"}&language=${ar ? "ar" : "en"}&search=` + encodeURIComponent(q), {}, 3600);
+  const s = await getJSON(`https://www.wikidata.org/w/api.php?origin=*&action=wbsearchentities&format=json&type=item&limit=20&uselang=${ar ? "ar" : "en"}&language=${ar ? "ar" : "en"}&search=` + encodeURIComponent(q), {}, 3600);
   const ids = (s.search || []).map(x => x.id);
   if (!ids.length) return [];
   const rows = await sparql(`SELECT ?f (MAX(?_en) AS ?en) (MAX(?_ar) AS ?ar) (MIN(?_d) AS ?d) (MAX(?_imdb) AS ?imdb) (MAX(?_sl) AS ?sl) WHERE {
@@ -74,7 +74,7 @@ export async function wdDetail(id) {
   // ويكيبيديا: ترتيب الممثلين من صندوق المعلومات، والقصة، والملخص العربي
   let plotEn = "", ovAr = "";
   await Promise.all([
-    enw && getJSON("https://en.wikipedia.org/w/api.php?format=json&formatversion=2&action=query&prop=revisions|extracts&rvprop=content&rvslots=main&rvsection=0&explaintext=1&redirects=1&titles=" + encodeURIComponent(enw)).then(j => {
+    enw && getJSON("https://en.wikipedia.org/w/api.php?origin=*&format=json&formatversion=2&action=query&prop=revisions|extracts&rvprop=content&rvslots=main&rvsection=0&explaintext=1&redirects=1&titles=" + encodeURIComponent(enw)).then(j => {
       const pg = j.query?.pages?.[0] || {};
       const wt = pg.revisions?.[0]?.slots?.main?.content || "";
       const starring = (wt.match(/\|\s*starring\s*=([\s\S]*?)\n\s*\|\s*[a-z_ ]+=/i) || [])[1] || "";
@@ -89,7 +89,7 @@ export async function wdDetail(id) {
       const sec = txt.split(/\n(?===+ )/).find(s => /^==+ (Plot|Synopsis|Premise|Story)/i.test(s)) || "";
       plotEn = (sec.replace(/^==+[^\n]*\n/, "").trim() || txt.split(/\n==/)[0]).slice(0, 1500);
     }).catch(() => {}),
-    arw && getJSON("https://ar.wikipedia.org/w/api.php?format=json&formatversion=2&action=query&prop=extracts&exintro=1&explaintext=1&redirects=1&titles=" + encodeURIComponent(arw)).then(j => { ovAr = (j.query?.pages?.[0]?.extract || "").replace(/\s+/g, " ").trim(); }).catch(() => {}),
+    arw && getJSON("https://ar.wikipedia.org/w/api.php?origin=*&format=json&formatversion=2&action=query&prop=extracts&exintro=1&explaintext=1&redirects=1&titles=" + encodeURIComponent(arw)).then(j => { ovAr = (j.query?.pages?.[0]?.extract || "").replace(/\s+/g, " ").trim(); }).catch(() => {}),
   ]);
   const langs = (b.lang || "").split(",").filter(Boolean);
   const num = String(id).replace(/^Q/, "");
