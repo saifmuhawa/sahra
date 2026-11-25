@@ -299,6 +299,33 @@ export async function wikiFacts(title, year, kind) {
   } catch { return null; }
 }
 
+
+// ===== اختبار مؤقت لـ TheTVDB (رح ينشال بعد الاختبار) =====
+const TVDB_SAMPLE = "tt32358390 tt38077943 tt36408401 tt44090278 tt29256561 tt37675123 tt44878818 tt42003599 tt11079148 tt22022452 tt12584954 tt0822854 tt3741700 tt31227572 tt27911000 tt5192124 tt0338564 tt30953759 tt38649153 tt0087646 tt0089206 tt1648216 tt1190539 tt0076085 tt0231477 tt0126354 tt0084787 tt0059742 tt0323869".split(" ");
+async function tvdbTest() {
+  if (!E.TVDB_API_KEY) return { error: "no key" };
+  const lg = await fetch("https://api4.thetvdb.com/v4/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ apikey: E.TVDB_API_KEY }) });
+  const lj = await lg.json().catch(() => ({}));
+  if (!lg.ok) return { error: "login " + lg.status, detail: JSON.stringify(lj).slice(0, 200) };
+  const H = { authorization: "Bearer " + lj.data.token, accept: "application/json" };
+  const rows = [];
+  for (const imdb of TVDB_SAMPLE) {
+    try {
+      const s = await (await fetch("https://api4.thetvdb.com/v4/search/remoteid/" + imdb, { headers: H })).json();
+      const hit = (s.data || []).find(x => x.movie) || (s.data || [])[0];
+      const id = hit?.movie?.id;
+      if (!id) { rows.push({ imdb, found: 0 }); continue; }
+      const m = (await (await fetch(`https://api4.thetvdb.com/v4/movies/${id}/extended?meta=translations&short=false`, { headers: H })).json()).data || {};
+      const actors = (m.characters || []).filter(c => c.peopleType === "Actor");
+      const tr = m.translations || {};
+      const arName = (tr.nameTranslations || []).find(x => x.language === "ara")?.name || "";
+      const arOv = (tr.overviewTranslations || []).find(x => x.language === "ara")?.overview || "";
+      rows.push({ imdb, found: 1, name: m.name, poster: m.image ? 1 : 0, posters: (m.artworks || []).filter(a => a.type === 14).length, actors: actors.length, chars: actors.filter(a => a.name).length, actorImg: actors.filter(a => a.personImgURL).length, arName: arName ? 1 : 0, arOv: arOv ? 1 : 0, enOv: (tr.overviewTranslations || []).some(x => x.language === "eng") ? 1 : 0, trailers: (m.trailers || []).length, genres: (m.genres || []).length, runtime: m.runtime ? 1 : 0, box: m.boxOffice ? 1 : 0, budget: m.budget ? 1 : 0, awards: (m.awards || []).length, year: m.year, directors: (m.characters || []).filter(c => c.peopleType === "Director").length });
+    } catch (e) { rows.push({ imdb, found: 0, err: String(e).slice(0, 80) }); }
+  }
+  return { rows };
+}
+
 // ===== مسارات الـAPI العامة (بحث، تفاصيل، ذكاء اصطناعي، صور) =====
 const JH = { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*" };
 export const json = (obj, code = 200, cache = "public, max-age=600") => new Response(JSON.stringify(obj), { status: code, headers: { ...JH, "cache-control": cache } });
@@ -312,6 +339,7 @@ export async function apiRoute(path, u) {
     if (!r.ok) return new Response("not found", { status: 404 });
     return new Response(r.body, { headers: { "content-type": r.headers.get("content-type") || "image/jpeg", "cache-control": "public, max-age=86400" } });
   }
+  if (path === "/tvdb-test") return json(await tvdbTest(), 200, "no-store");
   if (!KEY) return json({ error: "TMDB_API_KEY is missing" }, 500, "no-store");
   if (path === "/search") {
     const q = (u.searchParams.get("q") || "").trim().slice(0, 100);
