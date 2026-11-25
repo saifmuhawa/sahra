@@ -28,7 +28,7 @@ const qid = uri => uri.replace(/^.*\/entity\//, "");
 const num = q => +q.replace(/^Q/, "");
 async function pool(items, n, fn) {
   const out = new Array(items.length); let i = 0;
-  await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; try { out[k] = await fn(items[k], k); } catch (e) { console.warn("!", String(e).slice(0, 160)); } } }));
+  await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; try { out[k] = await fn(items[k], k); } catch (e) { console.warn("!", String(e).slice(0, 400)); } } }));
   return out;
 }
 const chunks = (a, n) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
@@ -58,12 +58,12 @@ async function main() {
   log("from seed:", pick.size);
 
   const lists = [
-    ["pop", `SELECT ?f WHERE { ?f wdt:P31 wd:Q11424; wikibase:sitelinks ?sl; wdt:P345 []. FILTER(?sl >= 45) } ORDER BY DESC(?sl) LIMIT 2500`],
+    ["pop", `SELECT ?f WHERE { VALUES ?c { wd:Q11424 wd:Q29168811 wd:Q20650540 } ?f wdt:P31 ?c; wikibase:sitelinks ?sl; wdt:P345 []. FILTER(?sl >= 30) } ORDER BY DESC(?sl) LIMIT 2500`],
     ["top", `SELECT ?f (COUNT(DISTINCT ?aw) AS ?n) WHERE { ?f wdt:P31 wd:Q11424; wdt:P166 ?aw. ?aw wdt:P31 wd:Q19020. } GROUP BY ?f ORDER BY DESC(?n) LIMIT 300`],
     ["now", `SELECT DISTINCT ?f WHERE { ?f wdt:P31 wd:Q11424; wdt:P577 ?d. FILTER(?d >= "${dayShift(-75)}"^^xsd:dateTime && ?d <= "${today}"^^xsd:dateTime) ?w schema:about ?f; schema:isPartOf <https://en.wikipedia.org/>. } LIMIT 400`],
     ["up", `SELECT DISTINCT ?f WHERE { ?f wdt:P31 wd:Q11424; wdt:P577 ?d. FILTER(?d > "${today}"^^xsd:dateTime && ?d <= "${dayShift(150)}"^^xsd:dateTime) ?w schema:about ?f; schema:isPartOf <https://en.wikipedia.org/>. } LIMIT 300`],
-    ["ar", `SELECT ?f WHERE { ?f wdt:P31 wd:Q11424; wdt:P364 wd:Q13955; wikibase:sitelinks ?sl. FILTER(?sl >= 6) } ORDER BY DESC(?sl) LIMIT 400`],
-    ["anime", `SELECT ?f WHERE { ?f wdt:P31 wd:Q11424; wdt:P364 wd:Q5287; wdt:P136 ?g; wikibase:sitelinks ?sl. VALUES ?g { wd:Q202866 wd:Q20650540 wd:Q1107 } FILTER(?sl >= 12) } ORDER BY DESC(?sl) LIMIT 300`],
+    ["ar", `SELECT ?f ?sl WHERE { ?f wdt:P364 wd:Q13955; wdt:P31 wd:Q11424; wikibase:sitelinks ?sl. FILTER(?sl >= 8) }`],
+    ["anime", `SELECT DISTINCT ?f WHERE { { ?f wdt:P31 wd:Q20650540 } UNION { ?f wdt:P31 wd:Q11424; wdt:P136 wd:Q20650540 } UNION { ?f wdt:P31 wd:Q11424; wdt:P136 wd:Q1107 } ?f wikibase:sitelinks ?sl. FILTER(?sl >= 12) }`],
   ];
   for (const [name, q] of lists) {
     try { const rows = await sparql(q); rows.forEach(r => add(qid(r.f), name)); log("list", name, rows.length); }
@@ -76,22 +76,22 @@ async function main() {
   const F = new Map();
   await pool(chunks(ids, 120), 3, async part => {
     const V = part.map(q => "wd:" + q).join(" ");
-    const rows = await sparql(`SELECT ?f (SAMPLE(?imdb) AS ?imdb) (SAMPLE(?en) AS ?en) (SAMPLE(?ar) AS ?ar) (SAMPLE(?ard) AS ?ard) (MIN(?date) AS ?date) (MAX(?dur) AS ?dur)
-      (SAMPLE(?sl) AS ?sl) (SAMPLE(?yt) AS ?yt) (MAX(?box) AS ?box) (MAX(?bud) AS ?bud) (SAMPLE(?lang) AS ?lang) (SAMPLE(?orig) AS ?orig) (SAMPLE(?enw) AS ?enw) (SAMPLE(?arw) AS ?arw)
+    const rows = await sparql(`SELECT ?f (MAX(?_imdb) AS ?imdb) (MAX(?_en) AS ?en) (MAX(?_ar) AS ?ar) (MAX(?_ard) AS ?ard) (MIN(?_date) AS ?date) (MAX(?_dur) AS ?dur)
+      (MAX(?_sl) AS ?sl) (MAX(?_yt) AS ?yt) (MAX(?_box) AS ?box) (MAX(?_bud) AS ?bud) (GROUP_CONCAT(DISTINCT ?_lang; separator=",") AS ?lang) (MAX(?_orig) AS ?orig) (MAX(?_enw) AS ?enw) (MAX(?_arw) AS ?arw)
       WHERE { VALUES ?f { ${V} }
-        OPTIONAL { ?f wdt:P345 ?imdb } OPTIONAL { ?f rdfs:label ?en FILTER(LANG(?en)="en") } OPTIONAL { ?f rdfs:label ?ar FILTER(LANG(?ar)="ar") }
-        OPTIONAL { ?f schema:description ?ard FILTER(LANG(?ard)="ar") }
-        OPTIONAL { ?f wdt:P577 ?date } OPTIONAL { ?f p:P2047/psv:P2047 [ wikibase:quantityAmount ?dur ] }
-        OPTIONAL { ?f wikibase:sitelinks ?sl } OPTIONAL { ?f wdt:P1651 ?yt } OPTIONAL { ?f wdt:P2142 ?box } OPTIONAL { ?f wdt:P2130 ?bud }
-        OPTIONAL { ?f wdt:P364/wdt:P218 ?lang } OPTIONAL { ?f wdt:P1476 ?orig }
-        OPTIONAL { ?enw schema:about ?f; schema:isPartOf <https://en.wikipedia.org/> } OPTIONAL { ?arw schema:about ?f; schema:isPartOf <https://ar.wikipedia.org/> }
+        OPTIONAL { ?f wdt:P345 ?_imdb } OPTIONAL { ?f rdfs:label ?_en FILTER(LANG(?_en)="en") } OPTIONAL { ?f rdfs:label ?_ar FILTER(LANG(?_ar)="ar") }
+        OPTIONAL { ?f schema:description ?_ard FILTER(LANG(?_ard)="ar") }
+        OPTIONAL { ?f wdt:P577 ?_date } OPTIONAL { ?f p:P2047/psv:P2047 [ wikibase:quantityAmount ?_dur ] }
+        OPTIONAL { ?f wikibase:sitelinks ?_sl } OPTIONAL { ?f wdt:P1651 ?_yt } OPTIONAL { ?f wdt:P2142 ?_box } OPTIONAL { ?f wdt:P2130 ?_bud }
+        OPTIONAL { ?f wdt:P364/wdt:P218 ?_lang } OPTIONAL { ?f wdt:P1476 ?_orig }
+        OPTIONAL { ?_enw schema:about ?f; schema:isPartOf <https://en.wikipedia.org/> } OPTIONAL { ?_arw schema:about ?f; schema:isPartOf <https://ar.wikipedia.org/> }
       } GROUP BY ?f`);
     for (const r of rows) {
       const q = qid(r.f);
       F.set(q, {
         q, id: num(q), imdb: r.imdb || null, en: r.en || r.orig || null, ar: r.ar || null, ard: r.ard || null,
         rd: r.date ? r.date.slice(0, 10) : null, rt: r.dur ? Math.round(+r.dur) : null, sl: +(r.sl || 0), tr: r.yt || null,
-        revenue: r.box ? Math.round(+r.box) : 0, budget: r.bud ? Math.round(+r.bud) : 0, lang: r.lang || null, orig: r.orig || null,
+        revenue: r.box ? Math.round(+r.box) : 0, budget: r.bud ? Math.round(+r.bud) : 0, lang: (r.lang || "").split(",").filter(Boolean).sort((a, b) => (b === "en") - (a === "en"))[0] || null, orig: r.orig || null,
         enw: r.enw ? decodeURIComponent(r.enw.replace("https://en.wikipedia.org/wiki/", "")).replace(/_/g, " ") : null,
         arw: r.arw ? decodeURIComponent(r.arw.replace("https://ar.wikipedia.org/wiki/", "")).replace(/_/g, " ") : null,
         g: new Set(), dir: [], prod: [], wri: [], mus: [], dop: [], cast: [], companies: [], countries: [], l: [...(pick.get(q) || [])],
@@ -99,6 +99,7 @@ async function main() {
     }
   });
   log("basic info:", F.size);
+  if (!F.size) throw new Error("no films built");
 
   // ٣. الأنواع والطاقم والممثلين والشركات والدول
   await pool(chunks([...F.keys()], 80), 3, async part => {
@@ -108,8 +109,8 @@ async function main() {
     const crew = await sparql(`SELECT ?f ?p ?n WHERE { VALUES ?f { ${V} } VALUES ?p { wdt:P57 wdt:P58 wdt:P86 wdt:P344 wdt:P162 } ?f ?p ?x. ?x rdfs:label ?n FILTER(LANG(?n)="en") }`);
     const key = { P57: "dir", P58: "wri", P86: "mus", P344: "dop", P162: "prod" };
     for (const r of crew) { const f = F.get(qid(r.f)); const k = key[r.p.split("/").pop()]; if (f && k && !f[k].includes(r.n) && f[k].length < 6) f[k].push(r.n); }
-    const cast = await sparql(`SELECT ?f ?n (SAMPLE(?chl) AS ?ch) (SAMPLE(?chs) AS ?chs) WHERE { VALUES ?f { ${V} } ?f p:P161 ?st. ?st ps:P161 ?a. ?a rdfs:label ?n FILTER(LANG(?n)="en")
-      OPTIONAL { ?st pq:P453 ?c. ?c rdfs:label ?chl FILTER(LANG(?chl)="en") } OPTIONAL { ?st pq:P4633 ?chs } } GROUP BY ?f ?n`);
+    const cast = await sparql(`SELECT ?f ?n (SAMPLE(?chl) AS ?ch) (SAMPLE(?chs0) AS ?chs) WHERE { VALUES ?f { ${V} } ?f p:P161 ?st. ?st ps:P161 ?a. ?a rdfs:label ?n FILTER(LANG(?n)="en")
+      OPTIONAL { ?st pq:P453 ?c. ?c rdfs:label ?chl FILTER(LANG(?chl)="en") } OPTIONAL { ?st pq:P4633 ?chs0 } } GROUP BY ?f ?n`);
     for (const r of cast) { const f = F.get(qid(r.f)); if (f && f.cast.length < 30) f.cast.push({ n: r.n, ch: r.ch || r.chs || "" }); }
     const misc = await sparql(`SELECT ?f ?k ?v WHERE { VALUES ?f { ${V} } { ?f wdt:P272 ?x. ?x rdfs:label ?v FILTER(LANG(?v)="en") BIND("co" AS ?k) } UNION { ?f wdt:P495 ?x. ?x wdt:P297 ?v BIND("cn" AS ?k) } }`);
     for (const r of misc) { const f = F.get(qid(r.f)); if (!f) continue; if (r.k === "co" && f.companies.length < 6 && !f.companies.some(c => c.n === r.v)) f.companies.push({ n: r.v }); if (r.k === "cn" && !f.countries.includes(r.v)) f.countries.push(r.v); }
