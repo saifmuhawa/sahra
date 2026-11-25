@@ -12,9 +12,15 @@
     "run_worker_first": true
   },
   "durable_objects": {
-    "bindings": [{ "name": "ROOMS", "class_name": "Room" }]
+    "bindings": [
+      { "name": "ROOMS", "class_name": "Room" },
+      { "name": "POLLS", "class_name": "Poll" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Room"] },
+    { "tag": "v2", "new_sqlite_classes": ["Poll"] }
+  ],
   "vars": {
     // لما يصير عندنا دومين خاص، بنحطه هون وكل الروابط الثانية بتتحوّل عليه
     "CANONICAL_HOST": "sahrafilm.com"

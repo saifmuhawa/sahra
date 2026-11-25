@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cinema Market Lab · ECO 201</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="/eco201/eco201.css">
+<style>
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar-row{display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center}
+.bar-row .nm{font-weight:600}
+.bar-track{display:flex;flex-direction:column;gap:4px}
+.bar{height:22px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:13px;font-weight:700;white-space:nowrap;transition:width .5s ease}
+.bar.std{background:#6fa8dc;color:#0e1a26}
+.bar.prem{background:var(--seat);color:#fff}
+</style>
+</head>
+<body>
+<main class="lab">
+  <div>
+    <p class="kicker">ECO 201 · UAE Cinema Tickets · Interactive lab</p>
+    <h1>Cinema Market Lab</h1>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="market">Market &amp; elasticity</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="costs">Short-run costs</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="prices">Real UAE prices</button>
+  </div>
+
+  <!-- ===== السوق والمرونة ===== -->
+  <section class="panel" id="p-market" role="tabpanel">
+    <div class="card chart-card"><svg id="c-market" role="img" aria-label="Demand and supply chart"></svg></div>
+    <div class="controls">
+      <div class="card controls">
+        <div class="slider"><label for="price">Ticket price <output id="price-o">AED 45</output></label>
+          <input id="price" type="range" min="30" max="60" step="1" value="45"></div>
+        <div class="toggles">
+          <label class="toggle"><input type="checkbox" id="eid"> Eid / blockbuster: demand +50 at every price</label>
+          <label class="toggle"><input type="checkbox" id="cost"> Mall rent &amp; energy rise: supply −30 at every price</label>
+        </div>
+        <button class="btn ghost" id="to-eq" type="button">Jump to equilibrium</button>
+      </div>
+      <div class="status eq" id="status">Equilibrium</div>
+      <div class="grid2">
+        <div class="mini"><b id="qd">150</b><small>Quantity demanded / week</small></div>
+        <div class="mini"><b id="qs">150</b><small>Quantity supplied / week</small></div>
+        <div class="mini"><b id="rev">AED 6,750</b><small>Spending, P × Qd</small></div>
+        <div class="mini"><b id="ped">1.55</b><small id="ped-l">Midpoint PED, AED 45 → 50</small></div>
+      </div>
+      <p class="explain" id="m-explain"></p>
+    </div>
+  </section>
+
+  <!-- ===== التكاليف ===== -->
+  <section class="panel" id="p-costs" role="tabpanel" hidden>
+    <div class="card chart-card"><svg id="c-costs" role="img" aria-label="Average cost curves"></svg></div>
+    <div class="controls">
+      <div class="card controls">
+        <div class="slider"><label for="q">Tickets sold per week <output id="q-o">150</output></label>
+          <input id="q" type="range" min="20" max="300" step="10" value="150"></div>
+        <div class="grid2">
+          <label class="mini"><small>Fixed cost / week (AED)</small><input id="fc" type="number" min="0" step="100" value="2000" style="width:100%;background:transparent;border:0;font-family:var(--display);font-size:32px"></label>
+          <label class="mini"><small>Marginal cost / ticket (AED)</small><input id="mc" type="number" min="0" step="1" value="8" style="width:100%;background:transparent;border:0;font-family:var(--display);font-size:32px"></label>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="mini"><b id="tc">–</b><small>Total cost (TC)</small></div>
+        <div class="mini"><b id="atc">–</b><small>Average total cost (ATC)</small></div>
+        <div class="mini"><b id="afc">–</b><small>Average fixed cost (AFC)</small></div>
+        <div class="mini"><b id="fshare">–</b><small>Fixed cost share of TC</small></div>
+      </div>
+      <div class="card"><table class="tbl" id="c-table"></table></div>
+    </div>
+  </section>
+
+  <!-- ===== أسعار حقيقية ===== -->
+  <section class="panel" id="p-prices" role="tabpanel" hidden>
+    <div class="card"><div class="bars" id="bars"></div></div>
+    <div class="controls">
+      <div class="card"><p class="kicker">Collected 12 Nov 2026</p>
+        <p style="margin:8px 0 0">Standard tickets cluster at <b>AED 40–50</b>, close to our model's <b>P* = AED 45</b>. Premium formats charge <b>+30% to +287%</b> more: second-degree price discrimination that captures consumer surplus from less price-sensitive viewers.</p></div>
+      <div class="grid2">
+        <div class="mini"><b>AED 46</b><small>Average standard ticket</small></div>
+        <div class="mini"><b>+287%</b><small>Biggest markup (Reel Platinum Suites)</small></div>
+      </div>
+    </div>
+  </section>
+</main>
+<script type="module">
+import { plot, midpointPED } from "/eco201/chart.js";
+const $ = id => document.getElementById(id);
+const fmt = n => "AED " + Math.round(n).toLocaleString("en-US");
+
+// ===== تبويبات =====
+document.querySelector(".tabs").addEventListener("click", e => {
+  const t = e.target.closest(".tab"); if (!t) return;
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", String(x === t)));
+  for (const id of ["market", "costs", "prices"]) $("p-" + id).hidden = id !== t.dataset.tab;
+  draw();
+});
+
+// ===== نموذج السوق من البحث: Qd = 420 − 6P ، Qs = 4P − 30 =====
+const qd = (P, eid) => 420 + (eid ? 50 : 0) - 6 * P;
+const qs = (P, cost) => 4 * P - 30 - (cost ? 30 : 0);
+const eqP = (eid, cost) => (450 + (eid ? 50 : 0) + (cost ? 30 : 0)) / 10;
+
+function market() {
+  const P = +$("price").value, eid = $("eid").checked, cost = $("cost").checked;
+  const D = qd(P, eid), Sq = qs(P, cost), pe = eqP(eid, cost), qe = qs(pe, cost);
+  $("price-o").textContent = "AED " + P;
+  $("qd").textContent = D; $("qs").textContent = Sq;
+  $("rev").textContent = fmt(P * D);
+  const e = midpointPED(P, D, P + 5, qd(P + 5, eid));
+  $("ped").textContent = Math.abs(e).toFixed(2);
+  $("ped-l").textContent = `Midpoint PED, AED ${P} → ${P + 5} (${Math.abs(e) > 1 ? "elastic" : Math.abs(e) < 1 ? "inelastic" : "unit elastic"})`;
+  const st = $("status");
+  if (Math.abs(D - Sq) < 1e-9) { st.className = "status eq"; st.textContent = "Equilibrium: the market clears"; }
+  else if (D > Sq) { st.className = "status short"; st.textContent = `Shortage of ${D - Sq} tickets`; }
+  else { st.className = "status sur"; st.textContent = `Surplus of ${Sq - D} unsold seats`; }
+  $("m-explain").textContent = `Equilibrium now: P* = AED ${+pe.toFixed(1)}, Q* = ${+qe.toFixed(1)} tickets/week.` +
+    (eid || cost ? " The curve shifted because a non-price factor changed." : " Moving the slider is a movement along the curves (only price changed).");
+
+  const sD = [[qd(30, eid), 30], [qd(62, eid), 62]], sS = [[Math.max(0, qs(30, cost)), 30], [qs(62, cost), 62]];
+  const series = [
+    { pts: [[qd(30, false), 30], [qd(62, false), 62]], color: "rgba(244,234,217,.25)", dash: "6 6", width: 2 },
+    { pts: [[qs(30, false), 30], [qs(62, false), 62]], color: "rgba(244,234,217,.25)", dash: "6 6", width: 2 },
+    { pts: sD, color: "#e2b457", width: 4 },
+    { pts: sS, color: "#5fbf8a", width: 4 },
+  ];
+  if (D !== Sq) series.push({ pts: [[Math.min(D, Sq), P], [Math.max(D, Sq), P]], color: D > Sq ? "#e0646b" : "#6fa8dc", width: 10 });
+  plot($("c-market"), {
+    x: [0, 320], y: [25, 62], xstep: 40, ystep: 5,
+    xlabel: "Tickets per week (Q)", ylabel: "Ticket price (AED)",
+    series,
+    hlines: [{ y: P, color: "rgba(244,234,217,.6)", label: "Price AED " + P }],
+    points: [{ x: qe, y: pe, color: "#f4ead9", label: `P* ${+pe.toFixed(1)}, Q* ${+qe.toFixed(1)}`, dy: 30 }],
+  });
+}
+$("price").addEventListener("input", market);
+$("eid").addEventListener("change", market);
+$("cost").addEventListener("change", market);
+$("to-eq").onclick = () => { $("price").value = Math.round(eqP($("eid").checked, $("cost").checked)); market(); };
+
+// ===== التكاليف =====
+function costs() {
+  const Q = +$("q").value, FC = Math.max(0, +$("fc").value || 0), MC = Math.max(0, +$("mc").value || 0);
+  $("q-o").textContent = Q;
+  const TC = FC + MC * Q;
+  $("tc").textContent = fmt(TC); $("atc").textContent = "AED " + (TC / Q).toFixed(2);
+  $("afc").textContent = "AED " + (FC / Q).toFixed(2); $("fshare").textContent = TC ? Math.round(FC / TC * 1000) / 10 + "%" : "–";
+  const qsRange = []; for (let q = 20; q <= 300; q += 5) qsRange.push(q);
+  const yMax = Math.max(40, Math.ceil((FC / 20 + MC) / 10) * 10);
+  plot($("c-costs"), {
+    x: [0, 300], y: [0, Math.min(yMax, 140)], xstep: 50, ystep: niceY(Math.min(yMax, 140)),
+    xlabel: "Tickets per week (Q)", ylabel: "Cost per ticket (AED)",
+    series: [
+      { pts: qsRange.map(q => [q, Math.min(FC / q + MC, 140)]), color: "#c8323c", width: 4 },
+      { pts: qsRange.map(q => [q, Math.min(FC / q, 140)]), color: "#e2b457", width: 3 },
+      { pts: [[0, MC], [300, MC]], color: "#5fbf8a", width: 3, dash: "8 6" },
+    ],
+    points: [{ x: Q, y: Math.min(TC / Q, 140), color: "#f4ead9", label: `ATC AED ${(TC / Q).toFixed(2)}` }],
+  });
+  const rows = [100, 120, 150, 180].map(q => `<tr class="${q === Q ? "on" : ""}"><td>${q}</td><td>${fmt(FC + MC * q)}</td><td>${(FC / q).toFixed(2)}</td><td>${(FC / q + MC).toFixed(2)}</td></tr>`).join("");
+  $("c-table").innerHTML = `<tr><th>Q</th><th>TC</th><th>AFC</th><th>ATC</th></tr>${rows}<tr><td colspan="4" class="muted" style="font-size:13px">Red: ATC · Gold: AFC · Green dashed: MC = AVC</td></tr>`;
+}
+const niceY = m => m <= 40 ? 5 : m <= 80 ? 10 : 20;
+for (const id of ["q", "fc", "mc"]) $(id).addEventListener("input", costs);
+
+// ===== الأسعار =====
+const PRICES = [["VOX Cinemas", 46, 70, "IMAX"], ["Reel Cinemas", 46, 178, "Platinum Suites"], ["Novo Cinemas", 45, 68, "7-Star VIP"], ["Roxy Cinemas", 50, 65, "Gold Lounge"], ["Star Cinemas", 42, 57.75, "Star Premium"], ["Cinemacity", 50, 65, "IMAX"], ["Cine Royal", 40.25, 150, "Royal Suites"]];
+$("bars").innerHTML = PRICES.map(([n, s, p, f]) => `<div class="bar-row"><span class="nm">${n}</span><div class="bar-track">
+  <div class="bar std" style="width:${s / 178 * 100}%">AED ${s}</div>
+  <div class="bar prem" style="width:${p / 178 * 100}%">${f} · AED ${p} (+${Math.round((p / s - 1) * 100)}%)</div></div></div>`).join("") +
+  `<p class="muted" style="margin:6px 0 0;font-size:14px"><span style="color:#6fa8dc">■</span> Standard ticket &nbsp; <span style="color:#c8323c">■</span> Premium experience</p>`;
+
+function draw() { if (!$("p-market").hidden) market(); if (!$("p-costs").hidden) costs(); }
+addEventListener("resize", draw);
+market(); costs();
+</script>
+</body>
+</html>

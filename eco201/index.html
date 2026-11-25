@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>How much would you pay? · ECO 201 Live Poll</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="/eco201/eco201.css">
+</head>
+<body>
+<main class="vote">
+  <div>
+    <p class="kicker">ECO 201 · Live class poll</p>
+    <h1>How much would <span>you</span> pay?</h1>
+  </div>
+
+  <form class="ticket" id="form" novalidate>
+    <p style="margin:0;font-weight:600">The <u>maximum</u> price you would pay for one standard 2D cinema ticket in the UAE:</p>
+    <div class="price-row">
+      <button type="button" class="step" id="minus" aria-label="Decrease by 5">−</button>
+      <label class="price-box"><span>AED</span><input id="price" type="number" inputmode="numeric" min="0" max="500" step="1" placeholder="45" aria-label="Price in AED" required></label>
+      <button type="button" class="step" id="plus" aria-label="Increase by 5">+</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <p class="err" id="err" role="alert"></p>
+    <button class="btn" id="send" type="submit">Submit my answer</button>
+  </form>
+
+  <section class="ticket done" id="done" hidden aria-live="polite">
+    <div class="check" aria-hidden="true">✓</div>
+    <p style="margin:0" class="muted">Your answer</p>
+    <div class="big" id="mine">AED 45</div>
+    <p style="margin:0">Look at the screen: your answer is now on the class demand curve.</p>
+    <button class="btn ghost" id="change" type="button">Change my answer</button>
+  </section>
+
+  <p class="foot-note">Anonymous · one answer per phone · Abu Dhabi University, ECO 201</p>
+</main>
+<script type="module">
+const S = (new URLSearchParams(location.search).get("s") || "class").toLowerCase();
+const KEY = "eco201-voter";
+let voter = localStorage.getItem(KEY);
+if (!voter) { voter = (crypto.randomUUID?.() || String(Math.random()).slice(2) + Date.now()).replace(/[^A-Za-z0-9]/g, "").slice(0, 32); localStorage.setItem(KEY, voter); }
+const $ = id => document.getElementById(id);
+const input = $("price"), form = $("form"), done = $("done"), err = $("err"), send = $("send");
+const CHIPS = [25, 30, 35, 40, 45, 50, 60, 75];
+$("chips").innerHTML = CHIPS.map(v => `<button type="button" class="chip" data-v="${v}" aria-pressed="false">${v}</button>`).join("");
+const sync = () => document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(+c.dataset.v === +input.value && input.value !== "")));
+$("chips").addEventListener("click", e => { const c = e.target.closest(".chip"); if (!c) return; input.value = c.dataset.v; err.textContent = ""; sync(); });
+const bump = d => { const v = Math.max(0, Math.min(500, (Number(input.value) || 45) + d)); input.value = v; sync(); };
+$("minus").onclick = () => bump(-5); $("plus").onclick = () => bump(5);
+input.addEventListener("input", () => { err.textContent = ""; sync(); });
+
+const saved = localStorage.getItem(KEY + "-" + S);
+if (saved !== null) { input.value = saved; showDone(saved); }
+
+function showDone(v) { $("mine").textContent = "AED " + v; form.hidden = true; done.hidden = false; }
+$("change").onclick = () => { done.hidden = true; form.hidden = false; sync(); input.focus(); };
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const v = Number(input.value);
+  if (input.value === "" || !Number.isFinite(v) || v < 0 || v > 500) { err.textContent = "Enter a price between 0 and 500 AED."; return; }
+  send.disabled = true; send.textContent = "Sending…"; err.textContent = "";
+  try {
+    const r = await fetch("/api/poll/vote?s=" + encodeURIComponent(S), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ voter, price: Math.round(v) }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "error");
+    localStorage.setItem(KEY + "-" + S, String(j.price));
+    showDone(j.price);
+  } catch {
+    err.textContent = "Couldn't send. Check your connection and try again.";
+  } finally { send.disabled = false; send.textContent = "Submit my answer"; }
+});
+</script>
+</body>
+</html>
