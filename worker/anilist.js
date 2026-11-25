@@ -7,7 +7,7 @@ async function gql(query, variables) {
   const ck = query.length + JSON.stringify(variables);
   const hit = cache.get(ck);
   if (hit && Date.now() - hit.t < 3600000) return hit.v;
-  const r = await fetch(AL, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ query, variables }) });
+  const r = await fetch(AL, { method: "POST", headers: { "content-type": "application/json", accept: "application/json", "user-agent": "SahraFilm/2.0 (https://sahrafilm.com; saiflex.u@gmail.com)", origin: "https://sahrafilm.com", referer: "https://sahrafilm.com/" }, body: JSON.stringify({ query, variables }) });
   if (r.status === 404) return null;
   if (!r.ok) throw new Error("AniList " + r.status);
   const j = await r.json();
