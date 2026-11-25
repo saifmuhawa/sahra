@@ -2,10 +2,10 @@
 //   Wikidata (CC0): الأسماء، التاريخ، المدة، الأنواع، الطاقم، الممثلين والشخصيات، شباك التذاكر، الإعلان
 //   Wikipedia (CC BY-SA): ترتيب الممثلين من صندوق المعلومات، ملخص عربي، وقصة الفيلم (للذكاء الاصطناعي بس)
 // بيطلّع نفس شكل الملفات اللي بتقرأها الصفحات: films.json + d/<id>.json
-// التشغيل: node scripts/free-films.mjs   (OUT_DIR=data2 افتراضياً)
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+// التشغيل: node scripts/free-films.mjs   (OUT_DIR=data افتراضياً)
+import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 
-const OUT_DIR = process.env.OUT_DIR || "data2";
+const OUT_DIR = process.env.OUT_DIR || "data";
 const SEED = process.env.SEED_FILE || "data/films.json"; // أفلام الموقع الحالية عشان ما نخسر ولا فيلم
 const MAX = +process.env.MAX_FILMS || 4000;
 const UA = { "user-agent": "SahraFilm/2.0 (https://sahrafilm.com; saiflex.u@gmail.com) node-fetch", accept: "application/json" };
@@ -57,16 +57,17 @@ async function main() {
   }
   log("from seed:", pick.size);
 
+  const nextDate = new Map();
   const lists = [
     ["pop", `SELECT ?f WHERE { VALUES ?c { wd:Q11424 wd:Q29168811 wd:Q20650540 } ?f wdt:P31 ?c; wikibase:sitelinks ?sl; wdt:P345 []. FILTER(?sl >= 30) } ORDER BY DESC(?sl) LIMIT 2500`],
     ["top", `SELECT ?f (COUNT(DISTINCT ?aw) AS ?n) WHERE { ?f wdt:P31 wd:Q11424; wdt:P166 ?aw. ?aw wdt:P31 wd:Q19020. } GROUP BY ?f ORDER BY DESC(?n) LIMIT 300`],
     ["now", `SELECT DISTINCT ?f WHERE { ?f wdt:P31 wd:Q11424; wdt:P577 ?d. FILTER(?d >= "${dayShift(-75)}"^^xsd:dateTime && ?d <= "${today}"^^xsd:dateTime) ?w schema:about ?f; schema:isPartOf <https://en.wikipedia.org/>. } LIMIT 400`],
-    ["up", `SELECT DISTINCT ?f WHERE { ?f wdt:P31 wd:Q11424; wdt:P577 ?d. FILTER(?d > "${today}"^^xsd:dateTime && ?d <= "${dayShift(150)}"^^xsd:dateTime) ?w schema:about ?f; schema:isPartOf <https://en.wikipedia.org/>. } LIMIT 300`],
+    ["up", `SELECT ?f (MIN(?d) AS ?nd) WHERE { ?f wdt:P31 wd:Q11424; wdt:P577 ?d. FILTER(?d > "${today}"^^xsd:dateTime && ?d <= "${dayShift(150)}"^^xsd:dateTime) ?w schema:about ?f; schema:isPartOf <https://en.wikipedia.org/>. } GROUP BY ?f LIMIT 300`],
     ["ar", `SELECT ?f ?sl WHERE { ?f wdt:P364 wd:Q13955; wdt:P31 wd:Q11424; wikibase:sitelinks ?sl. FILTER(?sl >= 8) }`],
     ["anime", `SELECT DISTINCT ?f WHERE { { ?f wdt:P31 wd:Q20650540 } UNION { ?f wdt:P31 wd:Q11424; wdt:P136 wd:Q20650540 } UNION { ?f wdt:P31 wd:Q11424; wdt:P136 wd:Q1107 } ?f wikibase:sitelinks ?sl. FILTER(?sl >= 12) }`],
   ];
   for (const [name, q] of lists) {
-    try { const rows = await sparql(q); rows.forEach(r => add(qid(r.f), name)); log("list", name, rows.length); }
+    try { const rows = await sparql(q); rows.forEach(r => { add(qid(r.f), name); if (r.nd) nextDate.set(qid(r.f), r.nd.slice(0, 10)); }); log("list", name, rows.length); }
     catch (e) { console.warn("list failed", name, String(e).slice(0, 200)); }
   }
   const ids = [...pick.keys()];
@@ -176,7 +177,7 @@ async function main() {
   const cut = s => s && s.length > 230 ? s.slice(0, 228).replace(/\s\S*$/, "") + "…" : s || "";
   const list = films.map(f => ({
     id: f.id, q: f.q, imdb: f.imdb, en: f.en, ar: f.ar, y: f.rd ? +f.rd.slice(0, 4) : null, rd: f.rd, rt: f.rt, g: [...f.g], lang: f.lang,
-    pop: f.sl, p: f.imdb ? "imdb:" + f.imdb : null, ov: cut(f.ovAr || f.ard || ""), tr: f.tr, l: f.l,
+    pop: f.sl, nd: nextDate.get(f.q) || undefined, p: f.imdb ? "imdb:" + f.imdb : null, ov: cut(f.ovAr || f.ard || ""), tr: f.tr, l: f.l,
   })).sort((a, b) => (b.l.length ? 1 : 0) - (a.l.length ? 1 : 0) || b.pop - a.pop).slice(0, MAX);
   const keep = new Set(list.map(f => f.id));
   let n = 0;
@@ -190,6 +191,8 @@ async function main() {
     };
     await writeFile(`${OUT_DIR}/d/${f.id}.json`, JSON.stringify(det)); n++;
   }
+  // نمسح ملفات الأفلام اللي طلعت من القائمة
+  for (const name of await readdir(OUT_DIR + "/d")) if (!keep.has(+name.replace(".json", ""))) await unlink(`${OUT_DIR}/d/${name}`).catch(() => {});
   // تقرير التغطية
   const kept = films.filter(f => keep.has(f.id)); const P = fn => Math.round(100 * kept.filter(fn).length / kept.length) + "%";
   const report = { films: kept.length, arTitle: P(f => f.ar), date: P(f => f.rd), runtime: P(f => f.rt), genres: P(f => f.g.size), director: P(f => f.dir.length), cast5: P(f => f.cast.length >= 5), chars3: P(f => f.cast.filter(c => c.ch).length >= 3), ovAr: P(f => f.ovAr || f.ard), plotEn: P(f => f.plotEn), trailer: P(f => f.tr), boxOffice: P(f => f.revenue), imdb: P(f => f.imdb),

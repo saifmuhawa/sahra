@@ -1,8 +1,8 @@
-name: Sync films (TMDB + IMDb)
+name: Sync films (Wikidata + Wikipedia)
 
 on:
   schedule:
-    - cron: "7,27,47 * * * *"   # كل 20 دقيقة (GitHub بيأخّر أو بيفوّت بعض المواعيد)
+    - cron: "17 */6 * * *"   # كل 6 ساعات
   workflow_dispatch: {}
 
 permissions:
@@ -15,24 +15,26 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Fetch films
+      - name: Build film list
         env:
-          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
-        run: node sync.mjs
+          SEED_FILE: data/films.json
+          OUT_DIR: data
+        run: cp data/films.json /tmp/seed.json && SEED_FILE=/tmp/seed.json node scripts/free-films.mjs
       - name: Commit if changed
         run: |
-          git add data 2>/dev/null || true
+          git add -A data
           if git diff --cached --quiet; then
             echo "No changes"
           else
             git config user.name "sahra-bot"
             git config user.email "sahra-bot@users.noreply.github.com"
             git commit -m "Update films $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git pull --rebase -q origin main || true
             git push
           fi

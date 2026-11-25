@@ -11,3 +11,4 @@ sync.mjs
 .assetsignore
 .gitignore
 .dev.vars
+scripts

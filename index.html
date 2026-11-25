@@ -83,11 +83,11 @@ function strip(id, list, sort) {
   fs.sort(sort || ((a, b) => (b.pop || 0) - (a.pop || 0)));
   fs = fs.slice(0, 20);
   if (!fs.length) { box.closest("section").hidden = true; return; }
-  box.innerHTML = fs.map(f => `<a class="pcard" href="${imdbUrl(f)}" target="_blank" rel="noopener">${posterBox(f, "w185")}<span>${esc(titleAr(f))}</span><small>${f.rd || f.y || ""} ${f.ir ? "· IMDb " + f.ir.toFixed(1) : ""}</small></a>`).join("");
+  box.innerHTML = fs.map(f => `<a class="pcard" href="${imdbUrl(f)}" target="_blank" rel="noopener">${posterBox(f, "w185")}<span>${esc(titleAr(f))}</span><small>${list === "up" ? (f.nd || f.rd || "") : (f.rd || f.y || "")}</small></a>`).join("");
 }
 loadFilms().then(() => {
   strip("strip-now", "now");
-  strip("strip-up", "up", (a, b) => (a.rd || "").localeCompare(b.rd || ""));
+  strip("strip-up", "up", (a, b) => (a.nd || a.rd || "").localeCompare(b.nd || b.rd || ""));
   strip("strip-trend", "trend");
 });
 </script>
