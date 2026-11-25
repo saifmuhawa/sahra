@@ -1,0 +1,40 @@
+name: Free film data (Wikidata + Wikipedia)
+
+on:
+  push:
+    branches: [free-data]
+    paths: ["scripts/**", ".github/workflows/free-films.yml"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: free-films
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Seed list from main
+        run: git fetch origin main --depth=1 && git show origin/main:data/films.json > /tmp/seed.json || true
+      - name: Build
+        env:
+          SEED_FILE: /tmp/seed.json
+          OUT_DIR: data2
+        run: node scripts/free-films.mjs
+      - name: Commit
+        run: |
+          git add data2
+          if git diff --cached --quiet; then echo "No changes"; else
+            git config user.name "sahra-bot"
+            git config user.email "sahra-bot@users.noreply.github.com"
+            git commit -m "Free film data $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git push
+          fi
