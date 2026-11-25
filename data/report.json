@@ -1,24 +1,23 @@
 {
- "films": 4000,
- "arTitle": "85%",
- "date": "100%",
- "runtime": "94%",
- "genres": "96%",
+ "films": 4306,
+ "arTitle": "88%",
+ "date": "99%",
+ "runtime": "89%",
+ "genres": "93%",
  "director": "99%",
- "cast5": "88%",
- "chars3": "32%",
- "ovAr": "91%",
- "plotEn": "92%",
- "trailer": "34%",
- "boxOffice": "47%",
- "imdb": "100%",
+ "cast5": "84%",
+ "chars3": "30%",
+ "ovAr": "92%",
+ "plotEn": "96%",
+ "trailer": "31%",
+ "boxOffice": "41%",
+ "imdb": "99%",
  "lists": {
   "now": 256,
   "up": 69,
   "trend": 40,
-  "pop": 2500,
+  "pop": 2470,
   "top": 300,
-  "ar": 340,
-  "anime": 282
+  "ar": 936
  }
 }
