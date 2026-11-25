@@ -157,6 +157,7 @@
 <script>
 const KIND = "anime", THING = "الأنمي", GAME_TITLE = "خمّن الأنمي";
 </script>
+<script type="module">import * as AL from "./anilist.js"; window.AL = AL;</script>
 <script src="card.js"></script>
 <script src="play.js"></script>
 <script>
@@ -166,13 +167,13 @@ $("#pick-form").addEventListener("submit", async e => {
   const q = $("#pick-in").value.trim(); if (!q) return;
   $("#sugg").innerHTML = `<p class="note">عم ندوّر… ${WAIT}</p>`;
   let list = [];
-  try { list = (await call("/anime/search?q=" + encodeURIComponent(q))).results || []; } catch (err) {}
+  try { list = await AL.alSearch(q); } catch (err) {}
   if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما لقينا أنمي بهالاسم. جرّب الاسم الإنجليزي أو الياباني (روماجي).</p>`; return; }
   if (list.length === 1) choose(list[0]); else suggest(list, "اختار الأنمي الصح:");
 });
 $("#random-btn").addEventListener("click", async () => {
   $("#sugg").innerHTML = `<p class="note">عم نختار أنمي… ${WAIT}</p>`;
-  try { choose(await call("/anime/random")); } catch (e) { $("#sugg").innerHTML = `<p class="warn">ما زبطت هلأ، جرّب كمان مرة.</p>`; }
+  try { choose(await AL.alRandom()); } catch (e) { $("#sugg").innerHTML = `<p class="warn">ما زبطت هلأ، جرّب كمان مرة.</p>`; }
 });
 
 // ===== معلومات الحكم الكاملة =====
@@ -219,7 +220,7 @@ function renderAnime(d) {
 }
 async function loadInfo(base) {
   $("#info").innerHTML = `<p class="note">عم نجيب كل المعلومات…</p>`;
-  try { const d = await call("/anime/" + base.t + "/" + base.id); if (infoKey === base.t + base.id) renderAnime(d); }
+  try { const d = window.PICKED_D && window.PICKED_D.id === base.id ? window.PICKED_D : await AL.alDetail(base.id); if (infoKey === base.t + base.id) renderAnime(d); }
   catch (e) { if (infoKey === base.t + base.id) $("#info").innerHTML = `<p class="warn">ما قدرنا نجيب المعلومات هلأ.</p>`; }
 }
 </script>

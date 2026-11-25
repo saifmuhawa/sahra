@@ -407,7 +407,9 @@ async function choose(f) {
   $("#sugg").innerHTML = `<p class="note">عم نجهّز ${THING} والتلميحات…</p>`;
   try {
     window.PICKED = f;
-    await act("film", {t: KIND === "film" ? "movie" : f.t, id: f.id});
+    let data;
+    if (KIND === "anime" && window.AL) { data = await window.AL.alDetail(f.id); window.PICKED_D = data; }
+    await act("film", {t: KIND === "film" ? "movie" : f.t, id: f.id, data});
   } catch (e) { $("#sugg").innerHTML = `<p class="warn">ما قدرنا نجيب معلوماته هلأ. جرّب كمان مرة أو اختار غيره.</p>`; }
   busy = false;
 }
@@ -417,7 +419,14 @@ $("#story-form").addEventListener("submit", async e => {
   $("#sugg").innerHTML = `<p class="note">🤖 عم يفكّر…</p>`;
   let j = null;
   try { j = await call(({ anime: "/anime/guess", series: "/series/guess" }[KIND] || "/guess") + "?story=" + encodeURIComponent(s)); } catch (err) {}
-  const list = j?.results || [];
+  let list = j?.results || [];
+  if (!list.length && j?.candidates?.length && KIND === "anime" && window.AL) {
+    for (const c of j.candidates) {
+      const found = await window.AL.alSearch(c.title).catch(() => []);
+      const f = found.find(x => c.year && x.y && Math.abs(x.y - c.year) <= 1) || found[0];
+      if (f && !list.some(x => x.id === f.id)) list.push({ ...f, why: c.why || "" });
+    }
+  }
   if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما قدرنا نعرفه من هالوصف. زيد تفاصيل: اسم شخصية، ممثل، أو مشهد مشهور، وجرّب كمان مرة.</p>`; return; }
   suggest(list, "🤖 هاي توقعات الذكاء الاصطناعي، اختار الصح:");
 });

@@ -2,7 +2,7 @@
 // الحكم والمتسابقين متصلين بـ WebSocket، والمؤقت بيمشي هون بالسيرفر عشان يكون نفس الوقت على كل الجوالات.
 import { DurableObject } from "cloudflare:workers";
 import {
-  init, tmdb, shape, animeShape, alDetail, tmDetail, wdDetail, filmItem, askAI, GENRE_AR, rid, clean, titleWords, leaks, fillLevels,
+  init, tmdb, shape, animeShape, alDetail, cleanAnime, tmDetail, wdDetail, filmItem, askAI, GENRE_AR, rid, clean, titleWords, leaks, fillLevels,
   dataHintsMovie, dataHintsAnime, dataHintsSeries, HINTS_PROMPT, parseHints, wikiFacts, hasKey,
 } from "./api.js";
 
@@ -189,7 +189,7 @@ export class Room extends DurableObject {
       }
       case "lobby": this.stopTimer(); r.stage = "lobby"; break;
       case "film": {
-        try { await this.setFilm(b.t, +b.id || 0); } catch (e) { return reply({ error: String(e.message || e) }, 502); }
+        try { await this.setFilm(b.t, +b.id || 0, b.data); } catch (e) { return reply({ error: String(e.message || e) }, 502); }
         return reply(this.view("judge"));
       }
       // الحكم جاوب على سؤال الفريق → الدور للفريق الثاني
@@ -229,7 +229,7 @@ export class Room extends DurableObject {
   }
 
   // ===== اختيار الفيلم وتجهيز التلميحات =====
-  async setFilm(t, id) {
+  async setFilm(t, id, data) {
     const r = this.r;
     const token = rid();
     r.filmToken = token;
@@ -242,7 +242,8 @@ export class Room extends DurableObject {
       info = { type: "TV series", year: a.y, status: a.status, genres: (a.g || []).map(x => GENRE_AR[x]).filter(Boolean), network: (a.networks || []).map(x => x.n), seasons: a.seasons, episodes: a.episodes, creators: a.creators, cast: (a.cast || []).slice(0, 8).map(c => c.n + " as " + c.ch), plot: a.ov };
     } else if (r.kind === "anime") {
       const tt = t === "movie" ? "movie" : "tv";
-      const a = await alDetail(id);
+      const given = cleanAnime(data);
+      const a = given && given.id === id ? given : await alDetail(id);
       if (!a) throw new Error("not found");
       film = { t: a.t, id: a.id, en: a.en, ar: a.ar, orig: a.orig, y: a.y, p: a.p };
       hints = dataHintsAnime(a);

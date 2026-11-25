@@ -1,3 +1,4 @@
+// الأنمي من AniList — بيشتغل من المتصفح (AniList بيمنع سيرفرات Cloudflare)
 // الأنمي من AniList (مجاني، والاستخدام التجاري مسموح لحد دخل بسيط، مع ذكر المصدر)
 // بيرجّع نفس الشكل اللي كانت بترجّعه دوال TMDB عشان الصفحات ما تتغيّر
 const AL = "https://graphql.anilist.co";
@@ -7,7 +8,7 @@ async function gql(query, variables) {
   const ck = query.length + JSON.stringify(variables);
   const hit = cache.get(ck);
   if (hit && Date.now() - hit.t < 3600000) return hit.v;
-  const r = await fetch(AL, { method: "POST", headers: { "content-type": "application/json", accept: "application/json", "user-agent": "SahraFilm/2.0 (https://sahrafilm.com; saiflex.u@gmail.com)", origin: "https://sahrafilm.com", referer: "https://sahrafilm.com/" }, body: JSON.stringify({ query, variables }) });
+  const r = await fetch(AL, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ query, variables }) });
   if (r.status === 404) return null;
   if (!r.ok) throw new Error("AniList " + r.status);
   const j = await r.json();
@@ -45,7 +46,7 @@ export async function alRandom() {
 async function arabicName(id) {
   try {
     const q = `SELECT ?ar ?arw WHERE { ?x wdt:P8729 "${id}". OPTIONAL { ?x rdfs:label ?ar FILTER(LANG(?ar)="ar") } OPTIONAL { ?arw schema:about ?x; schema:isPartOf <https://ar.wikipedia.org/> } } LIMIT 1`;
-    const r = await fetch("https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(q), { headers: { accept: "application/sparql-results+json", "user-agent": "SahraFilm/2.0 (https://sahrafilm.com)" }, signal: AbortSignal.timeout(4000), cf: { cacheTtl: 604800, cacheEverything: true } });
+    const r = await fetch("https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(q), { headers: { accept: "application/sparql-results+json" }, signal: AbortSignal.timeout(4000), cf: { cacheTtl: 604800, cacheEverything: true } });
     const b = (await r.json()).results.bindings[0] || {};
     return b.ar?.value || null;
   } catch { return null; }
@@ -83,5 +84,20 @@ export async function alDetail(id) {
     mus: staff("Music"), chr: staff("Character Design", "Original Character Design"),
     source: m.source || null, tr: m.trailer?.site === "youtube" ? m.trailer.id : null,
     cast: (m.characters?.edges || []).map(e => ({ ch: e.node.name.full, n: e.voiceActors?.[0]?.name?.full || "", p: e.node.image?.medium || null, va: e.voiceActors?.[0]?.image?.medium || null, main: e.role === "MAIN" })),
+  };
+}
+
+// تنظيف المعلومات اللي بتيجي من جوال الحكم قبل ما الغرفة تستخدمها
+export function cleanAnime(d) {
+  const str = (v, n = 200) => String(v ?? "").replace(/[\u0000-\u001f<>]/g, " ").trim().slice(0, n);
+  const arr = (v, n = 6) => (Array.isArray(v) ? v : []).slice(0, n).map(x => str(x, 80)).filter(Boolean);
+  if (!d || typeof d !== "object" || !+d.id) return null;
+  return {
+    id: +d.id, t: d.t === "movie" ? "movie" : "tv", en: str(d.en, 150), ar: d.ar ? str(d.ar, 150) : null, orig: d.orig ? str(d.orig, 150) : null,
+    y: +d.y || null, status: d.status ? str(d.status, 30) : null, episodes: +d.episodes || 0, seasons: +d.seasons || 0,
+    g: (Array.isArray(d.g) ? d.g : []).slice(0, 8).map(Number).filter(Boolean), p: /^https:\/\/s4\.anilist\.co\//.test(d.p || "") ? str(d.p, 300) : null,
+    ov: str(d.ov, 1500), studios: (Array.isArray(d.studios) ? d.studios : []).slice(0, 6).map(x => ({ n: str(x?.n, 80) })),
+    dir: arr(d.dir), wri: arr(d.wri), mus: arr(d.mus), chr: arr(d.chr),
+    cast: (Array.isArray(d.cast) ? d.cast : []).slice(0, 16).map(c => ({ ch: str(c?.ch, 80), n: str(c?.n, 80) })),
   };
 }

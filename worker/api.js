@@ -1,4 +1,4 @@
-import { alSearch, alRandom, alDetail } from "./anilist.js";
+import { alSearch, alRandom, alDetail, cleanAnime } from "../anilist.js";
 import { tmSearch, tmRandom, tmDetail } from "./tvmaze.js";
 import { wdSearch, wdFind, wdDetail } from "./wikidata.js";
 // سيرفر صغير بيدوّر على أي فيلم بقاعدة TMDB (فيها تقريباً كل أفلام IMDb) — المفتاح بيضل هون مخفي
@@ -332,7 +332,7 @@ export async function wikiFacts(title, year, kind) {
 const JH = { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*" };
 export const json = (obj, code = 200, cache = "public, max-age=600") => new Response(JSON.stringify(obj), { status: code, headers: { ...JH, "cache-control": cache } });
 
-export { alDetail, tmDetail, wdDetail };
+export { alDetail, cleanAnime, tmDetail, wdDetail };
 export const filmItem = d => ({ id: d.id, q: d.q, imdb: d.imdb, en: d.en, ar: d.ar, y: d.y, rd: d.rd, rt: d.rt, g: d.g, lang: d.lang, pop: d.pop, p: d.p, ov: (d.ov || "").slice(0, 230), tr: d.tr, l: [] });
 export async function apiRoute(path, u) {
   if (path === "/" || path === "/health") return json({ ok: true, key: !!KEY, ai: ["GROQ_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"].filter(k => E[k]).map(k => k.split("_")[0].toLowerCase()), host: "cloudflare" }, 200, "no-store");
@@ -391,12 +391,8 @@ export async function apiRoute(path, u) {
     const ai = await askAI(story, errs, ANIME_PROMPT).catch(e => (errs.push(String(e)), null));
     const cands = ai ? parseCandidates(ai.text) : [];
     const seen = new Set(), results = [];
-    for (const c of cands) {
-      const list = await alSearch(c.title).catch(() => []);
-      const f = list.find(x => c.year && x.y && Math.abs(x.y - c.year) <= 1) || list[0];
-      if (f && !seen.has(f.t + f.id)) { seen.add(f.t + f.id); results.push({ ...f, why: c.why || "" }); }
-    }
-    return json(results.length ? { source: ai.source, results } : { source: "none", results, aiError: errs.join(" | ").slice(0, 600) });
+    // AniList ما بيقبل طلبات من السيرفر، فبنرجّع الأسماء والمتصفح بيدوّر عليها
+    return json(cands.length ? { source: ai.source, results: [], candidates: cands.slice(0, 3) } : { source: "none", results: [], aiError: errs.join(" | ").slice(0, 600) });
   }
   const am = path.match(/^\/anime\/(tv|movie)\/(\d+)$/);
   if (am) {
