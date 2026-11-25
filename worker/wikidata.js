@@ -29,14 +29,14 @@ export async function wdSearch(q) {
   const s = await getJSON(`https://www.wikidata.org/w/api.php?origin=*&action=wbsearchentities&format=json&type=item&limit=20&uselang=${ar ? "ar" : "en"}&language=${ar ? "ar" : "en"}&search=` + encodeURIComponent(q), {}, 3600);
   const ids = (s.search || []).map(x => x.id);
   if (!ids.length) return [];
-  const rows = await sparql(`SELECT ?f (MAX(?_en) AS ?en) (MAX(?_ar) AS ?ar) (MIN(?_d) AS ?d) (MAX(?_imdb) AS ?imdb) (MAX(?_sl) AS ?sl) WHERE {
+  const rows = await sparql(`SELECT ?f (MAX(?_en) AS ?en) (MAX(?_mul) AS ?mul) (MAX(?_ar) AS ?ar) (MIN(?_d) AS ?d) (MAX(?_imdb) AS ?imdb) (MAX(?_sl) AS ?sl) WHERE {
     VALUES ?f { ${ids.map(i => "wd:" + i).join(" ")} } VALUES ?c { ${FILM_TYPES} } ?f wdt:P31 ?c.
-    OPTIONAL { ?f rdfs:label ?_en FILTER(LANG(?_en)="en") } OPTIONAL { ?f rdfs:label ?_ar FILTER(LANG(?_ar)="ar") }
+    OPTIONAL { ?f rdfs:label ?_en FILTER(LANG(?_en)="en") } OPTIONAL { ?f rdfs:label ?_mul FILTER(LANG(?_mul)="mul") } OPTIONAL { ?f rdfs:label ?_ar FILTER(LANG(?_ar)="ar") }
     OPTIONAL { ?f wdt:P577 ?_d } OPTIONAL { ?f wdt:P345 ?_imdb } OPTIONAL { ?f wikibase:sitelinks ?_sl } } GROUP BY ?f`);
   const order = new Map(ids.map((id, i) => [id, i]));
   return rows.map(r => {
     const q = qid(r.f);
-    return { id: +q.slice(1), q, imdb: r.imdb || null, en: r.en || r.ar, ar: r.ar || null, y: r.d ? +r.d.slice(0, 4) : null, rd: r.d ? r.d.slice(0, 10) : null, p: r.imdb ? "imdb:" + r.imdb : null, pop: +(r.sl || 0), g: [], l: [], ext: true };
+    return { id: +q.slice(1), q, imdb: r.imdb || null, en: r.en || r.mul || r.ar, ar: r.ar || null, y: r.d ? +r.d.slice(0, 4) : null, rd: r.d ? r.d.slice(0, 10) : null, p: r.imdb ? "imdb:" + r.imdb : null, pop: +(r.sl || 0), g: [], l: [], ext: true };
   }).sort((a, b) => order.get(a.q) - order.get(b.q)).slice(0, 10);
 }
 
@@ -50,21 +50,21 @@ export async function wdFind(title, year) {
 export async function wdDetail(id) {
   const Q = "wd:Q" + (+String(id).replace(/^Q/, ""));
   const [base, gen, crew, cast, misc] = await Promise.all([
-    sparql(`SELECT (MAX(?_imdb) AS ?imdb) (MAX(?_en) AS ?en) (MAX(?_ar) AS ?ar) (MAX(?_ard) AS ?ard) (MIN(?_d) AS ?date) (MAX(?_dur) AS ?dur) (MAX(?_yt) AS ?yt) (MAX(?_box) AS ?box) (MAX(?_bud) AS ?bud)
+    sparql(`SELECT (MAX(?_imdb) AS ?imdb) (MAX(?_en) AS ?en) (MAX(?_mul) AS ?mul) (MAX(?_ar) AS ?ar) (MAX(?_ard) AS ?ard) (MIN(?_d) AS ?date) (MAX(?_dur) AS ?dur) (MAX(?_yt) AS ?yt) (MAX(?_box) AS ?box) (MAX(?_bud) AS ?bud)
       (GROUP_CONCAT(DISTINCT ?_lang; separator=",") AS ?lang) (MAX(?_orig) AS ?orig) (MAX(?_enw) AS ?enw) (MAX(?_arw) AS ?arw) (MAX(?_sl) AS ?sl) (MAX(?_col) AS ?col) WHERE {
-      OPTIONAL { ${Q} wdt:P345 ?_imdb } OPTIONAL { ${Q} rdfs:label ?_en FILTER(LANG(?_en)="en") } OPTIONAL { ${Q} rdfs:label ?_ar FILTER(LANG(?_ar)="ar") }
+      OPTIONAL { ${Q} wdt:P345 ?_imdb } OPTIONAL { ${Q} rdfs:label ?_en FILTER(LANG(?_en)="en") } OPTIONAL { ${Q} rdfs:label ?_mul FILTER(LANG(?_mul)="mul") } OPTIONAL { ${Q} rdfs:label ?_ar FILTER(LANG(?_ar)="ar") }
       OPTIONAL { ${Q} schema:description ?_ard FILTER(LANG(?_ard)="ar") } OPTIONAL { ${Q} wdt:P577 ?_d } OPTIONAL { ${Q} p:P2047/psv:P2047 [ wikibase:quantityAmount ?_dur ] }
       OPTIONAL { ${Q} wdt:P1651 ?_yt } OPTIONAL { ${Q} wdt:P2142 ?_box } OPTIONAL { ${Q} wdt:P2130 ?_bud } OPTIONAL { ${Q} wdt:P364/wdt:P218 ?_lang } OPTIONAL { ${Q} wdt:P1476 ?_orig }
-      OPTIONAL { ${Q} wikibase:sitelinks ?_sl } OPTIONAL { ${Q} wdt:P179 ?c. ?c rdfs:label ?_col FILTER(LANG(?_col)="en") }
+      OPTIONAL { ${Q} wikibase:sitelinks ?_sl }
       OPTIONAL { ?_enw schema:about ${Q}; schema:isPartOf <https://en.wikipedia.org/> } OPTIONAL { ?_arw schema:about ${Q}; schema:isPartOf <https://ar.wikipedia.org/> } }`),
     sparql(`SELECT ?g WHERE { { ${Q} wdt:P136 ?g } UNION { ${Q} wdt:P31 ?g } }`),
-    sparql(`SELECT ?p ?n WHERE { VALUES ?p { wdt:P57 wdt:P58 wdt:P86 wdt:P344 wdt:P162 } ${Q} ?p ?x. ?x rdfs:label ?n FILTER(LANG(?n)="en") }`),
-    sparql(`SELECT ?n (MAX(?chl) AS ?ch) (MAX(?chs0) AS ?chs) (MIN(?o) AS ?ord) WHERE { ${Q} p:P161 ?st. ?st ps:P161 ?a. ?a rdfs:label ?n FILTER(LANG(?n)="en")
-      OPTIONAL { ?st pq:P453 ?c. ?c rdfs:label ?chl FILTER(LANG(?chl)="en") } OPTIONAL { ?st pq:P4633 ?chs0 } OPTIONAL { ?st pq:P1545 ?o } } GROUP BY ?n`),
-    sparql(`SELECT ?k ?v WHERE { { ${Q} wdt:P272 ?x. ?x rdfs:label ?v FILTER(LANG(?v)="en") BIND("co" AS ?k) } UNION { ${Q} wdt:P495 ?x. ?x wdt:P297 ?v BIND("cn" AS ?k) } }`),
+    sparql(`SELECT ?p ?n WHERE { VALUES ?p { wdt:P57 wdt:P58 wdt:P86 wdt:P344 wdt:P162 } ${Q} ?p ?x. ?x rdfs:label ?n FILTER(LANG(?n) IN ("en","mul")) }`),
+    sparql(`SELECT ?n (MAX(?chl) AS ?ch) (MAX(?chs0) AS ?chs) (MIN(?o) AS ?ord) WHERE { ${Q} p:P161 ?st. ?st ps:P161 ?a. ?a rdfs:label ?n FILTER(LANG(?n) IN ("en","mul"))
+      OPTIONAL { ?st pq:P453 ?c. ?c rdfs:label ?chl FILTER(LANG(?chl) IN ("en","mul")) } OPTIONAL { ?st pq:P4633 ?chs0 } OPTIONAL { ?st pq:P1545 ?o } } GROUP BY ?n`),
+    sparql(`SELECT ?k ?v WHERE { { ${Q} wdt:P272 ?x. ?x rdfs:label ?v FILTER(LANG(?v) IN ("en","mul")) BIND("co" AS ?k) } UNION { ${Q} wdt:P495 ?x. ?x wdt:P297 ?v BIND("cn" AS ?k) } }`),
   ]);
   const b = base[0] || {};
-  if (!b.en && !b.ar) return null;
+  if (!b.en && !b.mul && !b.ar) return null;
   const key = { P57: "dir", P58: "wri", P86: "mus", P344: "dop", P162: "prod" };
   const c = { dir: [], wri: [], mus: [], dop: [], prod: [] };
   for (const r of crew) { const k = key[r.p.split("/").pop()]; if (k && !c[k].includes(r.n) && c[k].length < 6) c[k].push(r.n); }
@@ -94,7 +94,7 @@ export async function wdDetail(id) {
   const langs = (b.lang || "").split(",").filter(Boolean);
   const num = String(id).replace(/^Q/, "");
   return {
-    id: +num, q: "Q" + num, imdb: b.imdb || null, en: b.en || b.orig || b.ar, orig: b.orig || null, ar: b.ar || null, tag: null,
+    id: +num, q: "Q" + num, imdb: b.imdb || null, en: b.en || b.mul || b.orig || b.ar, orig: b.orig || null, ar: b.ar || null, tag: null,
     ov: ovAr || b.ard || "", plotEn, rd: b.date ? b.date.slice(0, 10) : null, y: b.date ? +b.date.slice(0, 4) : null, rt: b.dur ? Math.round(+b.dur) : null,
     g: [...new Set(gen.map(r => GENRE[qid(r.g)]).filter(Boolean))], lang: langs.sort((x, y) => (y === "en") - (x === "en"))[0] || null,
     budget: b.bud ? Math.round(+b.bud) : 0, revenue: b.box ? Math.round(+b.box) : 0,

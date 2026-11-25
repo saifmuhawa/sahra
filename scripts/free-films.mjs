@@ -76,10 +76,10 @@ async function main() {
   const F = new Map();
   await pool(chunks(ids, 120), 3, async part => {
     const V = part.map(q => "wd:" + q).join(" ");
-    const rows = await sparql(`SELECT ?f (MAX(?_imdb) AS ?imdb) (MAX(?_en) AS ?en) (MAX(?_ar) AS ?ar) (MAX(?_ard) AS ?ard) (MIN(?_date) AS ?date) (MAX(?_dur) AS ?dur)
+    const rows = await sparql(`SELECT ?f (MAX(?_imdb) AS ?imdb) (MAX(?_en) AS ?en) (MAX(?_mul) AS ?mul) (MAX(?_ar) AS ?ar) (MAX(?_ard) AS ?ard) (MIN(?_date) AS ?date) (MAX(?_dur) AS ?dur)
       (MAX(?_sl) AS ?sl) (MAX(?_yt) AS ?yt) (MAX(?_box) AS ?box) (MAX(?_bud) AS ?bud) (GROUP_CONCAT(DISTINCT ?_lang; separator=",") AS ?lang) (MAX(?_orig) AS ?orig) (MAX(?_enw) AS ?enw) (MAX(?_arw) AS ?arw)
       WHERE { VALUES ?f { ${V} }
-        OPTIONAL { ?f wdt:P345 ?_imdb } OPTIONAL { ?f rdfs:label ?_en FILTER(LANG(?_en)="en") } OPTIONAL { ?f rdfs:label ?_ar FILTER(LANG(?_ar)="ar") }
+        OPTIONAL { ?f wdt:P345 ?_imdb } OPTIONAL { ?f rdfs:label ?_en FILTER(LANG(?_en)="en") } OPTIONAL { ?f rdfs:label ?_mul FILTER(LANG(?_mul)="mul") } OPTIONAL { ?f rdfs:label ?_ar FILTER(LANG(?_ar)="ar") }
         OPTIONAL { ?f schema:description ?_ard FILTER(LANG(?_ard)="ar") }
         OPTIONAL { ?f wdt:P577 ?_date } OPTIONAL { ?f p:P2047/psv:P2047 [ wikibase:quantityAmount ?_dur ] }
         OPTIONAL { ?f wikibase:sitelinks ?_sl } OPTIONAL { ?f wdt:P1651 ?_yt } OPTIONAL { ?f wdt:P2142 ?_box } OPTIONAL { ?f wdt:P2130 ?_bud }
@@ -89,7 +89,7 @@ async function main() {
     for (const r of rows) {
       const q = qid(r.f);
       F.set(q, {
-        q, id: num(q), imdb: r.imdb || null, en: r.en || r.orig || null, ar: r.ar || null, ard: r.ard || null,
+        q, id: num(q), imdb: r.imdb || null, en: r.en || r.mul || r.orig || null, ar: r.ar || null, ard: r.ard || null,
         rd: r.date ? r.date.slice(0, 10) : null, rt: r.dur ? Math.round(+r.dur) : null, sl: +(r.sl || 0), tr: r.yt || null,
         revenue: r.box ? Math.round(+r.box) : 0, budget: r.bud ? Math.round(+r.bud) : 0, lang: (r.lang || "").split(",").filter(Boolean).sort((a, b) => (b === "en") - (a === "en"))[0] || null, orig: r.orig || null,
         enw: r.enw ? decodeURIComponent(r.enw.replace("https://en.wikipedia.org/wiki/", "")).replace(/_/g, " ") : null,
@@ -106,13 +106,13 @@ async function main() {
     const V = part.map(q => "wd:" + q).join(" ");
     const g = await sparql(`SELECT ?f ?g WHERE { VALUES ?f { ${V} } { ?f wdt:P136 ?g } UNION { ?f wdt:P31 ?g } }`);
     for (const r of g) { const id = GENRE[qid(r.g)]; if (id) F.get(qid(r.f))?.g.add(id); }
-    const crew = await sparql(`SELECT ?f ?p ?n WHERE { VALUES ?f { ${V} } VALUES ?p { wdt:P57 wdt:P58 wdt:P86 wdt:P344 wdt:P162 } ?f ?p ?x. ?x rdfs:label ?n FILTER(LANG(?n)="en") }`);
+    const crew = await sparql(`SELECT ?f ?p ?n WHERE { VALUES ?f { ${V} } VALUES ?p { wdt:P57 wdt:P58 wdt:P86 wdt:P344 wdt:P162 } ?f ?p ?x. ?x rdfs:label ?n FILTER(LANG(?n) IN ("en","mul")) }`);
     const key = { P57: "dir", P58: "wri", P86: "mus", P344: "dop", P162: "prod" };
     for (const r of crew) { const f = F.get(qid(r.f)); const k = key[r.p.split("/").pop()]; if (f && k && !f[k].includes(r.n) && f[k].length < 6) f[k].push(r.n); }
-    const cast = await sparql(`SELECT ?f ?n (SAMPLE(?chl) AS ?ch) (SAMPLE(?chs0) AS ?chs) WHERE { VALUES ?f { ${V} } ?f p:P161 ?st. ?st ps:P161 ?a. ?a rdfs:label ?n FILTER(LANG(?n)="en")
-      OPTIONAL { ?st pq:P453 ?c. ?c rdfs:label ?chl FILTER(LANG(?chl)="en") } OPTIONAL { ?st pq:P4633 ?chs0 } } GROUP BY ?f ?n`);
+    const cast = await sparql(`SELECT ?f ?n (SAMPLE(?chl) AS ?ch) (SAMPLE(?chs0) AS ?chs) WHERE { VALUES ?f { ${V} } ?f p:P161 ?st. ?st ps:P161 ?a. ?a rdfs:label ?n FILTER(LANG(?n) IN ("en","mul"))
+      OPTIONAL { ?st pq:P453 ?c. ?c rdfs:label ?chl FILTER(LANG(?chl) IN ("en","mul")) } OPTIONAL { ?st pq:P4633 ?chs0 } } GROUP BY ?f ?n`);
     for (const r of cast) { const f = F.get(qid(r.f)); if (f && f.cast.length < 30) f.cast.push({ n: r.n, ch: r.ch || r.chs || "" }); }
-    const misc = await sparql(`SELECT ?f ?k ?v WHERE { VALUES ?f { ${V} } { ?f wdt:P272 ?x. ?x rdfs:label ?v FILTER(LANG(?v)="en") BIND("co" AS ?k) } UNION { ?f wdt:P495 ?x. ?x wdt:P297 ?v BIND("cn" AS ?k) } }`);
+    const misc = await sparql(`SELECT ?f ?k ?v WHERE { VALUES ?f { ${V} } { ?f wdt:P272 ?x. ?x rdfs:label ?v FILTER(LANG(?v) IN ("en","mul")) BIND("co" AS ?k) } UNION { ?f wdt:P495 ?x. ?x wdt:P297 ?v BIND("cn" AS ?k) } }`);
     for (const r of misc) { const f = F.get(qid(r.f)); if (!f) continue; if (r.k === "co" && f.companies.length < 6 && !f.companies.some(c => c.n === r.v)) f.companies.push({ n: r.v }); if (r.k === "cn" && !f.countries.includes(r.v)) f.countries.push(r.v); }
   });
   log("details from Wikidata done");
