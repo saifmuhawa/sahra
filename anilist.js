@@ -74,7 +74,7 @@ export async function alDetail(id) {
     tag: null, ov: strip(m.description),
     y: yearOf(m), first: dateOf(m.startDate), last: tv ? dateOf(m.endDate) : null,
     status: { FINISHED: "Ended", RELEASING: "Returning Series", NOT_YET_RELEASED: "Upcoming", CANCELLED: "Canceled" }[m.status] || null, inprod: m.status === "RELEASING",
-    seasons: tv ? 1 + seq.filter(e => e.relationType === "SEQUEL").length : 0, episodes: tv ? m.episodes || 0 : 0, seasonList: [],
+    seasons: 0, episodes: tv ? m.episodes || 0 : 0, seasonList: [],
     rt: m.duration || null, budget: 0, revenue: 0,
     g: genres(m.genres), gen: m.genres || [], p: m.coverImage?.extraLarge || m.coverImage?.large || null, banner: m.bannerImage || null,
     tv: m.averageScore ? m.averageScore / 10 : null, tc: m.popularity || 0,
