@@ -242,7 +242,7 @@ function revealHtml(myTeam) {
   const w = S.winner;
   const head = w === 0 || w === 1 ? `🏆 ${esc(teamName(w))} عرفه!` : "ما حدا عرفه 😅";
   const mine = myTeam == null || w == null || w < 0 ? "" : w === myTeam ? `<p class="win-me">فريقك أخذ النقطة! 🎉</p>` : `<p class="note">المرة الجاي إلكم 💪</p>`;
-  const poster = f.p ? `<img class="rposter" src="${posterUrl(f, "w342")}" alt="">` : "";
+  const poster = f.p ? `<img class="rposter" src="${posterUrl(f, "w342")}" alt="" onerror="this.remove()">` : "";
   return `<div class="card-g center reveal-card ${w === 0 || w === 1 ? TCLS[w] + "-glow" : ""}"><p class="lbl">${THING} كان</p>${poster}<h2 class="rtitle">${esc(f.ar || f.en || "")}</h2><div class="en" dir="ltr">${esc(f.en || "")}${f.y ? " · " + f.y : ""}</div><h3 class="rwin">${head}</h3>${mine}</div>`;
 }
 function finalText() {
@@ -364,7 +364,7 @@ function renderPlay() {
   $("#g-turn").innerHTML = scoreBar() + turnCard(null) + `<div class="row2 turnbtns">
       <button type="button" class="bigbtn ${TCLS[1 - S.turn]}" id="g-pass">✓ جاوبت، دور ${esc(teamName(1 - S.turn))}</button>
       <button type="button" class="bigbtn ghost" id="g-pause">${S.paused ? "▶ كمّل الوقت" : "⏸ وقّف الوقت"}</button></div>`;
-  $("#g-head").innerHTML = `${f.p ? `<img src="${posterUrl(f, "w154")}" alt="">` : `<div class="noposter"></div>`}<div><h2>${esc(f.ar || f.en)}</h2><div class="en" dir="ltr">${esc(f.en)}${f.y ? " · " + f.y : ""}</div><p class="note">بس إنت شايف هالمعلومات</p></div>`;
+  $("#g-head").innerHTML = `${f.p ? `<img src="${posterUrl(f, "w154")}" alt="" onerror="this.remove()">` : `<div class="noposter"></div>`}<div><h2>${esc(f.ar || f.en)}</h2><div class="en" dir="ltr">${esc(f.en)}${f.y ? " · " + f.y : ""}</div><p class="note">بس إنت شايف هالمعلومات</p></div>`;
   const tag = h => h.got.map(t => `<span class="gchip ${TCLS[t]}">${esc(teamName(t))}</span>`).join("");
   const groups = ["hard", "mid", "easy"].map(l => {
     const items = S.hints.filter(h => h.lvl === l);

@@ -2,7 +2,7 @@
 // الحكم والمتسابقين متصلين بـ WebSocket، والمؤقت بيمشي هون بالسيرفر عشان يكون نفس الوقت على كل الجوالات.
 import { DurableObject } from "cloudflare:workers";
 import {
-  init, tmdb, shape, animeShape, alDetail, tmDetail, askAI, GENRE_AR, rid, clean, titleWords, leaks, fillLevels,
+  init, tmdb, shape, animeShape, alDetail, tmDetail, wdDetail, filmItem, askAI, GENRE_AR, rid, clean, titleWords, leaks, fillLevels,
   dataHintsMovie, dataHintsAnime, dataHintsSeries, HINTS_PROMPT, parseHints, wikiFacts, hasKey,
 } from "./api.js";
 
@@ -189,7 +189,6 @@ export class Room extends DurableObject {
       }
       case "lobby": this.stopTimer(); r.stage = "lobby"; break;
       case "film": {
-        if (!hasKey()) return reply({ error: "TMDB_API_KEY is missing" }, 500);
         try { await this.setFilm(b.t, +b.id || 0); } catch (e) { return reply({ error: String(e.message || e) }, 502); }
         return reply(this.view("judge"));
       }
@@ -249,12 +248,12 @@ export class Room extends DurableObject {
       hints = dataHintsAnime(a);
       info = { type: a.t === "tv" ? "anime series" : "anime film", year: a.y, genres: (a.g || []).map(x => GENRE_AR[x]).filter(Boolean), studios: (a.studios || []).map(x => x.n), episodes: a.episodes, seasons: a.seasons, characters: (a.cast || []).slice(0, 8).map(c => c.ch), voices: (a.cast || []).slice(0, 4).map(c => c.n), writers: a.wri, plot: a.ov };
     } else {
-      const d = await tmdb("/movie/" + id, { language: "en-US", append_to_response: "videos,external_ids,translations,credits,release_dates" });
-      if (!d) throw new Error("not found");
-      const { film: f, det } = shape(d);
-      film = { t: "movie", id: f.id, en: f.en, ar: f.ar, orig: det.orig, y: f.y, p: f.p };
+      const det = await wdDetail(id);
+      if (!det) throw new Error("not found");
+      const f = filmItem(det);
+      film = { t: "movie", id: f.id, en: f.en, ar: f.ar, orig: det.orig, y: f.y, p: f.p, imdb: f.imdb };
       hints = dataHintsMovie(f, det);
-      info = { year: f.y, genres: (det.g || []).map(x => GENRE_AR[x]).filter(Boolean), director: det.dir, cast: (det.cast || []).slice(0, 8).map(c => c.n + " as " + c.ch), writers: det.wri, countries: det.countries, boxOffice: det.revenue, plot: det.ov, tagline: det.tag };
+      info = { year: f.y, genres: (det.g || []).map(x => GENRE_AR[x]).filter(Boolean), director: det.dir, cast: (det.cast || []).slice(0, 8).map(c => c.n + " as " + c.ch), writers: det.wri, countries: det.countries, boxOffice: det.revenue, plot: det.plotEn || det.ov, plotAr: det.ov, tagline: det.tag };
     }
     if (r.filmToken !== token) return;
     Object.assign(r, { film, hints, hintsSrc: "data", hintsErr: null, got: [[], []], lastHintAt: [0, 0], winner: null, lastPass: null, stage: "play" });

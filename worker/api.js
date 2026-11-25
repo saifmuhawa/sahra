@@ -1,5 +1,6 @@
 import { alSearch, alRandom, alDetail } from "./anilist.js";
 import { tmSearch, tmRandom, tmDetail } from "./tvmaze.js";
+import { wdSearch, wdFind, wdDetail } from "./wikidata.js";
 // سيرفر صغير بيدوّر على أي فيلم بقاعدة TMDB (فيها تقريباً كل أفلام IMDb) — المفتاح بيضل هون مخفي
 
 // بيئة Cloudflare: المفاتيح بتيجي من env (أسرار الـWorker)
@@ -120,12 +121,8 @@ async function wikiGuess(story) {
   });
 }
 async function resolve(c) {
-  const params = { query: c.title, include_adult: "false", language: "en-US" };
-  let j = c.year ? await tmdb("/search/movie", { ...params, year: String(c.year) }) : null;
-  if (!j?.results?.length) j = await tmdb("/search/movie", params);
-  const m = j?.results?.[0];
-  if (!m) return null;
-  return { id: m.id, en: m.title, y: m.release_date ? +m.release_date.slice(0, 4) : null, rd: m.release_date || null, p: m.poster_path || null, pop: m.popularity || 0, tv: m.vote_average || null, tc: m.vote_count || 0, lang: m.original_language, g: m.genre_ids || [], l: [], ext: true, why: c.why || "" };
+  const f = await wdFind(c.title, c.year);
+  return f ? { ...f, why: c.why || "" } : null;
 }
 
 // ===== الأنمي (مسلسلات وأفلام) =====
@@ -335,7 +332,8 @@ export async function wikiFacts(title, year, kind) {
 const JH = { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*" };
 export const json = (obj, code = 200, cache = "public, max-age=600") => new Response(JSON.stringify(obj), { status: code, headers: { ...JH, "cache-control": cache } });
 
-export { alDetail, tmDetail };
+export { alDetail, tmDetail, wdDetail };
+export const filmItem = d => ({ id: d.id, q: d.q, imdb: d.imdb, en: d.en, ar: d.ar, y: d.y, rd: d.rd, rt: d.rt, g: d.g, lang: d.lang, pop: d.pop, p: d.p, ov: (d.ov || "").slice(0, 230), tr: d.tr, l: [] });
 export async function apiRoute(path, u) {
   if (path === "/" || path === "/health") return json({ ok: true, key: !!KEY, ai: ["GROQ_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"].filter(k => E[k]).map(k => k.split("_")[0].toLowerCase()), host: "cloudflare" }, 200, "no-store");
   // بروكسي للبوسترات عشان كرت الستوري يقدر يرسمها على canvas بدون مشاكل CORS
@@ -406,17 +404,10 @@ export async function apiRoute(path, u) {
     if (!d) return json({ error: "not found" }, 404);
     return json(d);
   }
-  if (!KEY) return json({ error: "TMDB_API_KEY is missing" }, 500, "no-store");
   if (path === "/search") {
     const q = (u.searchParams.get("q") || "").trim().slice(0, 100);
     if (!q) return json({ error: "q is required" }, 400);
-    const j = await tmdb("/search/movie", { query: q, include_adult: "false", language: "en-US" });
-    const out = (j?.results || []).slice(0, 10).map(m => ({
-      id: m.id, en: m.title, y: m.release_date ? +m.release_date.slice(0, 4) : null, rd: m.release_date || null,
-      p: m.poster_path || null, pop: m.popularity || 0, tv: m.vote_average || null, tc: m.vote_count || 0,
-      lang: m.original_language, g: m.genre_ids || [], l: [], ext: true,
-    }));
-    return json({ results: out });
+    return json({ results: await wdSearch(q) });
   }
   if (path === "/guess") {
     const story = (u.searchParams.get("story") || "").trim().slice(0, 800);
@@ -430,11 +421,11 @@ export async function apiRoute(path, u) {
     for (const c of cands) { const f = await resolve(c).catch(() => null); if (f && !seen.has(f.id)) { seen.add(f.id); results.push(f); } }
     return json(errs.length && source === "wikipedia" ? { source, results, aiError: errs.join(" | ").slice(0, 600) } : { source, results });
   }
-  const m = path.match(/^\/movie\/(\d+)$/);
+  const m = path.match(/^\/movie\/Q?(\d+)$/);
   if (m) {
-    const d = await tmdb("/movie/" + m[1], { language: "en-US", append_to_response: "videos,external_ids,translations,credits,release_dates" });
-    if (!d) return json({ error: "not found" }, 404);
-    return json(shape(d));
+    const det = await wdDetail(m[1]);
+    if (!det) return json({ error: "not found" }, 404);
+    return json({ film: filmItem(det), det });
   }
   return json({ error: "unknown route" }, 404);
 }

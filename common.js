@@ -31,7 +31,7 @@ function ago(iso) {
 }
 function posterBox(f, size) {
   const u = posterUrl(f, size);
-  return u ? `<img src="${u}" alt="بوستر ${esc(titleAr(f))}" loading="lazy">` : `<div class="noposter">${esc(titleAr(f))}</div>`;
+  return u ? `<img src="${u}" alt="بوستر ${esc(titleAr(f))}" loading="lazy" onerror="this.outerHTML='<div class=noposter>'+this.alt.replace(/^بوستر /,'').replace(/[<>&]/g,'')+'</div>'">` : `<div class="noposter">${esc(titleAr(f))}</div>`;
 }
 function badges(f) {
   const out = [];

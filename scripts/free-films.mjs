@@ -16,7 +16,7 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 async function getJSON(url, opt = {}, tries = 5) {
   for (let i = 0; i < tries; i++) {
     try {
-      const r = await fetch(url, { ...opt, headers: { ...UA, ...(opt.headers || {}) }, signal: AbortSignal.timeout(90000) });
+      const r = await fetch(url, { ...opt, headers: { ...UA, ...(opt.headers || {}) }, signal: AbortSignal.timeout(opt.method === "POST" ? 90000 : 20000) });
       if (r.status === 429 || r.status >= 500) { await sleep(3000 * (i + 1)); continue; }
       if (!r.ok) throw new Error(r.status + " " + url.slice(0, 120));
       return await r.json();
@@ -89,7 +89,7 @@ async function main() {
     for (const r of rows) {
       const q = qid(r.f);
       F.set(q, {
-        q, id: num(q), imdb: r.imdb || null, en: r.en || r.mul || r.orig || null, ar: r.ar || null, ard: r.ard || null,
+        q, id: num(q), imdb: r.imdb || null, en: r.en || r.mul || r.orig || null, ar: r.ar ? r.ar.replace(/\s*\((?:فيلم|فلم)[^)]*\)\s*$/, "").trim() : null, ard: r.ard || null,
         rd: r.date ? r.date.slice(0, 10) : null, rt: r.dur ? Math.round(+r.dur) : null, sl: +(r.sl || 0), tr: r.yt || null,
         revenue: r.box ? Math.round(+r.box) : 0, budget: r.bud ? Math.round(+r.bud) : 0, lang: (r.lang || "").split(",").filter(Boolean).sort((a, b) => (b === "en") - (a === "en"))[0] || null, orig: r.orig || null,
         enw: r.enw ? decodeURIComponent(r.enw.replace("https://en.wikipedia.org/wiki/", "")).replace(/_/g, " ") : null,
@@ -120,7 +120,20 @@ async function main() {
   // ٤. ويكيبيديا الإنجليزية: ترتيب الممثلين من صندوق المعلومات + القصة. والعربية: الملخص
   const films = [...F.values()].filter(f => f.en);
   let infobox = 0, plots = 0, arOv = 0;
-  await pool(films.filter(f => f.enw), 6, async f => {
+  const T0 = Date.now(), BUDGET = +process.env.WIKI_MINUTES || 22;
+  let reused = 0, done = 0;
+  await pool(films.filter(f => f.enw), 10, async f => {
+    // من المرة الماضية: إذا قرينا صفحته قبل أقل من أسبوعين ما في داعي نقرأها كمان مرة
+    try {
+      const old = JSON.parse(await readFile(`${OUT_DIR}/d/${f.id}.json`, "utf8"));
+      if (old.wk && Date.now() - old.wk < 14 * 864e5 && old.wiki?.en === f.enw) {
+        const ord = (old.castOrder || []);
+        if (ord.length) { const by = new Map(f.cast.map(c => [c.n.toLowerCase(), c])); const o = ord.map(n => by.get(n.toLowerCase()) || { n, ch: "" }); f.cast = [...o, ...f.cast.filter(c => !o.some(x => x.n.toLowerCase() === c.n.toLowerCase()))]; infobox++; }
+        f.plotEn = old.plotEn || ""; f.castOrder = ord; f.wk = old.wk; if (!f.dir.length && old.dir?.length) f.dir = old.dir; reused++; return;
+      }
+    } catch {}
+    if ((Date.now() - T0) / 60000 > BUDGET) return;
+    if (++done % 250 === 0) log("wikipedia pages read:", done);
     const j = await getJSON("https://en.wikipedia.org/w/api.php?format=json&formatversion=2&action=query&prop=revisions|extracts&rvprop=content&rvslots=main&rvsection=0&explaintext=1&redirects=1&titles=" + encodeURIComponent(f.enw));
     const pg = j.query?.pages?.[0] || {};
     const wt = pg.revisions?.[0]?.slots?.main?.content || "";
@@ -132,7 +145,9 @@ async function main() {
       const byName = new Map(f.cast.map(c => [c.n.toLowerCase(), c]));
       const ordered = [...new Set(names)].map(n => byName.get(n.toLowerCase()) || { n, ch: "" });
       f.cast = [...ordered, ...f.cast.filter(c => !ordered.some(o => o.n.toLowerCase() === c.n.toLowerCase()))];
+      f.castOrder = [...new Set(names)].slice(0, 16);
     }
+    f.wk = Date.now();
     const txt = pg.extract || "";
     const plot = (txt.split(/\n(?===+ )/).find(s => /^==+ (Plot|Synopsis|Premise|Story)/i.test(s)) || "").replace(/^==+[^\n]*\n/, "").trim();
     if (plot) { f.plotEn = plot.slice(0, 1500); plots++; }
@@ -148,8 +163,14 @@ async function main() {
     } catch (e) { console.warn("arwiki", String(e).slice(0, 120)); }
     await sleep(200);
   }
-  log(`wikipedia: infobox cast ${infobox}, plots ${plots}, arabic summaries ${arOv}`);
+  log(`wikipedia: reused ${reused}, read ${done}, infobox cast ${infobox}, plots ${plots}, arabic summaries ${arOv}`);
 
+  // «بالسينما هلأ» و«قريباً»: نشيل الأفلام القديمة اللي إلها تاريخ إعادة عرض جديد
+  const yearAgo = dayShift(-365);
+  for (const f of F.values()) if (f.rd && f.rd < yearAgo) f.l = f.l.filter(l => l !== "now" && l !== "up");
+  // الرائج: أشهر أفلام آخر سنتين
+  const yNow = new Date().getFullYear();
+  films.filter(f => f.rd && +f.rd.slice(0, 4) >= yNow - 1 && f.rd <= today).sort((a, b) => b.sl - a.sl).slice(0, 40).forEach(f => f.l.push("trend"));
   // ٥. الحفظ بنفس شكل الموقع
   await mkdir(OUT_DIR + "/d", { recursive: true });
   const cut = s => s && s.length > 230 ? s.slice(0, 228).replace(/\s\S*$/, "") + "…" : s || "";
@@ -165,14 +186,14 @@ async function main() {
       id: f.id, q: f.q, imdb: f.imdb, en: f.en, orig: f.orig, ar: f.ar, tag: null, ov: f.ovAr || f.ard || "", plotEn: f.plotEn || f.introEn || "",
       rd: f.rd, rt: f.rt, g: [...f.g], lang: f.lang, budget: f.budget, revenue: f.revenue, companies: f.companies, countries: f.countries, langs: [], col: null, rel: [],
       dir: f.dir, prod: f.prod, wri: f.wri, mus: f.mus, dop: f.dop, cast: f.cast.slice(0, 16).map(c => ({ n: c.n, ch: c.ch, p: null })),
-      wiki: { en: f.enw, ar: f.arw },
+      wiki: { en: f.enw, ar: f.arw }, wk: f.wk || null, castOrder: f.castOrder || [],
     };
     await writeFile(`${OUT_DIR}/d/${f.id}.json`, JSON.stringify(det)); n++;
   }
   // تقرير التغطية
   const kept = films.filter(f => keep.has(f.id)); const P = fn => Math.round(100 * kept.filter(fn).length / kept.length) + "%";
   const report = { films: kept.length, arTitle: P(f => f.ar), date: P(f => f.rd), runtime: P(f => f.rt), genres: P(f => f.g.size), director: P(f => f.dir.length), cast5: P(f => f.cast.length >= 5), chars3: P(f => f.cast.filter(c => c.ch).length >= 3), ovAr: P(f => f.ovAr || f.ard), plotEn: P(f => f.plotEn), trailer: P(f => f.tr), boxOffice: P(f => f.revenue), imdb: P(f => f.imdb),
-    lists: Object.fromEntries(["now", "up", "pop", "top", "ar", "anime"].map(l => [l, kept.filter(f => f.l.includes(l)).length])) };
+    lists: Object.fromEntries(["now", "up", "trend", "pop", "top", "ar", "anime"].map(l => [l, kept.filter(f => f.l.includes(l)).length])) };
   await writeFile(`${OUT_DIR}/films.json`, JSON.stringify({ updated: new Date().toISOString(), source: "Wikidata + Wikipedia", count: list.length, films: list }));
   await writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 1));
   log("written", list.length, "films,", n, "detail files");

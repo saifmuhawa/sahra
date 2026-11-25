@@ -177,7 +177,7 @@ $("#pick-form").addEventListener("submit", async e => {
   if (list.length === 1) choose(list[0]); else suggest(list, "اختار الفيلم الصح:");
 });
 $("#random-btn").addEventListener("click", () => {
-  const pool = FILMS.filter(f => (f.iv || 0) > 150000 && (f.ir || 0) >= 7);
+  const pool = FILMS.filter(f => f.p && (f.pop || 0) >= 60);
   const src = pool.length ? pool : FILMS;
   if (src.length) choose(src[Math.floor(Math.random() * src.length)]);
 });
@@ -248,8 +248,6 @@ function renderDetails(f, d) {
       <div class="fact"><span>المدة</span><b>${timeLabel(d?.rt || f.rt)}</b></div>
       ${d?.countries?.length ? `<div class="fact"><span>بلد الإنتاج</span><b style="font-size:15px">${d.countries.map(c => flag(c) + " " + regionAr(c)).join("، ")}</b></div>` : ""}
       ${d?.col ? `<div class="fact"><span>من سلسلة</span><b style="font-size:15px;direction:ltr;text-align:right">${esc(d.col)}</b></div>` : ""}
-      ${f.ir ? `<div class="fact"><span>تقييم IMDb</span><b>${f.ir.toFixed(1)} <small style="font-size:12px;color:var(--muted)">(${(f.iv || 0).toLocaleString("en")} صوت)</small></b></div>` : ""}
-      ${!f.ir && f.tv ? `<div class="fact"><span>تقييم TMDB</span><b>${f.tv}</b></div>` : ""}
     </div>`;
   const imdbId = (d && d.imdb) || f.imdb;
   if (imdbId) h += `<div class="sec" id="oscars" data-k="${imdbId}"><h4>الأوسكار</h4><p class="note">عم نجيب الترشيحات…</p></div>`;
@@ -262,7 +260,7 @@ function renderDetails(f, d) {
     if (d.cast?.length) h += `<div class="sec"><h4>الممثلين</h4><div class="cast">${d.cast.map(c => `<div class="actor">${c.p ? `<img src="${imgSrc(c.p, "w185")}" alt="${esc(c.n)}" loading="lazy">` : `<div class="noposter">${esc(c.n)}</div>`}<b>${esc(c.n)}</b><small>${esc(c.ch || "")}</small></div>`).join("")}</div></div>`;
     if (d.ov) h += `<div class="sec"><h4>القصة</h4><p style="margin:0;max-width:70ch">${esc(d.ov)}</p></div>`;
   } else {
-    h += `<p class="note">التفاصيل الكاملة لهالفيلم (الإيرادات، الإنتاج، الممثلين) لسا عم تتجهّز، وبتكون جاهزة بالتحديث الجاي خلال ساعة.</p>`;
+    h += `<p class="note">ما قدرنا نجيب التفاصيل الكاملة لهالفيلم هلأ، جرّب كمان شوي.</p>`;
   }
   h += `<div class="actions"><a class="btn btn-ghost" href="${imdbUrl(f)}" target="_blank" rel="noopener">صفحته على IMDb ↗</a></div>`;
   $("#info").innerHTML = h;
@@ -275,7 +273,7 @@ async function loadInfo(base) {
   let f = Object.assign({}, base, window.PICKED && window.PICKED.id === base.id ? window.PICKED : {}, local || {});
   let d = null;
   if (local) { try { const r = await fetch(RAW_D + base.id + ".json?h=" + Math.floor(Date.now() / 3600000)); if (r.ok) d = await r.json(); } catch (e) {} }
-  if (!d) { try { const j = await call("/movie/" + base.id); d = j.det; f = Object.assign({}, f, j.film, {ir: f.ir, iv: f.iv}); } catch (e) {} }
+  if (!d) { try { const j = await call("/movie/" + base.id); d = j.det; f = Object.assign({}, f, j.film); } catch (e) {} }
   if (infoKey !== base.t + base.id) return;
   renderDetails(f, d);
 }
