@@ -2,8 +2,8 @@
 // الحكم والمتسابقين متصلين بـ WebSocket، والمؤقت بيمشي هون بالسيرفر عشان يكون نفس الوقت على كل الجوالات.
 import { DurableObject } from "cloudflare:workers";
 import {
-  init, tmdb, shape, animeShape, askAI, GENRE_AR, rid, clean, titleWords, leaks, fillLevels,
-  dataHintsMovie, dataHintsAnime, HINTS_PROMPT, parseHints, wikiFacts, hasKey,
+  init, tmdb, shape, animeShape, alDetail, tmDetail, askAI, GENRE_AR, rid, clean, titleWords, leaks, fillLevels,
+  dataHintsMovie, dataHintsAnime, dataHintsSeries, HINTS_PROMPT, parseHints, wikiFacts, hasKey,
 } from "./api.js";
 
 const DEFAULT_TEAMS = ["الفريق الأحمر", "الفريق الذهبي"];
@@ -87,7 +87,7 @@ export class Room extends DurableObject {
     if (p === "/create") {
       if (this.r && Date.now() - this.r.touched < IDLE_MS) return reply({ error: "taken" }, 409);
       this.r = {
-        code: clean(b.code, 8), key: rid(), kind: b.kind === "anime" ? "anime" : "film", v: 0, touched: Date.now(),
+        code: clean(b.code, 8), key: rid(), kind: ["anime", "series"].includes(b.kind) ? b.kind : "film", v: 0, touched: Date.now(),
         stage: "lobby", players: [], teams: DEFAULT_TEAMS.slice(), turnSec: 30,
         score: [0, 0], hintsTotal: [0, 0], rounds: [], round: 0,
         film: null, hints: [], hintsSrc: null, hintsErr: null, filmToken: null, got: [[], []], lastHintAt: [0, 0],
@@ -235,14 +235,19 @@ export class Room extends DurableObject {
     const token = rid();
     r.filmToken = token;
     let film, hints, info;
-    if (r.kind === "anime") {
+    if (r.kind === "series") {
+      const a = await tmDetail(id);
+      if (!a) throw new Error("not found");
+      film = { t: "tv", id: a.id, en: a.en, ar: a.ar, orig: a.orig, y: a.y, p: a.p, imdb: a.imdb };
+      hints = dataHintsSeries(a);
+      info = { type: "TV series", year: a.y, status: a.status, genres: (a.g || []).map(x => GENRE_AR[x]).filter(Boolean), network: (a.networks || []).map(x => x.n), seasons: a.seasons, episodes: a.episodes, creators: a.creators, cast: (a.cast || []).slice(0, 8).map(c => c.n + " as " + c.ch), plot: a.ov };
+    } else if (r.kind === "anime") {
       const tt = t === "movie" ? "movie" : "tv";
-      const d = await tmdb("/" + tt + "/" + id, { language: "en-US", append_to_response: (tt === "tv" ? "aggregate_credits" : "credits") + ",external_ids,translations" });
-      if (!d) throw new Error("not found");
-      const a = animeShape(d, tt);
-      film = { t: tt, id: a.id, en: a.en, ar: a.ar, orig: a.orig, y: a.y, p: a.p };
+      const a = await alDetail(id);
+      if (!a) throw new Error("not found");
+      film = { t: a.t, id: a.id, en: a.en, ar: a.ar, orig: a.orig, y: a.y, p: a.p };
       hints = dataHintsAnime(a);
-      info = { type: tt === "tv" ? "anime series" : "anime film", year: a.y, genres: (a.g || []).map(x => GENRE_AR[x]).filter(Boolean), studios: (a.studios || []).map(x => x.n), episodes: a.episodes, seasons: a.seasons, characters: (a.cast || []).slice(0, 8).map(c => c.ch), voices: (a.cast || []).slice(0, 4).map(c => c.n), writers: a.wri, plot: a.ov };
+      info = { type: a.t === "tv" ? "anime series" : "anime film", year: a.y, genres: (a.g || []).map(x => GENRE_AR[x]).filter(Boolean), studios: (a.studios || []).map(x => x.n), episodes: a.episodes, seasons: a.seasons, characters: (a.cast || []).slice(0, 8).map(c => c.ch), voices: (a.cast || []).slice(0, 4).map(c => c.n), writers: a.wri, plot: a.ov };
     } else {
       const d = await tmdb("/movie/" + id, { language: "en-US", append_to_response: "videos,external_ids,translations,credits,release_dates" });
       if (!d) throw new Error("not found");
@@ -266,7 +271,7 @@ export class Room extends DurableObject {
       const wiki = await wikiFacts(film.en, film.y, r.kind);
       if (wiki) info.wikipedia = wiki;
       const errs = [];
-      const ai = await askAI(info, errs, x => HINTS_PROMPT(r.kind === "anime" ? "anime" : "movie", x), t => !!parseHints(t), 40000);
+      const ai = await askAI(info, errs, x => HINTS_PROMPT(r.kind === "anime" ? "anime" : r.kind === "series" ? "TV series" : "movie", x), t => !!parseHints(t), 40000);
       if (!ai) { if (errs.length && this.r?.filmToken === token) { this.r.hintsErr = errs.join(" | ").slice(0, 400); } return; }
       const h = parseHints(ai.text); const ws = titleWords(...names);
       const pick = arr => arr.map(x => clean(x, 200)).filter(x => x && !leaks(x, ws));

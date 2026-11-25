@@ -1,3 +1,4 @@
+const PAGE_OF = k => ({ anime: "anime.html", series: "series.html" })[k] || "game.html";
 /* لعبة الغرف المشتركة بين خمّن الفيلم وخمّن الأنمي. الصفحة بتعرّف KIND و THING و GAME_TITLE و loadInfo و subLine */
 const API = "/api";
 const LS_J = "sahra-judge-" + KIND, LS_P = "sahra-player-" + KIND;
@@ -65,7 +66,7 @@ async function poll() {
 }
 function apply(st) {
   if (!role) return;
-  if (st.kind && st.kind !== KIND) { location.href = (st.kind === "anime" ? "anime.html" : "game.html") + "?room=" + code; return; }
+  if (st.kind && st.kind !== KIND) { location.href = PAGE_OF(st.kind) + "?room=" + code; return; }
   if (st.v < lastV) return; // نسخة أقدم وصلت متأخرة
   if (st.now) offset = st.now - Date.now();
   const prev = S;
@@ -150,7 +151,7 @@ async function openJoin(c) {
   $("#home-msg").textContent = "عم ندوّر على الغرفة…";
   try {
     const st = await call("/room/state?code=" + c);
-    if (st.kind !== KIND) { location.href = (st.kind === "anime" ? "anime.html" : "game.html") + "?room=" + c; return; }
+    if (st.kind !== KIND) { location.href = PAGE_OF(st.kind) + "?room=" + c; return; }
     code = c; $("#home-msg").textContent = "";
     const p = get(LS_P);
     if (p && p.code === c && st.players.some(x => x.id === p.pid)) { role = "player"; pid = p.pid; show("s-player"); connect(); return; }
@@ -241,7 +242,7 @@ function revealHtml(myTeam) {
   const w = S.winner;
   const head = w === 0 || w === 1 ? `🏆 ${esc(teamName(w))} عرفه!` : "ما حدا عرفه 😅";
   const mine = myTeam == null || w == null || w < 0 ? "" : w === myTeam ? `<p class="win-me">فريقك أخذ النقطة! 🎉</p>` : `<p class="note">المرة الجاي إلكم 💪</p>`;
-  const poster = f.p ? `<img class="rposter" src="${IMG}w342${f.p}" alt="">` : "";
+  const poster = f.p ? `<img class="rposter" src="${posterUrl(f, "w342")}" alt="">` : "";
   return `<div class="card-g center reveal-card ${w === 0 || w === 1 ? TCLS[w] + "-glow" : ""}"><p class="lbl">${THING} كان</p>${poster}<h2 class="rtitle">${esc(f.ar || f.en || "")}</h2><div class="en" dir="ltr">${esc(f.en || "")}${f.y ? " · " + f.y : ""}</div><h3 class="rwin">${head}</h3>${mine}</div>`;
 }
 function finalText() {
@@ -363,7 +364,7 @@ function renderPlay() {
   $("#g-turn").innerHTML = scoreBar() + turnCard(null) + `<div class="row2 turnbtns">
       <button type="button" class="bigbtn ${TCLS[1 - S.turn]}" id="g-pass">✓ جاوبت، دور ${esc(teamName(1 - S.turn))}</button>
       <button type="button" class="bigbtn ghost" id="g-pause">${S.paused ? "▶ كمّل الوقت" : "⏸ وقّف الوقت"}</button></div>`;
-  $("#g-head").innerHTML = `${f.p ? `<img src="${IMG}w154${f.p}" alt="">` : `<div class="noposter"></div>`}<div><h2>${esc(f.ar || f.en)}</h2><div class="en" dir="ltr">${esc(f.en)}${f.y ? " · " + f.y : ""}</div><p class="note">بس إنت شايف هالمعلومات</p></div>`;
+  $("#g-head").innerHTML = `${f.p ? `<img src="${posterUrl(f, "w154")}" alt="">` : `<div class="noposter"></div>`}<div><h2>${esc(f.ar || f.en)}</h2><div class="en" dir="ltr">${esc(f.en)}${f.y ? " · " + f.y : ""}</div><p class="note">بس إنت شايف هالمعلومات</p></div>`;
   const tag = h => h.got.map(t => `<span class="gchip ${TCLS[t]}">${esc(teamName(t))}</span>`).join("");
   const groups = ["hard", "mid", "easy"].map(l => {
     const items = S.hints.filter(h => h.lvl === l);
@@ -406,7 +407,7 @@ async function choose(f) {
   $("#sugg").innerHTML = `<p class="note">عم نجهّز ${THING} والتلميحات…</p>`;
   try {
     window.PICKED = f;
-    await act("film", {t: KIND === "anime" ? f.t : "movie", id: f.id});
+    await act("film", {t: KIND === "film" ? "movie" : f.t, id: f.id});
   } catch (e) { $("#sugg").innerHTML = `<p class="warn">ما قدرنا نجيب معلوماته هلأ. جرّب كمان مرة أو اختار غيره.</p>`; }
   busy = false;
 }
@@ -415,7 +416,7 @@ $("#story-form").addEventListener("submit", async e => {
   const s = $("#story-in").value.trim(); if (s.length < 8) return;
   $("#sugg").innerHTML = `<p class="note">🤖 عم يفكّر…</p>`;
   let j = null;
-  try { j = await call((KIND === "anime" ? "/anime/guess" : "/guess") + "?story=" + encodeURIComponent(s)); } catch (err) {}
+  try { j = await call(({ anime: "/anime/guess", series: "/series/guess" }[KIND] || "/guess") + "?story=" + encodeURIComponent(s)); } catch (err) {}
   const list = j?.results || [];
   if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما قدرنا نعرفه من هالوصف. زيد تفاصيل: اسم شخصية، ممثل، أو مشهد مشهور، وجرّب كمان مرة.</p>`; return; }
   suggest(list, "🤖 هاي توقعات الذكاء الاصطناعي، اختار الصح:");
@@ -433,7 +434,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && ro
 // ===== كتيّب التعليمات: بيطلع أول مرة قبل اللعب، وبيضل موجود بزر "كيف بنلعب؟" =====
 const GUIDE_KEY = "sahra-guide-v2";
 const GUIDE = [
-  ["🎬", "سهرة " + (KIND === "anime" ? "أنمي" : "أفلام") + " بخطوات بسيطة", "واحد منكم بيكون الحكم، والباقي بينقسموا فريقين متساويين. كل واحد بيلعب من جواله."],
+  ["🎬", "سهرة " + ({ anime: "أنمي", series: "مسلسلات" }[KIND] || "أفلام") + " بخطوات بسيطة", "واحد منكم بيكون الحكم، والباقي بينقسموا فريقين متساويين. كل واحد بيلعب من جواله."],
   ["👑", "الحكم بيعمل غرفة", "بيكبس «أنا الحكم» وبيطلعله كود من 4 أرقام وباركود. الحكم بيختار " + THING + " وبيشوف كل معلوماته، والمتسابقين ما بيشوفوا إشي."],
   ["📱", "المتسابقين بيدخلوا", "صوّروا الباركود أو اكتبوا الكود، وبعدين اكتبوا أسماءكم. الحكم بيرتّب الفرق، ولازم يكونوا بنفس العدد."],
   ["⏱️", "سؤال واحد بالدور", "كل فريق إله 30 ثانية يسأل الحكم سؤال واحد، والحكم بيجاوب. إذا خلص الوقت قبل السؤال، راح الدور عليكم وانتقل للفريق الثاني."],

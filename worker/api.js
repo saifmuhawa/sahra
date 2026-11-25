@@ -1,3 +1,5 @@
+import { alSearch, alRandom, alDetail } from "./anilist.js";
+import { tmSearch, tmRandom, tmDetail } from "./tvmaze.js";
 // سيرفر صغير بيدوّر على أي فيلم بقاعدة TMDB (فيها تقريباً كل أفلام IMDb) — المفتاح بيضل هون مخفي
 
 // بيئة Cloudflare: المفاتيح بتيجي من env (أسرار الـWorker)
@@ -254,6 +256,36 @@ export function dataHintsAnime(d) {
   for (const k in c) c[k] = c[k].filter(ok);
   return fillLevels(c);
 }
+export function dataHintsSeries(d) {
+  const ws = titleWords(d.en, d.ar, d.orig);
+  const ok = t => t && !leaks(t, ws);
+  const g = (d.g || []).map(x => GENRE_AR[x]).filter(Boolean);
+  const cast = d.cast || [];
+  const c = { hard: [], mid: [], easy: [] };
+  if (g.length) c.hard.push("نوعه: " + g.slice(0, 3).join("، "));
+  if (d.y) c.hard.push("بلّش بفترة " + decadeAr(d.y));
+  if (d.countries?.length) c.hard.push("من إنتاج " + regionAr(d.countries[0]));
+  if (d.status) c.hard.push(d.status === "Ended" ? "المسلسل خلص" : d.status === "Returning Series" ? "المسلسل لسا مستمر" : "حالته: " + d.status);
+  if (d.lang && d.lang !== "English") c.hard.push("لغته الأصلية مش إنجليزي");
+  if (d.y) c.mid.push("أول حلقة نزلت سنة " + d.y);
+  if (d.seasons) c.mid.push("عدد مواسمه " + d.seasons + (d.episodes ? " وحلقاته تقريباً " + d.episodes : ""));
+  const net = (d.networks || []).map(x => x.n).filter(ok);
+  if (net.length) c.mid.push("انعرض على " + net[0]);
+  if (d.creators?.length) c.mid.push("من صنّاعه " + d.creators[0]);
+  if (cast[3]?.ch && ok(cast[3].ch)) c.mid.push("فيه شخصية اسمها " + cast[3].ch);
+  if (cast[2]) c.mid.push("من ممثليه " + cast[2].n);
+  if (cast[0]?.ch && ok(cast[0].ch)) c.easy.push("البطل اسمه " + cast[0].ch);
+  if (cast[0]) c.easy.push("بطولة " + cast[0].n);
+  if (cast[1]) c.easy.push("ومعه " + cast[1].n);
+  if (d.ov) c.easy.push("القصة: " + mask(firstSentence(d.ov), ws));
+  const name = d.en || ""; if (name) c.easy.push("اسمه بالإنجليزي " + wordsAr(name.split(/\s+/).length) + "، وبيبلش بحرف " + name.replace(/^the\s+/i, "")[0].toUpperCase());
+  for (const k in c) c[k] = c[k].filter(ok);
+  return fillLevels(c);
+}
+export const SERIES_PROMPT = s => `You are a TV expert. Someone describes the plot of a TV series (in Arabic or English, possibly vague or with mistakes). Identify the series.
+Return ONLY JSON: {"candidates":[{"title":"<English title>","year":<first air year>,"why":"<one short sentence in Arabic explaining the match>"}]}
+Give up to 3 candidates, most likely first. Only real TV series (not films, not anime).
+Plot: """${s}"""`;
 export const HINTS_PROMPT = (kindAr, info) => `You write hints for a party guessing game in Jordanian Arabic. Two teams must guess the ${kindAr} below by asking the judge questions; a team can ask for a hint, which only that team sees, starting with the hardest.
 Write exactly 15 short hints in Arabic (one sentence each): 5 "hard" (vague: genre, era, mood, setting), 5 "medium" (specific: a famous scene, the director, a supporting actor, a key plot point, a production fact), 5 "easy" (almost gives it away: lead actor, main character name, iconic line or object).
 If "wikipedia" text is included, use it to make the medium hints accurate and specific (real scenes, real behind-the-scenes facts). Write everything in your own Arabic words; never copy sentences.
@@ -276,7 +308,7 @@ function section(text, names) {
 }
 export async function wikiFacts(title, year, kind) {
   try {
-    const tmpl = kind === "anime" ? 'hastemplate:"Infobox animanga"' : 'hastemplate:"Infobox film"';
+    const tmpl = kind === "anime" ? 'hastemplate:"Infobox animanga"' : kind === "series" ? 'hastemplate:"Infobox television"' : 'hastemplate:"Infobox film"';
     const q = `${title} ${year || ""} ${tmpl}`.trim();
     const s = await (await fetch("https://en.wikipedia.org/w/api.php?format=json&action=query&list=search&srlimit=1&srsearch=" + encodeURIComponent(q), { headers: WIKI_UA, signal: AbortSignal.timeout(6000) })).json();
     const page = s.query?.search?.[0]?.title;
@@ -303,6 +335,7 @@ export async function wikiFacts(title, year, kind) {
 const JH = { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*" };
 export const json = (obj, code = 200, cache = "public, max-age=600") => new Response(JSON.stringify(obj), { status: code, headers: { ...JH, "cache-control": cache } });
 
+export { alDetail, tmDetail };
 export async function apiRoute(path, u) {
   if (path === "/" || path === "/health") return json({ ok: true, key: !!KEY, ai: ["GROQ_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"].filter(k => E[k]).map(k => k.split("_")[0].toLowerCase()), host: "cloudflare" }, 200, "no-store");
   // بروكسي للبوسترات عشان كرت الستوري يقدر يرسمها على canvas بدون مشاكل CORS
@@ -311,6 +344,67 @@ export async function apiRoute(path, u) {
     const r = await fetch(`https://image.tmdb.org/t/p/${im[1]}/${im[2]}`, { cf: { cacheTtl: 86400, cacheEverything: true } });
     if (!r.ok) return new Response("not found", { status: 404 });
     return new Response(r.body, { headers: { "content-type": r.headers.get("content-type") || "image/jpeg", "cache-control": "public, max-age=86400" } });
+  }
+  // بوستر من TheTVDB حسب رقم IMDb: /api/poster/tt1234567(.jpg)?s=t  (t = صورة صغيرة)
+  const pm = path.match(/^\/poster\/(tt\d{5,10})(?:\.jpg)?$/);
+  if (pm) return poster(pm[1], u.searchParams.get("s") === "t");
+  if (path === "/series/search") {
+    const q = (u.searchParams.get("q") || "").trim().slice(0, 100);
+    if (!q) return json({ error: "q is required" }, 400);
+    return json({ results: await tmSearch(q) });
+  }
+  if (path === "/series/random") {
+    const a = await tmRandom();
+    return a ? json(a, 200, "no-store") : json({ error: "not found" }, 404);
+  }
+  if (path === "/series/guess") {
+    const story = (u.searchParams.get("story") || "").trim().slice(0, 800);
+    if (story.length < 8) return json({ error: "story is too short" }, 400);
+    const errs = [];
+    const ai = await askAI(story, errs, SERIES_PROMPT).catch(e => (errs.push(String(e)), null));
+    const cands = ai ? parseCandidates(ai.text) : [];
+    const seen = new Set(), results = [];
+    for (const c of cands) {
+      const list = await tmSearch(c.title).catch(() => []);
+      const f = list.find(x => c.year && x.y && Math.abs(x.y - c.year) <= 1) || list[0];
+      if (f && !seen.has(f.id)) { seen.add(f.id); results.push({ ...f, why: c.why || "" }); }
+    }
+    return json(results.length ? { source: ai.source, results } : { source: "none", results, aiError: errs.join(" | ").slice(0, 600) });
+  }
+  const sm = path.match(/^\/series\/(?:tv\/)?(\d+)$/);
+  if (sm) {
+    const d = await tmDetail(sm[1]);
+    if (!d) return json({ error: "not found" }, 404);
+    return json(d);
+  }
+  if (path === "/anime/search") {
+    const q = (u.searchParams.get("q") || "").trim().slice(0, 100);
+    if (!q) return json({ error: "q is required" }, 400);
+    return json({ results: await alSearch(q) });
+  }
+  if (path === "/anime/random") {
+    const a = await alRandom();
+    return a ? json(a, 200, "no-store") : json({ error: "not found" }, 404);
+  }
+  if (path === "/anime/guess") {
+    const story = (u.searchParams.get("story") || "").trim().slice(0, 800);
+    if (story.length < 8) return json({ error: "story is too short" }, 400);
+    const errs = [];
+    const ai = await askAI(story, errs, ANIME_PROMPT).catch(e => (errs.push(String(e)), null));
+    const cands = ai ? parseCandidates(ai.text) : [];
+    const seen = new Set(), results = [];
+    for (const c of cands) {
+      const list = await alSearch(c.title).catch(() => []);
+      const f = list.find(x => c.year && x.y && Math.abs(x.y - c.year) <= 1) || list[0];
+      if (f && !seen.has(f.t + f.id)) { seen.add(f.t + f.id); results.push({ ...f, why: c.why || "" }); }
+    }
+    return json(results.length ? { source: ai.source, results } : { source: "none", results, aiError: errs.join(" | ").slice(0, 600) });
+  }
+  const am = path.match(/^\/anime\/(tv|movie)\/(\d+)$/);
+  if (am) {
+    const d = await alDetail(am[2]);
+    if (!d) return json({ error: "not found" }, 404);
+    return json(d);
   }
   if (!KEY) return json({ error: "TMDB_API_KEY is missing" }, 500, "no-store");
   if (path === "/search") {
@@ -336,39 +430,6 @@ export async function apiRoute(path, u) {
     for (const c of cands) { const f = await resolve(c).catch(() => null); if (f && !seen.has(f.id)) { seen.add(f.id); results.push(f); } }
     return json(errs.length && source === "wikipedia" ? { source, results, aiError: errs.join(" | ").slice(0, 600) } : { source, results });
   }
-  if (path === "/anime/search") {
-    const q = (u.searchParams.get("q") || "").trim().slice(0, 100);
-    if (!q) return json({ error: "q is required" }, 400);
-    return json({ results: await animeSearch(q) });
-  }
-  if (path === "/anime/random") {
-    const page = 1 + Math.floor(Math.random() * 5);
-    const j = await tmdb("/discover/tv", { with_genres: "16", with_original_language: "ja", sort_by: "vote_count.desc", page: String(page), language: "en-US" });
-    const list = (j?.results || []).map(m => animeItem(m, "tv"));
-    if (!list.length) return json({ error: "not found" }, 404);
-    return json(list[Math.floor(Math.random() * list.length)], 200, "no-store");
-  }
-  if (path === "/anime/guess") {
-    const story = (u.searchParams.get("story") || "").trim().slice(0, 800);
-    if (story.length < 8) return json({ error: "story is too short" }, 400);
-    const errs = [];
-    const ai = await askAI(story, errs, ANIME_PROMPT).catch(e => (errs.push(String(e)), null));
-    const cands = ai ? parseCandidates(ai.text) : [];
-    const seen = new Set(), results = [];
-    for (const c of cands) {
-      const list = await animeSearch(c.title).catch(() => []);
-      const f = list.find(x => c.year && x.y && Math.abs(x.y - c.year) <= 1) || list[0];
-      if (f && !seen.has(f.t + f.id)) { seen.add(f.t + f.id); results.push({ ...f, why: c.why || "" }); }
-    }
-    return json(results.length ? { source: ai.source, results } : { source: "none", results, aiError: errs.join(" | ").slice(0, 600) });
-  }
-  const am = path.match(/^\/anime\/(tv|movie)\/(\d+)$/);
-  if (am) {
-    const tv = am[1] === "tv";
-    const d = await tmdb("/" + am[1] + "/" + am[2], { language: "en-US", append_to_response: (tv ? "aggregate_credits" : "credits") + ",external_ids,translations" });
-    if (!d) return json({ error: "not found" }, 404);
-    return json(animeShape(d, am[1]));
-  }
   const m = path.match(/^\/movie\/(\d+)$/);
   if (m) {
     const d = await tmdb("/movie/" + m[1], { language: "en-US", append_to_response: "videos,external_ids,translations,credits,release_dates" });
@@ -376,4 +437,46 @@ export async function apiRoute(path, u) {
     return json(shape(d));
   }
   return json({ error: "unknown route" }, 404);
+}
+
+// ===== TheTVDB (مجاني لحد ٥٠ ألف دولار دخل بالسنة، مع ذكر المصدر) =====
+let tvdbTok = null;
+async function tvdbToken() {
+  if (tvdbTok && Date.now() - tvdbTok.t < 20 * 864e5) return tvdbTok.v;
+  const r = await fetch("https://api4.thetvdb.com/v4/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ apikey: E.TVDB_API_KEY }) });
+  if (!r.ok) throw new Error("TVDB login " + r.status);
+  tvdbTok = { t: Date.now(), v: (await r.json()).data.token };
+  return tvdbTok.v;
+}
+export async function tvdb(path) {
+  const go = async () => fetch("https://api4.thetvdb.com/v4" + path, { headers: { authorization: "Bearer " + await tvdbToken(), accept: "application/json" } });
+  let r = await go();
+  if (r.status === 401) { tvdbTok = null; r = await go(); }
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error("TVDB " + r.status);
+  return (await r.json()).data;
+}
+async function poster(imdb, small) {
+  const c = caches.default;
+  const key = new Request(`https://sahrafilm.com/api/poster/${imdb}${small ? "?s=t" : ""}`);
+  const hit = await c.match(key);
+  if (hit) return hit;
+  const miss = () => new Response(null, { status: 404, headers: { "cache-control": "public, max-age=21600", "access-control-allow-origin": "*" } });
+  if (!E.TVDB_API_KEY) return miss();
+  let url = null;
+  try {
+    const hits = await tvdb("/search/remoteid/" + imdb) || [];
+    const h = hits.find(x => x.movie) || hits.find(x => x.series) || {};
+    const it = h.movie || h.series;
+    url = it?.image || null;
+    if (url && !/^https?:/.test(url)) url = "https://artworks.thetvdb.com" + url;
+  } catch (e) { return new Response(null, { status: 503, headers: { "cache-control": "no-store" } }); }
+  if (!url) { const m = miss(); await c.put(key, m.clone()); return m; }
+  let r = null;
+  if (small) { r = await fetch(url.replace(/(\.\w+)$/, "_t$1"), { cf: { cacheTtl: 2592000, cacheEverything: true } }); if (!r.ok) r = null; }
+  if (!r) r = await fetch(url, { cf: { cacheTtl: 2592000, cacheEverything: true } });
+  if (!r.ok) return miss();
+  const out = new Response(r.body, { headers: { "content-type": r.headers.get("content-type") || "image/jpeg", "cache-control": "public, max-age=2592000", "access-control-allow-origin": "*" } });
+  await c.put(key, out.clone());
+  return out;
 }

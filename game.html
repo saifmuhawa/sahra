@@ -31,6 +31,7 @@
     <div class="nav-links">
       <a href="game.html" data-page="game">خمّن الفيلم</a>
       <a href="anime.html" data-page="anime">خمّن الأنمي</a>
+      <a href="series.html" data-page="series">خمّن المسلسل</a>
       <a href="music.html" data-page="music">أغاني الأفلام</a>
       <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
       <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
@@ -254,11 +255,11 @@ function renderDetails(f, d) {
   if (imdbId) h += `<div class="sec" id="oscars" data-k="${imdbId}"><h4>الأوسكار</h4><p class="note">عم نجيب الترشيحات…</p></div>`;
   if (d) {
     h += `<div class="sec"><h4>مين أنتجه</h4>
-      ${d.companies?.length ? `<div class="cos">${d.companies.map(c => `<span class="co">${c.logo ? `<img src="${IMG}w92${c.logo}" alt="">` : ""}<span dir="ltr">${esc(c.n)}</span></span>`).join("")}</div>` : `<p class="note">ما في معلومات عن شركات الإنتاج.</p>`}
+      ${d.companies?.length ? `<div class="cos">${d.companies.map(c => `<span class="co">${c.logo ? `<img src="${imgSrc(c.logo, "w92")}" alt="">` : ""}<span dir="ltr">${esc(c.n)}</span></span>`).join("")}</div>` : `<p class="note">ما في معلومات عن شركات الإنتاج.</p>`}
       </div>
       <div class="crew">${people("المخرج", d.dir)}${people("المنتجين", d.prod)}${people("الكتّاب", d.wri)}${people("الموسيقى", d.mus)}${people("التصوير", d.dop)}</div>`;
     if (d.rel?.length) h += `<div class="sec"><h4>وين نزل ومتى</h4><div class="chiplist">${d.rel.map(r => `<span class="cchip">${flag(r.c)} ${esc(regionAr(r.c))} <small>${r.d}</small></span>`).join("")}</div></div>`;
-    if (d.cast?.length) h += `<div class="sec"><h4>الممثلين</h4><div class="cast">${d.cast.map(c => `<div class="actor">${c.p ? `<img src="${IMG}w185${c.p}" alt="${esc(c.n)}" loading="lazy">` : `<div class="noposter">${esc(c.n)}</div>`}<b>${esc(c.n)}</b><small>${esc(c.ch || "")}</small></div>`).join("")}</div></div>`;
+    if (d.cast?.length) h += `<div class="sec"><h4>الممثلين</h4><div class="cast">${d.cast.map(c => `<div class="actor">${c.p ? `<img src="${imgSrc(c.p, "w185")}" alt="${esc(c.n)}" loading="lazy">` : `<div class="noposter">${esc(c.n)}</div>`}<b>${esc(c.n)}</b><small>${esc(c.ch || "")}</small></div>`).join("")}</div></div>`;
     if (d.ov) h += `<div class="sec"><h4>القصة</h4><p style="margin:0;max-width:70ch">${esc(d.ov)}</p></div>`;
   } else {
     h += `<p class="note">التفاصيل الكاملة لهالفيلم (الإيرادات، الإنتاج، الممثلين) لسا عم تتجهّز، وبتكون جاهزة بالتحديث الجاي خلال ساعة.</p>`;

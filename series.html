@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>خمّن المسلسل | لعبة مسلسلات جماعية من سهرة فيلم</title>
+<meta name="description" content="خمّن المسلسل: لعبة مسلسلات جماعية من سهرة فيلم. الحكم بيختار مسلسل ومعه 15 هنت، والفريقين بيخمّنوا من تلفوناتهم.">
+<link rel="canonical" href="https://sahrafilm.com/series.html">
+<meta property="og:site_name" content="سهرة فيلم">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_AE">
+<meta property="og:title" content="خمّن المسلسل | لعبة مسلسلات جماعية من سهرة فيلم">
+<meta property="og:description" content="خمّن المسلسل: لعبة مسلسلات جماعية من سهرة فيلم. الحكم بيختار مسلسل ومعه 15 هنت، والفريقين بيخمّنوا من تلفوناتهم.">
+<meta property="og:url" content="https://sahrafilm.com/series.html">
+<meta property="og:image" content="https://sahrafilm.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#170a0f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="play.css">
+</head>
+<body data-page="series">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة <b>فيلم</b></a>
+    <div class="nav-links">
+      <a href="game.html" data-page="game">خمّن الفيلم</a>
+      <a href="anime.html" data-page="anime">خمّن الأنمي</a>
+      <a href="series.html" data-page="series">خمّن المسلسل</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+      <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
+      <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
+    </div>
+  </div>
+</nav>
+<main class="app" id="app">
+  <!-- البداية -->
+  <section class="scr" id="s-home">
+    <div class="hero-g">
+      <div class="logo-g">📺</div>
+      <h1>خمّن المسلسل</h1>
+      <p>الحكم بيعمل غرفة من تلفونه، والمتسابقين بيدخلوا بالكود أو الباركود من تلفوناتهم. فريقين متساويين، كل فريق إله 30 ثانية يسأل سؤال واحد، والتلميحات بتوصل للفريق اللي بطلبها بس.</p>
+    </div>
+    <button class="bigbtn gold" type="button" id="create-btn">👑 أنا الحكم: اعمل غرفة</button>
+    <div class="or"><span>أو</span></div>
+    <form class="card-g" id="code-form" autocomplete="off">
+      <label for="code-in" class="lbl">عندك كود غرفة؟</label>
+      <input class="codein" id="code-in" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="• • • •" dir="ltr">
+      <button class="bigbtn red" type="submit">🎮 ادخل الغرفة</button>
+    </form>
+    <div class="card-g resume" id="resume" hidden></div>
+    <p class="msg" id="home-msg" role="status"></p>
+  </section>
+
+  <!-- المتسابق: الاسم -->
+  <section class="scr" id="s-name" hidden>
+    <div class="hero-g"><div class="pillcode" id="name-code"></div><h1>شو اسمك؟</h1><p>اكتب اسمك عشان يطلع للحكم ولفريقك.</p></div>
+    <form class="card-g" id="name-form" autocomplete="off">
+      <input class="inp big" id="name-in" maxlength="20" placeholder="مثلاً: سيف" enterkeyhint="go">
+      <button class="bigbtn red" type="submit">يلا ادخل</button>
+    </form>
+    <button class="linkbtn" type="button" data-home>رجوع</button>
+    <p class="msg" id="name-msg" role="status"></p>
+  </section>
+
+  <!-- المتسابق: داخل الغرفة -->
+  <section class="scr" id="s-player" hidden>
+    <div class="topbar"><span class="pillcode" id="p-code"></span><span class="me" id="p-me"></span><button class="linkbtn" type="button" id="p-leave">اطلع</button></div>
+    <div id="p-body"></div>
+  </section>
+
+  <!-- الحكم: الغرفة -->
+  <section class="scr" id="s-lobby" hidden>
+    <div class="topbar"><span class="pillcode">غرفة الحكم</span><span></span><button class="linkbtn" type="button" id="j-close">سكّر الغرفة</button></div>
+    <div class="card-g center">
+      <p class="lbl">كود الغرفة</p>
+      <div class="codebox" id="l-code" dir="ltr"></div>
+      <div class="qr" id="l-qr" aria-label="باركود الغرفة"></div>
+      <p class="note">خلّي المتسابقين يصوّروا الباركود أو يكتبوا الكود بصفحة خمّن المسلسل</p>
+      <button class="btn btn-ghost" type="button" id="l-share">🔗 ابعت رابط الغرفة</button>
+    </div>
+    <div class="card-g"><p class="lbl" id="l-sec-lbl">وقت كل دور</p><div class="seg" id="l-sec" role="group" aria-labelledby="l-sec-lbl"><button type="button" data-sec="30">30 ثانية</button><button type="button" data-sec="45">45 ثانية</button><button type="button" data-sec="60">دقيقة</button></div></div>
+    <div class="teams" id="l-teams"></div>
+    <button class="btn btn-ghost shuf" type="button" id="l-shuffle">🔀 وزّع الفرق عشوائياً</button>
+    <p class="msg" id="l-msg" role="status"></p>
+    <button class="bigbtn gold" type="button" id="l-start" disabled>يلا نبلّش ▶</button>
+  </section>
+
+  <!-- الحكم: اختار فيلمك -->
+  <section class="scr" id="s-pick" hidden>
+    <div class="topbar"><span class="pillcode" id="k-code"></span><span class="vs" id="k-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
+    <div id="k-score"></div>
+    <div class="hero-g small"><h1>اختار المسلسل</h1><p>المتسابقين ما بيشوفوا إشي من هون.</p></div>
+    <form class="card-g" id="pick-form" autocomplete="off">
+      <label for="pick-in" class="lbl">اسم المسلسل بالإنجليزي</label>
+      <input class="inp big" id="pick-in" placeholder="breaking bad" dir="ltr">
+      <div class="row2"><button class="bigbtn gold" type="submit">دوّر</button><button class="bigbtn ghost" type="button" id="random-btn">🎲 عشوائي</button></div>
+    </form>
+    <details class="card-g story">
+      <summary>🤖 ما بتعرف الاسم؟ احكي القصة</summary>
+      <form class="story-form" id="story-form" autocomplete="off">
+        <textarea class="inp" id="story-in" rows="3" placeholder="مثلاً: أستاذ كيمياء بيعرف إنه مريض وبيبلش يصنع مخدرات مع طالب قديم عنده"></textarea>
+        <button class="bigbtn red" type="submit">اعرفلي المسلسل</button>
+      </form>
+    </details>
+    <div class="sugg" id="sugg"></div>
+    <button class="linkbtn" type="button" id="k-end">🏁 خلّص السهرة وطلّع النتيجة</button>
+  </section>
+
+  <!-- الحكم: اللعب -->
+  <section class="scr" id="s-play" hidden>
+    <div class="topbar"><span class="pillcode" id="g-code"></span><span class="vs" id="g-vs"></span><button class="linkbtn" type="button" id="g-change">غيّر المسلسل</button></div>
+    <div id="g-turn" class="gturn"></div>
+    <div class="film-head" id="g-head"></div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" class="tab" id="tab-hints" aria-selected="true">💡 التلميحات</button>
+      <button type="button" role="tab" class="tab" id="tab-info" aria-selected="false">📋 كل المعلومات</button>
+    </div>
+    <div id="g-hints"></div>
+    <div id="g-info" hidden><div class="det" id="info"></div></div>
+    <div class="who card-g">
+      <p class="lbl">مين عرفه؟ (بياخذ نقطة)</p>
+      <div class="row2" id="g-who"></div>
+      <button class="linkbtn" type="button" id="g-nobody">ما حدا عرفه، اكشفه</button>
+    </div>
+  </section>
+
+  <!-- الحكم: الكشف -->
+  <section class="scr" id="s-reveal" hidden>
+    <div class="topbar"><span class="pillcode" id="r-code"></span><span class="vs" id="r-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
+    <div id="r-body"></div>
+    <button class="bigbtn gold" type="button" id="r-next">مسلسل جديد ▶</button>
+    <button class="bigbtn ghost" type="button" id="r-end">🏁 خلّص السهرة وطلّع النتيجة</button>
+  </section>
+
+  <!-- الحكم: نتيجة السهرة -->
+  <section class="scr" id="s-final" hidden>
+    <div class="topbar"><span class="pillcode" id="f-code"></span><span class="vs" id="f-vs"></span><button class="linkbtn" type="button" data-lobby>الغرفة</button></div>
+    <div id="f-body"></div>
+    <button class="bigbtn gold" type="button" id="f-new">سهرة جديدة ▶</button>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>سهرة فيلم · فكرة وإعداد saiflex · معلومات المسلسلات من <a href="https://www.tvmaze.com" target="_blank" rel="noopener">TVmaze</a> (CC BY-SA)</span>
+    <a class="credits" href="credits.html">المصادر</a>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="curated.js"></script>
+<script src="common.js"></script>
+<script>
+const KIND = "series", THING = "المسلسل", GAME_TITLE = "خمّن المسلسل";
+</script>
+<script src="card.js"></script>
+<script src="play.js"></script>
+<script>
+const subLine = f => "مسلسل" + (f.y ? " · " + f.y : "");
+$("#pick-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const q = $("#pick-in").value.trim(); if (!q) return;
+  $("#sugg").innerHTML = `<p class="note">عم ندوّر… ${WAIT}</p>`;
+  let list = [];
+  try { list = (await call("/series/search?q=" + encodeURIComponent(q))).results || []; } catch (err) {}
+  if (!list.length) { $("#sugg").innerHTML = `<p class="warn">ما لقينا مسلسل بهالاسم. جرّب الاسم الإنجليزي.</p>`; return; }
+  if (list.length === 1) choose(list[0]); else suggest(list, "اختار المسلسل الصح:");
+});
+$("#random-btn").addEventListener("click", async () => {
+  $("#sugg").innerHTML = `<p class="note">عم نختار مسلسل… ${WAIT}</p>`;
+  try { choose(await call("/series/random")); } catch (e) { $("#sugg").innerHTML = `<p class="warn">ما زبطت هلأ، جرّب كمان مرة.</p>`; }
+});
+
+// ===== معلومات الحكم الكاملة =====
+const STATUS_AR = {"Returning Series":"مستمر", "Ended":"منتهي", "Canceled":"ملغي", "In Production":"قيد الإنتاج", "Released":"صدر", "Planned":"مخطط له", "Post Production":"قيد التجهيز"};
+function money(n) {
+  if (!n) return "";
+  if (n >= 1e9) return "$" + (n / 1e9).toFixed(2).replace(/\.?0+$/, "") + " مليار";
+  if (n >= 1e6) return "$" + (n / 1e6).toFixed(1).replace(/\.0$/, "") + " مليون";
+  return "$" + n.toLocaleString("en");
+}
+const dateAr = d => d ? new Date(d + "T00:00:00").toLocaleDateString("ar-EG-u-nu-latn", {year:"numeric", month:"long", day:"numeric"}) : "غير معروف";
+const typeAr = f => f.t === "tv" ? "مسلسل" : "فيلم";
+
+function people(title, arr) { return arr && arr.length ? `<div class="fact"><span>${title}</span><b style="font-size:15px;direction:ltr;text-align:right">${arr.map(esc).join("، ")}</b></div>` : ""; }
+const logos = arr => `<div class="cos">${arr.map(c => `<span class="co">${c.logo ? `<img src="${imgSrc(c.logo, "w92")}" alt="">` : ""}<span dir="ltr">${esc(c.n)}</span></span>`).join("")}</div>`;
+function renderSeries(d) {
+  const tv = d.t === "tv";
+  const g = (d.g || []).map(x => GENRE_AR[x]).filter(Boolean);
+  const st = d.status ? (STATUS_AR[d.status] || d.status) : "";
+  let h = `<div class="dhead">${posterBox(d, "w342")}<div style="display:grid;gap:6px">
+      <h3>${esc(d.ar || d.en)}</h3><div class="en">${esc(d.en)}${d.orig && d.orig !== d.en ? " · " + esc(d.orig) : ""}</div>
+      <div class="meta"><span class="cchip">${typeAr(d)}</span>${g.map(x => `<span class="cchip">${x}</span>`).join("")}</div>
+      ${d.tag ? `<p class="tagline" dir="auto">"${esc(d.tag)}"</p>` : ""}
+    </div></div>
+    <div class="facts">
+      <div class="fact big"><span>سنة البداية</span><b>${d.y || "غير معروف"}</b></div>
+      ${tv ? `<div class="fact big"><span>عدد المواسم</span><b>${d.seasons || "؟"}</b></div><div class="fact big"><span>عدد الحلقات</span><b>${d.episodes || "؟"}</b></div>` : ""}
+      ${st ? `<div class="fact"><span>الحالة</span><b>${esc(st)}</b></div>` : ""}
+      <div class="fact"><span>${tv ? "أول حلقة" : "تاريخ العرض"}</span><b style="font-size:15px">${dateAr(d.first)}</b></div>
+      ${tv && d.last ? `<div class="fact"><span>آخر حلقة</span><b style="font-size:15px">${dateAr(d.last)}</b></div>` : ""}
+      ${d.rt ? `<div class="fact"><span>${tv ? "مدة الحلقة" : "المدة"}</span><b>${timeLabel(d.rt)}</b></div>` : ""}
+      ${!tv && d.revenue ? `<div class="fact big"><span>كم جاب (شباك التذاكر)</span><b>${money(d.revenue)}</b></div>` : ""}
+      ${!tv && d.budget ? `<div class="fact"><span>الميزانية</span><b>${money(d.budget)}</b></div>` : ""}
+      ${d.tv ? `<div class="fact"><span>تقييم TVmaze</span><b>${d.tv} <small style="font-size:12px;color:var(--muted)">(${(d.tc || 0).toLocaleString("en")} صوت)</small></b></div>` : ""}
+    </div>`;
+  if (d.studios?.length) h += `<div class="sec"><h4>شركات الإنتاج</h4>${logos(d.studios)}</div>`;
+  if (d.networks?.length) h += `<div class="sec"><h4>وين انعرض</h4>${logos(d.networks)}</div>`;
+  h += `<div class="crew">${people("صاحب العمل", d.creators)}${people("المخرج", d.dir)}${people("التأليف والقصة", d.wri)}${people("الموسيقى", d.mus)}${people("المنتجين", d.prod)}</div>`;
+  if (d.seasonList?.length > 1) h += `<div class="sec"><h4>المواسم</h4><div class="seasons">${d.seasonList.map(s => `<div class="fact"><span>${esc(s.name || "موسم " + s.n)}${s.y ? " · " + s.y : ""}</span><b style="font-size:15px">${s.ep} حلقة</b></div>`).join("")}</div></div>`;
+  if (d.cast?.length) h += `<div class="sec"><h4>الممثلين والشخصيات</h4><div class="cast">${d.cast.map(c => `<div class="actor">${c.p ? `<img src="${imgSrc(c.p, "w185")}" alt="${esc(c.n)}" loading="lazy">` : `<div class="noposter">${esc(c.n)}</div>`}<b>${esc(c.n)}</b><small>${esc(c.ch || "")}</small></div>`).join("")}</div></div>`;
+  if (d.ov) h += `<div class="sec"><h4>القصة</h4><p style="margin:0;max-width:70ch">${esc(d.ov)}</p></div>`;
+  h += `<div class="actions"><a class="btn btn-ghost" href="${esc(d.url || "https://www.tvmaze.com/shows/" + d.id)}" target="_blank" rel="noopener">صفحته على TVmaze ↗</a>${d.imdb ? `<a class="btn btn-ghost" href="https://www.imdb.com/title/${d.imdb}/" target="_blank" rel="noopener">صفحته على IMDb ↗</a>` : ""}</div>`;
+  $("#info").innerHTML = h;
+}
+async function loadInfo(base) {
+  $("#info").innerHTML = `<p class="note">عم نجيب كل المعلومات…</p>`;
+  try { const d = await call("/series/" + base.id); if (infoKey === base.t + base.id) renderSeries(d); }
+  catch (e) { if (infoKey === base.t + base.id) $("#info").innerHTML = `<p class="warn">ما قدرنا نجيب المعلومات هلأ.</p>`; }
+}
+</script>
+</body>
+</html>
