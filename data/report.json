@@ -1,7 +1,7 @@
 {
- "films": 4318,
+ "films": 4326,
  "arTitle": "88%",
- "date": "100%",
+ "date": "99%",
  "runtime": "89%",
  "genres": "93%",
  "director": "99%",
@@ -13,11 +13,11 @@
  "boxOffice": "41%",
  "imdb": "99%",
  "lists": {
-  "now": 244,
+  "now": 246,
   "up": 65,
   "trend": 40,
   "pop": 2470,
   "top": 300,
-  "ar": 935
+  "ar": 936
  }
 }
