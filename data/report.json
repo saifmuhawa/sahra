@@ -1,23 +1,23 @@
 {
- "films": 4306,
+ "films": 4318,
  "arTitle": "88%",
- "date": "99%",
+ "date": "100%",
  "runtime": "89%",
  "genres": "93%",
  "director": "99%",
  "cast5": "84%",
  "chars3": "30%",
  "ovAr": "92%",
- "plotEn": "96%",
+ "plotEn": "99%",
  "trailer": "31%",
  "boxOffice": "41%",
  "imdb": "99%",
  "lists": {
-  "now": 256,
-  "up": 69,
+  "now": 244,
+  "up": 65,
   "trend": 40,
   "pop": 2470,
   "top": 300,
-  "ar": 936
+  "ar": 935
  }
 }
