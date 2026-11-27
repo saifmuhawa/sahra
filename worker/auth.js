@@ -5,6 +5,7 @@
 // - الإيميل عن طريق Resend (RESEND_API_KEY)، والحماية من البوتات بـ Turnstile (TURNSTILE_SECRET)
 
 const DAY = 864e5;
+const MONTH = 30 * DAY;
 const SESSION_DAYS = 30;
 const COOKIE = "sahra_s";
 const WELCOME_COINS = 100;
@@ -227,7 +228,8 @@ export async function authRoute(req, env, path, u) {
   if (op === "/forgot") {
     const email = cleanEmail(b.email);
     if (!emailOk(email)) return err("email");
-    if (await limited(env, "forgot:" + email, 3, 3600e3) || await limited(env, "forgotip:" + ip, 10, 3600e3)) return err("slow", 429);
+    // 3 طلبات استرجاع بالشهر لكل إيميل (تخفيف الضغط)، وحد سريع لكل IP ضد السبام
+    if (await limited(env, "forgot:" + email, 3, MONTH) || await limited(env, "forgotip:" + ip, 10, 3600e3)) return err("slow", 429);
     if (!(await humanOk(env, b.ts, req))) return err("human", 403);
     const user = await env.DB.prepare("SELECT id, email, name FROM users WHERE email = ?").bind(email).first();
     // نفس الرد سواء الإيميل موجود أو لا، عشان ما حدا يعرف مين مسجّل
