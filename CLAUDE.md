@@ -11,6 +11,11 @@
 - **النشر:** Workers Builds مربوط بـ GitHub. أي push على `main` بينشر لحاله. التغييرات بـ `data/**` ما بتعمل build.
 - **مفاتيح سرية** موجودة بـ Cloudflare، وسيف هو اللي حطها: `GEMINI_API_KEY`، `TVDB_API_KEY`، `TMDB_API_KEY` (ما عاد مستخدم).
   - لا تطبع ولا تنسخ أي مفتاح.
+- **الحسابات والعملات (D1):** قاعدة `sahra-db` بـ binding اسمه `DB`، والجداول بـ `migrations/`. الكود بـ `worker/auth.js` والمسارات `/api/auth/*`، والصفحة `login.html`.
+  - جدول جديد = ملف migration جديد، وطبّقه على `--remote` **قبل** الـ push.
+  - مفاتيح بـ `wrangler.jsonc` (vars): `JUDGE_LOGIN` ("1" = الحكم لازم يكون داخل) و`ROOM_COINS` (0 = الغرف ببلاش).
+  - مفاتيح سرية لسا ناقصة (سيف بيحطها): `RESEND_API_KEY` للإيميلات، و`TURNSTILE_SECRET` + `TURNSTILE_SITE_KEY` (var) للحماية من البوتات. بدونهم الحسابات بتشتغل بس ما بتنبعث إيميلات.
+  - الاختبار: `tests/auth.test.mjs` مع `wrangler dev --var DEV_MAIL_LINKS:1 --var ROOM_COINS:100` (بعد `wrangler d1 migrations apply sahra-db --local`).
 - **الألعاب:**
   - `game.html` (أفلام)، `anime.html`، `series.html`، `music.html` (أغاني الأفلام).
   - الكود المشترك: `play.js` و`play.css` و`common.js`، وكرت الاستوري `card.js`.

@@ -137,7 +137,12 @@ $("#create-btn").addEventListener("click", async () => {
     const r = await call("/room/create", {kind: KIND});
     role = "judge"; code = r.code; key = r.key; put(LS_J, {code, key});
     $("#home-msg").textContent = ""; show("s-lobby"); lobbyInit(); connect();
-  } catch (e) { $("#home-msg").textContent = "ما زبطت، جرّب كمان مرة."; }
+  } catch (e) {
+    // الحكم لازم يكون داخل على حسابه: بنوديه يسجّل وبيرجع لنفس اللعبة
+    if (e.status === 401 && e.message === "login") { location.href = "login.html?next=" + encodeURIComponent(location.pathname + location.search); return; }
+    if (e.status === 402) $("#home-msg").innerHTML = `رصيدك ما بيكفي، الغرفة بـ ${+e.data?.cost || 100} عملة. <a href="login.html">شوف رصيدك</a>`;
+    else $("#home-msg").textContent = "ما زبطت، جرّب كمان مرة.";
+  }
   b.disabled = false;
 });
 $("#code-in").addEventListener("input", e => { e.target.value = e.target.value.replace(/[^0-9٠-٩]/g, "").replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).slice(0, 4); });

@@ -1,5 +1,6 @@
 // نقطة الدخول على Cloudflare: الصفحات الثابتة من assets، والـAPI تحت /api، وغرف اللعب بـ Durable Objects
 import { init, apiRoute, json } from "./api.js";
+import { authRoute, currentUser, spend } from "./auth.js";
 export { Room } from "./room.js";
 export { Poll } from "./poll.js";
 
@@ -11,10 +12,20 @@ async function roomRoute(req, env, path, u) {
   const op = path.slice("/room".length); // /create /state /join /leave /act /hint /ws
   if (op === "/create" && req.method === "POST") {
     let b = {}; try { b = JSON.parse(await req.text() || "{}"); } catch {}
+    // الحكم بس بيحتاج حساب (لما JUDGE_LOGIN = "1")، والغرفة بتكلّف ROOM_COINS عملة (0 = ببلاش)
+    const cost = +env.ROOM_COINS || 0;
+    let user = null;
+    if (env.JUDGE_LOGIN === "1" || cost > 0) {
+      user = await currentUser(req, env);
+      if (!user) return json({ error: "login" }, 401, "no-store");
+    }
     for (let i = 0; i < 25; i++) {
       const code = String(1000 + Math.floor(Math.random() * 9000));
       const res = await roomStub(env, code).fetch("https://room/create", { method: "POST", body: JSON.stringify({ code, kind: b.kind }) });
-      if (res.status !== 409) return withCors(res);
+      if (res.status === 409) continue;
+      // بنخصم بعد ما الغرفة انعملت، وإذا الرصيد ما بيكفي ما بنعطي مفتاح الحكم
+      if (cost > 0 && res.ok && !(await spend(env, user.id, cost, "room", code + ":" + Date.now()))) return json({ error: "coins", cost }, 402, "no-store");
+      return withCors(res);
     }
     return json({ error: "busy" }, 503, "no-store");
   }
@@ -64,6 +75,7 @@ export default {
     try {
       if (path.startsWith("/room/")) return await roomRoute(req, env, path, u);
       if (path.startsWith("/poll/")) return await pollRoute(req, env, path, u);
+      if (path.startsWith("/auth/")) return await authRoute(req, env, path, u);
       return await apiRoute(path, u);
     } catch (e) {
       return json({ error: String(e.message || e) }, 502, "no-store");

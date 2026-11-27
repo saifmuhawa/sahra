@@ -21,9 +21,17 @@
     { "tag": "v1", "new_sqlite_classes": ["Room"] },
     { "tag": "v2", "new_sqlite_classes": ["Poll"] }
   ],
+  // الحسابات والعملات (المرحلة ٢)
+  "d1_databases": [
+    { "binding": "DB", "database_name": "sahra-db", "database_id": "546341eb-2c5e-459b-af4d-1e004e40fb24", "migrations_dir": "migrations" }
+  ],
   "vars": {
     // لما يصير عندنا دومين خاص، بنحطه هون وكل الروابط الثانية بتتحوّل عليه
-    "CANONICAL_HOST": "sahrafilm.com"
+    "CANONICAL_HOST": "sahrafilm.com",
+    // "1" = الحكم لازم يكون مسجّل دخول عشان يعمل غرفة. مطفي لحد ما تشتغل الإيميلات
+    "JUDGE_LOGIN": "0",
+    // كم عملة بتكلّف الغرفة. 0 = ببلاش (لحد ما يشتغل الدفع)
+    "ROOM_COINS": "0"
   },
   // الدومين الخاص: Cloudflare بيربطه لحاله وقت النشر
   "routes": [

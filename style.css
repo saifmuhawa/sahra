@@ -39,6 +39,8 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.2;text-wrap:ba
 .nav-soon small,.soon{font-size:11px;font-weight:700;background:var(--velvet-3);color:var(--ticket);border:1px solid rgba(226,180,87,.4);border-radius:999px;padding:0 8px;line-height:1.7}
 .nav-cta{display:flex;gap:6px;align-items:center}
 .nav-cta a{text-decoration:none;font-size:15px;font-weight:700;border-radius:999px;padding:6px 14px;white-space:nowrap}
+.nav-login{color:var(--cream);border:1px solid var(--line)}
+.nav-login:hover,.nav-login[aria-current="page"]{border-color:var(--ticket);color:var(--ticket)}
 .nav-play{background:var(--seat);color:#fff}
 .nav-play:hover{filter:brightness(1.1)}
 /* الجوال: الشعار والزر بسطر، والروابط بسطر تحتهم بينسحب يمين ويسار */
@@ -279,3 +281,19 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .box p{margin:0;color:var(--muted)}
 .box .actions{margin-top:4px}
 .src-note{font-size:13px;color:var(--muted);margin:6px 0 0}
+
+/* ===== الحساب (login.html) ===== */
+.tabs{margin-bottom:18px}
+.linkish{background:none;border:0;color:var(--ticket);text-decoration:underline;cursor:pointer;font-size:15px;padding:0}
+.ts:empty{display:none}
+.plan-coins{display:flex;align-items:baseline;gap:8px}
+.plan-coins .price{font-family:var(--display);font-size:48px;line-height:1;color:var(--cream)}
+.plan-coins .coins{font-weight:700;color:var(--ticket)}
+.ledger{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.ledger li{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:6px;font-size:15px}
+.ledger li small{color:var(--muted);font-size:13px}
+.ledger li.none{display:block;color:var(--muted);border:0}
+.ledger .plus{color:var(--good)}
+.ledger .minus{color:var(--bad)}
+#msg:empty{display:none}
+#msg{margin:8px 0 0}

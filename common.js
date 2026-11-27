@@ -88,6 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // على الجوال سطر الروابط بينسحب، فنخلي الرابط الحالي ظاهر
   const cur = document.querySelector(".nav-links [aria-current]"), row = cur?.parentElement;
   if (cur && row.scrollWidth > row.clientWidth) row.scrollLeft += cur.getBoundingClientRect().left - row.getBoundingClientRect().left - (row.clientWidth - cur.offsetWidth) / 2;
+  // إذا داخل على حسابك، زر "دخول" بيصير "حسابي"
+  if (/(?:^|;\s*)sahra_in=1/.test(document.cookie)) document.querySelectorAll(".nav-login").forEach(a => a.textContent = "حسابي");
 });
 
 // رابط المسابقة بالقائمة (لحد ما يخلص السحب)

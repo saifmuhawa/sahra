@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حسابك | سهرة فيلم</title>
+<meta name="description" content="ادخل على حسابك بسهرة فيلم أو اعمل حساب جديد، وخذ 100 عملة هدية.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://sahrafilm.com/login.html">
+<meta name="theme-color" content="#170a0f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="login">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة <b>فيلم</b></a>
+    <div class="nav-links">
+      <a href="index.html" data-page="index">الرئيسية</a>
+      <a href="index.html#games" data-page="game anime series music">الألعاب</a>
+      <a href="index.html#worlds">العوالم</a>
+      <a href="cinema.html" data-page="cinema">السينما</a>
+      <span class="nav-soon" aria-disabled="true">التطبيق <small>قريباً</small></span>
+      <a href="index.html#contact" data-page="feedback support" class="nav-contact">تواصل معنا</a>
+    </div>
+    <div class="nav-cta">
+      <a href="login.html" data-page="login" class="nav-login">دخول</a>
+      <a href="music.html" class="nav-play">العب مجاناً</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="page-head">
+    <h1 id="title">حسابك</h1>
+    <p id="lead">الحساب بس للحكم اللي بيعمل الغرفة. صحابك بيدخلوا باسمهم بدون حساب.</p>
+  </header>
+
+  <p class="form-msg" id="msg" role="status" aria-live="polite"></p>
+
+  <!-- داخل: الحساب والرصيد -->
+  <section class="sec two" id="v-account" hidden aria-label="حسابك">
+    <div class="box">
+      <h3>أهلاً <span id="a-name"></span></h3>
+      <p dir="ltr" style="text-align:right" id="a-email"></p>
+      <p id="a-unverified" hidden>إيميلك لسا مش مأكّد. افتح الإيميل اللي بعتناه واضغط الرابط عشان تاخذ <b>100 عملة هدية</b>.</p>
+      <div class="actions">
+        <button class="btn btn-gold" type="button" id="a-resend" hidden>ابعتلي رابط التأكيد كمان مرة</button>
+        <a class="btn btn-red" id="a-next" href="index.html#games">يلا نلعب ←</a>
+        <button class="btn btn-ghost" type="button" id="a-logout">اطلع من الحساب</button>
+      </div>
+    </div>
+    <div class="box">
+      <h3>رصيدك</h3>
+      <div class="plan-coins"><span class="price" id="a-coins">0</span> <span class="coins">عملة 🪙</span></div>
+      <ul class="ledger" id="a-history"></ul>
+    </div>
+  </section>
+
+  <!-- مش داخل: دخول / حساب جديد / نسيت كلمة السر -->
+  <section class="sec" id="v-forms" hidden>
+    <div class="chips tabs" role="tablist" aria-label="نوع الطلب">
+      <button class="chip" type="button" role="tab" data-tab="login" aria-pressed="true">دخول</button>
+      <button class="chip" type="button" role="tab" data-tab="register" aria-pressed="false">حساب جديد</button>
+    </div>
+
+    <form class="form" id="f-login" novalidate>
+      <div class="field"><label for="l-email">الإيميل</label><input id="l-email" type="email" dir="ltr" autocomplete="email" required maxlength="254"></div>
+      <div class="field"><label for="l-pass">كلمة السر</label><input id="l-pass" type="password" dir="ltr" autocomplete="current-password" required maxlength="200"></div>
+      <div class="ts"></div>
+      <div class="form-end"><button class="btn btn-red" type="submit">ادخل ←</button><button class="linkish" type="button" data-tab="forgot">نسيت كلمة السر؟</button></div>
+    </form>
+
+    <form class="form" id="f-register" novalidate hidden>
+      <div class="field"><label for="r-name">اسمك</label><input id="r-name" type="text" autocomplete="nickname" required maxlength="30" placeholder="شو نناديك؟"></div>
+      <div class="field"><label for="r-email">الإيميل</label><input id="r-email" type="email" dir="ltr" autocomplete="email" required maxlength="254"><small>رح نبعتلك رابط تأكيد، وبعد ما تأكّد بتاخذ 100 عملة هدية.</small></div>
+      <div class="field"><label for="r-pass">كلمة السر</label><input id="r-pass" type="password" dir="ltr" autocomplete="new-password" required minlength="8" maxlength="200"><small>8 حروف أو أكثر.</small></div>
+      <div class="ts"></div>
+      <div class="form-end"><button class="btn btn-red" type="submit">اعمل حساب ←</button></div>
+    </form>
+
+    <form class="form" id="f-forgot" novalidate hidden>
+      <p>اكتب إيميلك ورح نبعتلك رابط تغيّر فيه كلمة السر (بيضل شغّال ساعة).</p>
+      <div class="field"><label for="g-email">الإيميل</label><input id="g-email" type="email" dir="ltr" autocomplete="email" required maxlength="254"></div>
+      <div class="ts"></div>
+      <div class="form-end"><button class="btn btn-red" type="submit">ابعتلي الرابط ←</button><button class="linkish" type="button" data-tab="login">رجوع للدخول</button></div>
+    </form>
+
+    <form class="form" id="f-reset" novalidate hidden>
+      <div class="field"><label for="n-pass">كلمة السر الجديدة</label><input id="n-pass" type="password" dir="ltr" autocomplete="new-password" required minlength="8" maxlength="200"><small>8 حروف أو أكثر.</small></div>
+      <div class="form-end"><button class="btn btn-red" type="submit">غيّر كلمة السر ←</button></div>
+    </form>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>سهرة فيلم · فكرة وإعداد saiflex</span>
+    <a class="credits" href="credits.html">المصادر</a>
+  </div>
+</footer>
+<script src="common.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const $$ = s => document.querySelectorAll(s);
+const msg = document.getElementById("msg");
+const say = (t, good) => { msg.textContent = t || ""; msg.className = "form-msg " + (good ? "ok" : "err"); };
+// بعد الدخول بنرجع للصفحة اللي إجا منها (بس صفحات من نفس الموقع)
+const next = (() => { try { const n = new URL(q.get("next") || "", location.href); return q.get("next") && n.origin === location.origin ? n.pathname + n.search + n.hash : null; } catch { return null; } })();
+const ERR = {
+  email: "الإيميل مش مزبوط.", name: "اكتب اسمك (حرفين على الأقل).", password: "كلمة السر لازم تكون 8 حروف أو أكثر.",
+  exists: "هالإيميل عنده حساب. جرّب تدخل، أو اضغط «نسيت كلمة السر».", wrong: "الإيميل أو كلمة السر غلط.",
+  slow: "محاولات كثير. استنى شوي وجرّب كمان مرة.", human: "تأكّد إنك مش روبوت وجرّب كمان مرة.",
+  link: "الرابط خلص أو انستعمل قبل. اطلب رابط جديد.", origin: "صار في مشكلة، حدّث الصفحة وجرّب.", unavailable: "الحسابات مش شغّالة هلأ، جرّب بعد شوي.",
+};
+async function api(path, body) {
+  const r = await fetch("/api/auth/" + path, body ? { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify(body) } : { cache: "no-store" });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "net");
+  return j;
+}
+const fail = e => say(ERR[e.message] || "ما زبطت، جرّب كمان مرة.");
+const devNote = j => j.devLink ? ` (تجربة محلية: <a href="${j.devLink}">الرابط</a>)` : "";
+
+// ===== Turnstile (لما ينحط المفتاح) =====
+let cfg = {}, tsReady = null;
+function loadTurnstile() {
+  if (!cfg.turnstile || tsReady) return tsReady;
+  return tsReady = new Promise(res => {
+    window.onTs = res;
+    const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTs&render=explicit"; s.async = true; document.head.appendChild(s);
+  }).then(() => $$(".ts").forEach(el => { el.dataset.id = turnstile.render(el, { sitekey: cfg.turnstile, language: "ar", theme: "dark" }); }));
+}
+const tsToken = form => { const el = form.querySelector(".ts"); return el?.dataset.id && window.turnstile ? turnstile.getResponse(el.dataset.id) : undefined; };
+const tsReset = form => { const el = form.querySelector(".ts"); if (el?.dataset.id && window.turnstile) turnstile.reset(el.dataset.id); };
+
+// ===== التبويبات =====
+function tab(name) {
+  for (const f of ["login", "register", "forgot", "reset"]) document.getElementById("f-" + f).hidden = f !== name;
+  $$(".tabs .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.tab === name));
+  document.querySelector(".tabs").hidden = name === "reset";
+  document.getElementById("title").textContent = { login: "ادخل على حسابك", register: "حساب جديد", forgot: "نسيت كلمة السر", reset: "كلمة سر جديدة" }[name];
+  say("");
+}
+$$("[data-tab]").forEach(b => b.addEventListener("click", () => tab(b.dataset.tab)));
+
+// ===== الحساب =====
+const REASON = { welcome: "هدية الحساب الجديد", room: "غرفة جديدة", payment: "شراء عملات", prize: "جائزة", admin: "تعديل" };
+async function showAccount() {
+  const me = await api("me");
+  if (!me.user) return false;
+  document.getElementById("v-forms").hidden = true;
+  document.getElementById("v-account").hidden = false;
+  document.getElementById("title").textContent = "حسابك";
+  document.querySelectorAll(".nav-login").forEach(a => a.textContent = "حسابي");
+  document.getElementById("a-name").textContent = me.user.name;
+  document.getElementById("a-email").textContent = me.user.email;
+  document.getElementById("a-unverified").hidden = me.user.verified;
+  document.getElementById("a-resend").hidden = me.user.verified;
+  document.getElementById("a-coins").textContent = me.coins.toLocaleString("en");
+  document.getElementById("a-history").innerHTML = me.history.length
+    ? me.history.map(h => `<li><span>${esc(REASON[h.reason] || h.reason)}</span><small>${new Date(h.created_at).toLocaleDateString("ar-AE-u-nu-latn")}</small><b class="${h.delta > 0 ? "plus" : "minus"}" dir="ltr">${h.delta > 0 ? "+" : ""}${h.delta}</b></li>`).join("")
+    : `<li class="none">لسا ما في حركات.</li>`;
+  if (next) { const a = document.getElementById("a-next"); a.href = next; a.textContent = "كمّل للغرفة ←"; }
+  return true;
+}
+function done() { if (next) location.href = next; else { history.replaceState(null, "", "login.html"); showAccount(); } }
+
+document.getElementById("a-logout").addEventListener("click", async () => { await api("logout", {}).catch(() => {}); location.href = "login.html"; });
+document.getElementById("a-resend").addEventListener("click", async e => {
+  e.target.disabled = true;
+  try { const j = await api("resend", {}); say(j.mailSent === false && !j.devLink ? "الإيميلات لسا مش شغّالة، جرّب بعد شوي." : "بعتنالك رابط جديد. شيّك الإيميل (وكمان الـ Spam).", true); msg.innerHTML += devNote(j); }
+  catch (err) { fail(err); } finally { e.target.disabled = false; }
+});
+
+// ===== النماذج =====
+function onSubmit(id, run) {
+  const form = document.getElementById(id);
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = form.querySelector("button[type=submit]"); btn.disabled = true; say("لحظة…", true);
+    try { await run(form); } catch (err) { fail(err); tsReset(form); } finally { btn.disabled = false; }
+  });
+}
+const val = id => document.getElementById(id).value.trim();
+onSubmit("f-login", async f => { await api("login", { email: val("l-email"), password: document.getElementById("l-pass").value, ts: tsToken(f) }); done(); });
+onSubmit("f-register", async f => {
+  const j = await api("register", { name: val("r-name"), email: val("r-email"), password: document.getElementById("r-pass").value, ts: tsToken(f) });
+  await showAccount();
+  say(j.mailSent === false && !j.devLink ? "انعمل حسابك! الإيميلات لسا مش شغّالة، فرح نبعتلك رابط التأكيد لما تشتغل." : "انعمل حسابك! بعتنالك رابط التأكيد على الإيميل.", true);
+  msg.innerHTML += devNote(j);
+});
+onSubmit("f-forgot", async f => { const j = await api("forgot", { email: val("g-email"), ts: tsToken(f) }); say("إذا الإيميل عنده حساب، وصله رابط تغيّر فيه كلمة السر. شيّك الإيميل (وكمان الـ Spam).", true); msg.innerHTML += devNote(j); });
+onSubmit("f-reset", async () => { await api("reset", { token: q.get("reset"), password: document.getElementById("n-pass").value }); say("تغيّرت كلمة السر ودخلت على حسابك.", true); done(); });
+
+// ===== البداية =====
+(async () => {
+  cfg = await api("config").catch(() => ({}));
+  if (q.get("verify")) {
+    try { const j = await api("verify", { token: q.get("verify") }); history.replaceState(null, "", "login.html"); if (!(await showAccount())) { document.getElementById("v-forms").hidden = false; tab("login"); } say(j.gift ? `تأكّد إيميلك، وانضافتلك ${j.gift} عملة هدية! 🎉` : "تأكّد إيميلك.", true); }
+    catch (err) { document.getElementById("v-forms").hidden = false; tab("login"); fail(err); }
+    return;
+  }
+  if (q.get("reset")) { document.getElementById("v-forms").hidden = false; tab("reset"); return; }
+  if (await showAccount().catch(() => false)) return;
+  document.getElementById("v-forms").hidden = false;
+  tab(q.get("new") ? "register" : "login");
+  if (next) say("لازم تدخل على حسابك عشان تعمل غرفة وتكون الحكم.", true);
+  loadTurnstile();
+})();
+</script>
+</body>
+</html>
