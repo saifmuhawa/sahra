@@ -83,7 +83,11 @@ function searchFilms(q, limit = 8) {
 // شريط التنقّل
 document.addEventListener("DOMContentLoaded", () => {
   const page = document.body.dataset.page;
-  document.querySelectorAll(".nav-links a").forEach(a => { if (a.dataset.page === page) a.setAttribute("aria-current", "page"); });
+  // الرابط ممكن يغطي أكثر من صفحة (مثلاً "الألعاب" لكل صالات اللعب)
+  document.querySelectorAll(".nav-links a[data-page]").forEach(a => { if (a.dataset.page.split(" ").includes(page)) a.setAttribute("aria-current", "page"); });
+  // على الجوال سطر الروابط بينسحب، فنخلي الرابط الحالي ظاهر
+  const cur = document.querySelector(".nav-links [aria-current]"), row = cur?.parentElement;
+  if (cur && row.scrollWidth > row.clientWidth) row.scrollLeft += cur.getBoundingClientRect().left - row.getBoundingClientRect().left - (row.clientWidth - cur.offsetWidth) / 2;
 });
 
 // رابط المسابقة بالقائمة (لحد ما يخلص السحب)
@@ -92,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!links || Date.now() > Date.parse("2026-12-20T00:00:00+04:00") || links.querySelector('[data-page="contest"]')) return;
   const a = document.createElement("a"); a.href = "contest.html"; a.dataset.page = "contest"; a.className = "nav-contest"; a.textContent = "🎟️ مسابقة";
   if (document.body.dataset.page === "contest") a.setAttribute("aria-current", "page");
-  links.insertBefore(a, links.querySelector(".nav-support"));
+  links.insertBefore(a, links.querySelector(".nav-contact, .nav-support"));
 });
 // عدّاد الزيارات (GoatCounter): الإحصائيات على https://sahrafilm.goatcounter.com
 (() => { const s = document.createElement("script"); s.async = true; s.src = "https://gc.zgo.at/count.js"; s.dataset.goatcounter = "https://sahrafilm.goatcounter.com/count"; document.head.appendChild(s); })();

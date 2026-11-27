@@ -33,8 +33,22 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.2;text-wrap:ba
 .logo b{font-weight:400;color:var(--cream)}
 .logo .dot{width:10px;height:10px;border-radius:50%;background:var(--seat);box-shadow:0 0 12px var(--seat)}
 .nav-links{display:flex;gap:6px;margin-inline-start:auto;flex-wrap:wrap}
-.nav-links a{color:var(--cream);text-decoration:none;padding:6px 14px;border-radius:999px;border:1px solid var(--line);font-size:15px}
+.nav-links a,.nav-soon{color:var(--cream);text-decoration:none;padding:6px 14px;border-radius:999px;border:1px solid var(--line);font-size:15px;white-space:nowrap}
 .nav-links a:hover{border-color:var(--ticket);color:var(--ticket)}
+.nav-soon{color:var(--muted);cursor:default;display:inline-flex;align-items:center;gap:6px}
+.nav-soon small,.soon{font-size:11px;font-weight:700;background:var(--velvet-3);color:var(--ticket);border:1px solid rgba(226,180,87,.4);border-radius:999px;padding:0 8px;line-height:1.7}
+.nav-cta{display:flex;gap:6px;align-items:center}
+.nav-cta a{text-decoration:none;font-size:15px;font-weight:700;border-radius:999px;padding:6px 14px;white-space:nowrap}
+.nav-play{background:var(--seat);color:#fff}
+.nav-play:hover{filter:brightness(1.1)}
+/* الجوال: الشعار والزر بسطر، والروابط بسطر تحتهم بينسحب يمين ويسار */
+@media (max-width:900px){
+  .nav-in{gap:8px 10px}
+  .nav-cta{margin-inline-start:auto;order:2}
+  .nav-links{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none}
+  .nav-links::-webkit-scrollbar{display:none}
+}
+@media (max-width:400px){.logo{font-size:25px}.nav-cta a{padding:5px 11px;font-size:14px}}
 
 .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
 .hero{padding:44px 0 18px;display:grid;gap:8px}
@@ -230,3 +244,38 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .strip-head .more{color:var(--ticket);font-weight:700;text-decoration:none;font-size:15px}
 .strip-head .muted,.muted{color:var(--muted);font-size:14px}
 .pcard small[dir="ltr"]{opacity:.75}
+
+/* ===== الرئيسية الجديدة (مواصفات 1.6) ===== */
+.hero-cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.hero-cta .btn{padding:12px 22px;font-size:17px}
+.sec{margin:44px 0}
+.sec-head{display:grid;gap:4px;margin-bottom:16px}
+.sec-head h2{font-size:clamp(28px,4vw,38px)}
+.sec-head p{margin:0;color:var(--muted);max-width:62ch}
+.card.is-soon{cursor:default}
+.card.is-soon:hover{transform:none;border-color:var(--line)}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .free{font-size:12px;font-weight:700;background:var(--good);color:#0d2117;border-radius:999px;padding:0 9px}
+.reframe{font-family:var(--display);font-size:clamp(24px,3.6vw,32px);color:var(--cream);margin:0 0 14px}
+.reframe b{font-weight:400;color:var(--ticket)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;align-items:stretch}
+.plan{position:relative;display:grid;gap:8px;align-content:start;padding:22px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(180deg,var(--velvet-2),var(--velvet))}
+.plan.best{border-color:var(--ticket);box-shadow:0 0 0 1px var(--ticket),0 20px 60px -30px rgba(226,180,87,.6)}
+.plan .flag{position:absolute;top:-12px;inset-inline-start:18px;background:var(--ticket);color:#1b0d12;font-size:13px;font-weight:700;border-radius:999px;padding:1px 12px}
+.plan h3{font-size:26px}
+.plan .price{font-family:var(--display);font-size:40px;line-height:1;color:var(--cream)}
+.plan .price small{font-family:var(--body);font-size:16px;color:var(--muted)}
+.plan .coins{font-weight:700;color:var(--ticket)}
+.plan .sub{margin:0;color:var(--muted);font-size:15px}
+.plan .btn{justify-content:center;margin-top:6px}
+.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;pointer-events:none}
+.stores{display:flex;flex-wrap:wrap;gap:10px}
+.store-badge{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 16px;background:#0b0609;color:var(--muted)}
+.store-badge b{display:block;color:var(--cream);font-size:16px;line-height:1.2}
+.store-badge small{font-size:12px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.box{border:1px solid var(--line);border-radius:20px;padding:22px;background:linear-gradient(180deg,var(--velvet-2),var(--velvet));display:grid;gap:10px;align-content:start}
+.box h3{font-size:26px}
+.box p{margin:0;color:var(--muted)}
+.box .actions{margin-top:4px}
+.src-note{font-size:13px;color:var(--muted);margin:6px 0 0}

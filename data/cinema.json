@@ -16,7 +16,7 @@
  "up": [
   { "en": "Dune: Part Three", "rd": "2026-12-17" },
   { "en": "Avengers: Doomsday", "rd": "2026-12-17" },
-  { "en": "King", "rd": "2026-12-24", "hint": "Shah Rukh Khan" },
+  { "en": "King", "rd": "2026-12-24", "hint": "Shah Rukh Khan", "imdb": "tt28228084" },
   { "en": "Jumanji: Open World", "rd": "2026-12-24" }
  ]
 }
