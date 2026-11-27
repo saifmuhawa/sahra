@@ -77,6 +77,7 @@
       <div class="field"><label for="r-name">اسمك</label><input id="r-name" type="text" autocomplete="nickname" required maxlength="30" placeholder="شو نناديك؟"></div>
       <div class="field"><label for="r-email">الإيميل</label><input id="r-email" type="email" dir="ltr" autocomplete="email" required maxlength="254"><small>رح نبعتلك رابط تأكيد، وبعد ما تأكّد بتاخذ 100 عملة هدية.</small></div>
       <div class="field"><label for="r-pass">كلمة السر</label><input id="r-pass" type="password" dir="ltr" autocomplete="new-password" required minlength="8" maxlength="200"><small>8 حروف أو أكثر.</small></div>
+      <label class="agree"><input type="checkbox" id="r-adult" required><span>عمري 18 سنة أو أكثر، وموافق على <a href="terms.html" target="_blank">شروط الاستخدام</a> و<a href="privacy.html" target="_blank">سياسة الخصوصية</a>.</span></label>
       <div class="ts"></div>
       <div class="form-end"><button class="btn btn-red" type="submit">اعمل حساب ←</button></div>
     </form>
@@ -97,7 +98,7 @@
 <footer>
   <div class="wrap">
     <span>سهرة فيلم · فكرة وإعداد saiflex</span>
-    <a class="credits" href="credits.html">المصادر</a>
+    <span><a href="terms.html">الشروط</a> · <a href="privacy.html">الخصوصية</a> · <a href="refund.html">الاسترجاع</a> · <a class="credits" href="credits.html">المصادر</a></span>
   </div>
 </footer>
 <script src="common.js"></script>
@@ -110,6 +111,7 @@ const say = (t, good) => { msg.textContent = t || ""; msg.className = "form-msg 
 const next = (() => { try { const n = new URL(q.get("next") || "", location.href); return q.get("next") && n.origin === location.origin ? n.pathname + n.search + n.hash : null; } catch { return null; } })();
 const ERR = {
   email: "الإيميل مش مزبوط.", name: "اكتب اسمك (حرفين على الأقل).", password: "كلمة السر لازم تكون 8 حروف أو أكثر.",
+  adult: "الحساب بس للي عمره 18 سنة أو أكثر، ولازم توافق على الشروط.",
   exists: "هالإيميل عنده حساب. جرّب تدخل، أو اضغط «نسيت كلمة السر».", wrong: "الإيميل أو كلمة السر غلط.",
   slow: "محاولات كثير. استنى شوي وجرّب كمان مرة.", human: "تأكّد إنك مش روبوت وجرّب كمان مرة.",
   link: "الرابط خلص أو انستعمل قبل. اطلب رابط جديد.", origin: "صار في مشكلة، حدّث الصفحة وجرّب.", unavailable: "الحسابات مش شغّالة هلأ، جرّب بعد شوي.",
@@ -186,7 +188,8 @@ function onSubmit(id, run) {
 const val = id => document.getElementById(id).value.trim();
 onSubmit("f-login", async f => { await api("login", { email: val("l-email"), password: document.getElementById("l-pass").value, ts: tsToken(f) }); done(); });
 onSubmit("f-register", async f => {
-  const j = await api("register", { name: val("r-name"), email: val("r-email"), password: document.getElementById("r-pass").value, ts: tsToken(f) });
+  if (!document.getElementById("r-adult").checked) throw new Error("adult");
+  const j = await api("register", { name: val("r-name"), email: val("r-email"), password: document.getElementById("r-pass").value, adult: true, ts: tsToken(f) });
   await showAccount();
   say(j.mailSent === false && !j.devLink ? "انعمل حسابك! الإيميلات لسا مش شغّالة، فرح نبعتلك رابط التأكيد لما تشتغل." : "انعمل حسابك! بعتنالك رابط التأكيد على الإيميل.", true);
   msg.innerHTML += devNote(j);

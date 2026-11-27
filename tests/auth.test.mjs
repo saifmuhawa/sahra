@@ -1,7 +1,9 @@
 // اختبار الحسابات والعملات (D1) مع wrangler dev
 // شغّل السيرفر هيك عشان روابط الإيميل ترجع بالرد بدل ما تنبعث:
 //   npx wrangler d1 migrations apply sahra-db --local
-//   npx wrangler dev --var DEV_MAIL_LINKS:1 --var ROOM_COINS:100
+//   npx wrangler dev --var DEV_MAIL_LINKS:1 --var ROOM_COINS:100 --var TURNSTILE_SITE_KEY:1x00000000000000000000AA
+// التسجيل محدود بـ 5 بالساعة لنفس الـ IP، فإذا شغّلته كثير صفّر الحد:
+//   npx wrangler d1 execute sahra-db --local --command "DELETE FROM rate_limits"
 const BASE = process.env.BASE || "http://127.0.0.1:8787";
 let fails = 0;
 const ok = (cond, msg) => { console.log((cond ? "✓ " : "✗ ") + msg); if (!cond) fails++; };
@@ -23,15 +25,16 @@ const A = browser();
 
 ok((await A("/auth/config")).j.welcome === 100, "الإعدادات بترجع");
 ok((await A("/auth/me")).j.user === null, "قبل التسجيل: ما في حساب");
-ok((await A("/auth/register", { email: "bad", name: "سيف", password: pass })).j.error === "email", "إيميل غلط مرفوض");
+ok((await A("/auth/register", { email: "bad", name: "سيف", password: pass, adult: true })).j.error === "email", "إيميل غلط مرفوض");
 ok((await A("/auth/register", { email, name: "سيف", password: "123" })).j.error === "password", "كلمة سر قصيرة مرفوضة");
 
-const reg = await A("/auth/register", { email, name: "سيف", password: pass });
+ok((await A("/auth/register", { email, name: "سيف", password: pass })).j.error === "adult", "بدون تأكيد العمر (18+) ما في تسجيل");
+const reg = await A("/auth/register", { email, name: "سيف", password: pass, adult: true });
 ok(reg.status === 200 && reg.j.devLink, "تسجيل حساب جديد");
 ok(reg.jar.has("sahra_s") && reg.jar.get("sahra_in") === "1", "التسجيل بيدخّلك وبيحط الكوكي");
 let me = (await A("/auth/me")).j;
 ok(me.user?.email === email && me.user.verified === false && me.coins === 0, "داخل، والإيميل لسا مش مأكّد، والرصيد 0");
-ok((await A("/auth/register", { email: email.toUpperCase(), name: "ثاني", password: pass })).status === 409, "نفس الإيميل ما بيتسجّل مرتين (حتى بأحرف كبيرة)");
+ok((await A("/auth/register", { email: email.toUpperCase(), name: "ثاني", password: pass, adult: true })).status === 409, "نفس الإيميل ما بيتسجّل مرتين (حتى بأحرف كبيرة)");
 
 // تأكيد الإيميل والهدية
 const vt = tokenOf(reg.j.devLink);

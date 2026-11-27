@@ -175,6 +175,7 @@ export async function authRoute(req, env, path, u) {
     if (!emailOk(email)) return err("email");
     if (name.length < 2) return err("name");
     if (!passOk(b.password)) return err("password");
+    if (b.adult !== true) return err("adult"); // الحساب لـ 18+ وموافق على الشروط
     if (await limited(env, "reg:" + ip, 5, 3600e3)) return err("slow", 429);
     if (!(await humanOk(env, b.ts, req))) return err("human", 403);
     if (await env.DB.prepare("SELECT 1 FROM users WHERE email = ?").bind(email).first()) return err("exists", 409);

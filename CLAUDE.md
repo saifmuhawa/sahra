@@ -14,8 +14,10 @@
 - **الحسابات والعملات (D1):** قاعدة `sahra-db` بـ binding اسمه `DB`، والجداول بـ `migrations/`. الكود بـ `worker/auth.js` والمسارات `/api/auth/*`، والصفحة `login.html`.
   - جدول جديد = ملف migration جديد، وطبّقه على `--remote` **قبل** الـ push.
   - مفاتيح بـ `wrangler.jsonc` (vars): `JUDGE_LOGIN` ("1" = الحكم لازم يكون داخل) و`ROOM_COINS` (0 = الغرف ببلاش).
-  - مفاتيح سرية لسا ناقصة (سيف بيحطها): `RESEND_API_KEY` للإيميلات، و`TURNSTILE_SECRET` + `TURNSTILE_SITE_KEY` (var) للحماية من البوتات. بدونهم الحسابات بتشتغل بس ما بتنبعث إيميلات.
-  - الاختبار: `tests/auth.test.mjs` مع `wrangler dev --var DEV_MAIL_LINKS:1 --var ROOM_COINS:100` (بعد `wrangler d1 migrations apply sahra-db --local`).
+  - مفاتيح سرية (سيف حطها): `RESEND_API_KEY` (الإيميلات من `no-reply@sahrafilm.com`، الدومين Verified على Resend) و`TURNSTILE_SECRET`. المفتاح العام `TURNSTILE_SITE_KEY` بـ vars.
+  - Cloudflare رفض PBKDF2 بـ 150,000 على الموقع الحقيقي، فالحسابات بـ 100,000 (الكود بيجرّب الأعلى وبينزل لحاله).
+  - الحساب لـ 18+ (الصفحة والسيرفر بيتأكدوا). الصفحات: `terms.html` و`privacy.html` و`refund.html` (شراء العملات نهائي إلا الدفع المكرر أو خطأ تقني). إيميل الدعم `support@sahrafilm.com` بيتحوّل لإيميل سيف (Cloudflare Email Routing).
+  - الاختبار: `tests/auth.test.mjs` مع `wrangler dev --var DEV_MAIL_LINKS:1 --var ROOM_COINS:100 --var TURNSTILE_SITE_KEY:1x00000000000000000000AA` (بعد `wrangler d1 migrations apply sahra-db --local`).
 - **الألعاب:**
   - `game.html` (أفلام)، `anime.html`، `series.html`، `music.html` (أغاني الأفلام).
   - الكود المشترك: `play.js` و`play.css` و`common.js`، وكرت الاستوري `card.js`.

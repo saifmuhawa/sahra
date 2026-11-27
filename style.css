@@ -295,5 +295,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .ledger li.none{display:block;color:var(--muted);border:0}
 .ledger .plus{color:var(--good)}
 .ledger .minus{color:var(--bad)}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:15px;cursor:pointer}
+.agree input{margin-top:6px;width:18px;height:18px;accent-color:var(--seat);flex:none}
+
+/* ===== الصفحات القانونية ===== */
+.legal{max-width:760px}
+.legal h2{font-size:26px;margin:28px 0 8px}
+.legal p,.legal li{color:var(--cream)}
+.legal ul{padding-inline-start:22px;display:grid;gap:6px;margin:0}
+.legal li b{color:var(--ticket);font-weight:700}
+.legal code{font-size:14px;background:var(--velvet-3);border-radius:6px;padding:0 6px;direction:ltr;unicode-bidi:isolate}
 #msg:empty{display:none}
 #msg{margin:8px 0 0}
