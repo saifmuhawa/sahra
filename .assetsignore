@@ -12,3 +12,4 @@ sync.mjs
 .gitignore
 .dev.vars
 scripts
+CLAUDE.md
