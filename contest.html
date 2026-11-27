@@ -197,6 +197,7 @@ bdi{white-space:nowrap}
       </div>
       <label class="agree"><input type="checkbox" id="c-agree" required><span>عمري 18 سنة أو أكثر، ساكن بالإمارات، وموافق على <a href="#terms">الشروط</a>.</span></label>
       <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="ts" id="c-ts" style="margin:4px 0"></div>
       <div class="form-end">
         <button class="btn btn-red" type="submit" id="c-send">سجّلني بالسحب 🎟️</button>
         <p class="form-msg" id="c-status" role="status" aria-live="polite"></p>
@@ -236,8 +237,10 @@ bdi{white-space:nowrap}
 </footer>
 <script src="common.js"></script>
 <script>
-// رابط Google Apps Script (الاستمارة بتبعت عليه، وهو بيحط المشاركة بجدول سيف وبيحفظ الصورة على Drive)
-const GS_URL = "https://script.google.com/macros/s/AKfycbwLTQzPc1B6H1t-KEAMAG_4LPW78QijvmZKOgaLFqWrBBfKMePWNMNvwGOGli8ZD_rwMA/exec";
+// الاستمارة بتبعت لسيرفرنا (/api/contest)، وهو بيتأكد من Turnstile وبيمرّر لجدول سيف.
+const SUBMIT_URL = "/api/contest";
+// مفتاح Turnstile العام (مش سري، بينبعت لكل متصفح أصلاً)
+const TS_SITE_KEY = "0x4AAAAAAGVlwVme1FwbdW7T";
 const END = Date.parse("2026-12-11T23:59:59+04:00");
 const DONE_KEY = "sahra-contest-2026";
 
@@ -293,8 +296,15 @@ const ERR = {
   dup: "هاد الرقم أو الإيميل مشارك من قبل. مشاركة وحدة بس لكل شخص 😊",
   closed: "انتهت المسابقة، ما عاد في مشاركات.",
   big: "الصورة كبيرة كثير، جرّب وحدة أصغر.",
+  human: "تأكّد إنك مش روبوت من المربع وجرّب كمان مرة.",
+  slow: "طلبات كثير من عندك. استنى شوي وجرّب كمان مرة.",
   phone: "رقم الجوال مش مزبوط.", email: "البريد الإلكتروني مش مزبوط.", ig: "يوزر الإنستغرام مش مزبوط.", name: "اكتب اسمك الكامل."
 };
+
+// Turnstile (مربع "مش روبوت"): بنحمّله ونرسم المربع بالاستمارة
+let tsId = null;
+window.onContestTs = () => { try { tsId = turnstile.render("#c-ts", { sitekey: TS_SITE_KEY, language: "ar", theme: "dark" }); } catch (e) {} };
+(() => { const s = document.createElement("script"); s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onContestTs&render=explicit"; s.async = true; document.head.appendChild(s); })();
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const name = F["name"].value.trim(), email = F["email"].value.trim(), phone = phoneOf(F["phone"].value);
@@ -307,18 +317,18 @@ form.addEventListener("submit", async e => {
   if (!$("#c-agree").checked) { say("لازم توافق على الشروط."); $("#c-agree").focus(); return; }
   if (F["botcheck"].checked) return;
   if (Date.now() > END) { close(); return; }
-  if (!GS_URL) { say("الاستمارة لسا عم تتجهّز، جرّب كمان شوي."); return; }
+  const ts = tsId != null && window.turnstile ? turnstile.getResponse(tsId) : "";
+  if (!ts) { say("استنى المربع يحمّل، أو تأكّد إنك مش روبوت."); return; }
   btn.disabled = true; say(shot ? "عم نرفع الصورة ونسجّلك…" : "عم نسجّلك…", true);
   try {
-    // text/plain بدون headers عشان ما يصير CORS preflight
-    const r = await fetch(GS_URL, { method: "POST", body: JSON.stringify({ name, email, phone, ig, emirate, film, agree: true, shot, hp: F["botcheck"].checked }) });
+    const r = await fetch(SUBMIT_URL, { method: "POST", body: JSON.stringify({ name, email, phone, ig, emirate, film, agree: true, shot, hp: F["botcheck"].checked, ts }) });
     const j = await r.json();
-    if (!j.ok) { say(ERR[j.error] || "في إشي مش مزبوط، راجع المعلومات وجرّب كمان مرة."); return; }
+    if (!j.ok) { say(ERR[j.error] || "في إشي مش مزبوط، راجع المعلومات وجرّب كمان مرة."); if (tsId != null) turnstile.reset(tsId); return; }
     try { localStorage.setItem(DONE_KEY, "1"); } catch (e) {}
     form.hidden = true; $("#done").hidden = false;
     if (shot) $("#done-msg").insertAdjacentHTML("beforeend", " ووصلت الصورة كمان، يعني اسمك بالسحب مرتين.");
     $("#done").scrollIntoView({ behavior: "smooth", block: "center" });
-  } catch (err) { say("ما قدرنا نسجّلك هلأ. تأكد من النت وجرّب كمان مرة."); }
+  } catch (err) { say("ما قدرنا نسجّلك هلأ. تأكد من النت وجرّب كمان مرة."); if (tsId != null && window.turnstile) turnstile.reset(tsId); }
   finally { btn.disabled = false; }
 });
 

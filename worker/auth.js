@@ -66,7 +66,7 @@ const cleanName = s => String(s || "").replace(/[\u0000-\u001f<>]/g, "").replace
 const passOk = p => typeof p === "string" && p.length >= 8 && p.length <= 200;
 
 // ===== حد المحاولات =====
-async function limited(env, key, max, windowMs) {
+export async function limited(env, key, max, windowMs) {
   const now = Date.now();
   const row = await env.DB.prepare("SELECT count, window_start FROM rate_limits WHERE key = ?").bind(key).first();
   if (!row || now - row.window_start > windowMs) {
@@ -79,7 +79,7 @@ async function limited(env, key, max, windowMs) {
 }
 
 // ===== Turnstile =====
-async function humanOk(env, token, req) {
+export async function humanOk(env, token, req) {
   if (!env.TURNSTILE_SECRET) return true; // لسا ما انحطّ المفتاح
   if (!token) return false;
   const body = new FormData();

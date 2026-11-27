@@ -1,6 +1,6 @@
 // نقطة الدخول على Cloudflare: الصفحات الثابتة من assets، والـAPI تحت /api، وغرف اللعب بـ Durable Objects
 import { init, apiRoute, json } from "./api.js";
-import { authRoute, currentUser, spend } from "./auth.js";
+import { authRoute, currentUser, spend, humanOk, limited } from "./auth.js";
 export { Room } from "./room.js";
 export { Poll } from "./poll.js";
 
@@ -58,6 +58,30 @@ function withCors(res) {
   return r;
 }
 
+// استمارة المسابقة: بتمرّ على سيرفرنا بدل ما تروح لـ Google مباشرة.
+// هون منتأكد إنه مش روبوت (Turnstile)، منحدّ الطلبات، ومنمسك الفخ، وبعدها منمرّر للشيت.
+// رابط الشيت صار بإعدادات السيرفر (CONTEST_URL) مش بالصفحة.
+const CONTEST_FALLBACK = "https://script.google.com/macros/s/AKfycbwLTQzPc1B6H1t-KEAMAG_4LPW78QijvmZKOgaLFqWrBBfKMePWNMNvwGOGli8ZD_rwMA/exec";
+async function contestRoute(req, env, u) {
+  if (req.method !== "POST") return json({ ok: false, error: "method" }, 405, "no-store");
+  const origin = req.headers.get("origin");
+  if (origin && new URL(origin).host !== u.host) return json({ ok: false, error: "origin" }, 403, "no-store");
+  const ip = req.headers.get("cf-connecting-ip") || "local";
+  const text = await req.text();
+  if (text.length > 8_000_000) return json({ ok: false, error: "big" }, 413, "no-store");
+  let b = {}; try { b = JSON.parse(text || "{}"); } catch { return json({ ok: false, error: "bad" }, 400, "no-store"); }
+  if (b.hp === true) return json({ ok: true }, 200, "no-store"); // فخ: البوت عبّى الحقل المخفي، منكذب عليه
+  if (env.DB && await limited(env, "contest:" + ip, 30, 3600e3)) return json({ ok: false, error: "slow" }, 429, "no-store");
+  if (!(await humanOk(env, b.ts, req))) return json({ ok: false, error: "human" }, 403, "no-store");
+  // منمرّر كل شي إلا توكن Turnstile، ومنضيف مفتاح يثبت إنه الطلب إجا من سيرفرنا (إذا انحطّ)
+  const { ts, ...payload } = b;
+  if (env.CONTEST_SECRET) payload.wkey = env.CONTEST_SECRET;
+  try {
+    const r = await fetch(env.CONTEST_URL || CONTEST_FALLBACK, { method: "POST", body: JSON.stringify(payload), headers: { "content-type": "text/plain" } });
+    return new Response(await r.text(), { status: 200, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
+  } catch { return json({ ok: false, error: "net" }, 502, "no-store"); }
+}
+
 // ترويسات حماية على كل الردود: منع التأطير (Clickjacking)، منع تخمين نوع الملف،
 // سياسة إحالة آمنة، وتعطيل صلاحيات ما بنستعملها. CSP متساهل: بيمنع التأطير بس
 // وما بيكسر الخطوط وTurnstile ويوتيوب (السكربتات الداخلية تبقى شغّالة).
@@ -93,6 +117,7 @@ async function handle(req, env, ctx) {
       if (path.startsWith("/room/")) return await roomRoute(req, env, path, u);
       if (path.startsWith("/poll/")) return await pollRoute(req, env, path, u);
       if (path.startsWith("/auth/")) return await authRoute(req, env, path, u);
+      if (path === "/contest") return await contestRoute(req, env, u);
       return await apiRoute(path, u);
     } catch (e) {
       // التفصيل بالـ logs بس، والمستخدم بياخد رسالة عامة

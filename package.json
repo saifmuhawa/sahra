@@ -7,7 +7,8 @@
     "deploy": "wrangler deploy",
     "test": "node tests/rooms.test.mjs",
     "test:auth": "node tests/auth.test.mjs",
-    "test:bots": "node tests/bots.test.mjs"
+    "test:bots": "node tests/bots.test.mjs",
+    "test:contest": "node tests/contest.test.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
