@@ -6,6 +6,8 @@ const ok = (cond, msg) => { console.log((cond ? "✓ " : "✗ ") + msg); if (!co
 const post = async (p, b) => { const r = await fetch(API + p, { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify(b) }); return { status: r.status, j: await r.json().catch(() => ({})) }; };
 const get = async p => (await fetch(API + p)).json();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// الأفلام بالغرف من Wikidata: الرقم هو رقم Q (Inception = Q25188)
+const INCEPTION = 25188;
 function sock(q) {
   const ws = new WebSocket(BASE.replace("http", "ws") + "/api/room/ws?" + q);
   const s = { ws, last: null, msgs: 0 };
@@ -33,7 +35,7 @@ ok(bad === "rejected", "شخص مش بالغرفة ما بيقدر يتصل");
 ok((await post("/room/act", { code, key: "wrong", type: "start" })).status === 403, "بس الحكم بيقدر يتحكم");
 ok((await post("/room/act", { code, key, type: "turnsec", sec: 15 })).j.turnSec === 15, "الحكم بيغيّر مدة الدور");
 await post("/room/act", { code, key, type: "start" });
-const filmRes = await post("/room/act", { code, key, type: "film", t: "movie", id: 27205 });
+const filmRes = await post("/room/act", { code, key, type: "film", t: "movie", id: INCEPTION });
 st = filmRes.j;
 ok(st.stage === "play" && st.hints.length === 15, "اختيار فيلم بيجهّز 15 تلميح");
 ok(st.turn === 0 && st.turnEnds - st.now > 14000 && st.turnEnds - st.now <= 15000, "الدور للفريق الأول ومؤقت 15 ثانية بالسيرفر");
