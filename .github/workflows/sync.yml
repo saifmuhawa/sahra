@@ -31,6 +31,8 @@ jobs:
         run: cp data/films.json /tmp/seed.json && SEED_FILE=/tmp/seed.json node scripts/free-films.mjs
       - name: Box office (Wikipedia)
         run: node scripts/boxoffice.mjs || echo "box office failed, keeping old"
+      - name: Cinema IMDb ids (Wikidata)
+        run: node scripts/cinema-ids.mjs || echo "cinema ids failed, keeping old"
       - name: Commit if changed
         run: |
           git add -A data
