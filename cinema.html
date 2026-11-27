@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>السينما بالإمارات | شو موجود، جاي قريباً، وشباك التذاكر | سهرة فيلم</title>
+<meta name="description" content="شو موجود بسينمات الإمارات هلأ، شو جاي قريباً، وأعلى أفلام السنة إيرادات بشباك التذاكر. مجاني من سهرة فيلم.">
+<link rel="canonical" href="https://sahrafilm.com/cinema.html">
+<meta property="og:site_name" content="سهرة فيلم">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_AE">
+<meta property="og:title" content="السينما بالإمارات | سهرة فيلم">
+<meta property="og:description" content="شو موجود بسينمات الإمارات هلأ، شو جاي قريباً، وأعلى أفلام السنة إيرادات بشباك التذاكر. مجاني من سهرة فيلم.">
+<meta property="og:url" content="https://sahrafilm.com/cinema.html">
+<meta property="og:image" content="https://sahrafilm.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#170a0f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="cinema">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة <b>فيلم</b></a>
+    <div class="nav-links">
+      <a href="game.html" data-page="game">خمّن الفيلم</a>
+      <a href="anime.html" data-page="anime">خمّن الأنمي</a>
+      <a href="series.html" data-page="series">خمّن المسلسل</a>
+      <a href="music.html" data-page="music">أغاني الأفلام</a>
+      <a href="cinema.html" data-page="cinema">السينما</a>
+      <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
+      <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="hero">
+    <h1>السينما <span>بالإمارات</span></h1>
+    <p>شو موجود بالسينمات هلأ، وشو جاي قريباً، وأكثر الأفلام إيرادات هالسنة. القسم مجاني، وما إله علاقة بالألعاب.</p>
+  </header>
+  <section aria-labelledby="s-now">
+    <div class="strip-head"><h2 id="s-now">شو موجود عندنا بالسينما</h2><a class="more" href="https://uae.voxcinemas.com/" target="_blank" rel="noopener">احجز على VOX ←</a></div>
+    <div class="strip" id="strip-now"></div>
+  </section>
+  <section aria-labelledby="s-up">
+    <div class="strip-head"><h2 id="s-up">جاي قريباً</h2></div>
+    <div class="strip" id="strip-up"></div>
+  </section>
+  <section aria-labelledby="s-top">
+    <div class="strip-head"><h2 id="s-top">الأكثر إيرادات <span id="top-year"></span></h2><small class="muted">حول العالم</small></div>
+    <div class="strip" id="strip-top"></div>
+  </section>
+  <section aria-labelledby="s-weekend">
+    <div class="strip-head"><h2 id="s-weekend">الأول بشباك التذاكر كل ويكند</h2><small class="muted">أمريكا</small></div>
+    <div class="strip" id="strip-weekend"></div>
+  </section>
+  <p class="note small"><span id="cinema-updated"></span> · التواريخ والعروض ممكن تتغيّر، تأكد من موقع السينما قبل ما تحجز.</p>
+</main>
+<footer>
+  <div class="wrap">
+    <span>قائمة السينما من صفحات السينمات وأخبار الإمارات · شباك التذاكر من <a href="https://en.wikipedia.org/" target="_blank" rel="noopener">ويكيبيديا</a> (CC BY-SA 4.0) · Metadata provided by <a href="https://thetvdb.com/subscribe" target="_blank" rel="noopener">TheTVDB</a></span>
+    <a class="credits" href="credits.html">المصادر</a>
+  </div>
+</footer>
+<script src="common.js"></script>
+<script src="cinema.js"></script>
+<script>loadCinema(30);</script>
+</body>
+</html>

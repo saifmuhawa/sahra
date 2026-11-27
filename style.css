@@ -227,3 +227,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .promo .pt b{font-family:var(--display);font-weight:400;font-size:clamp(24px,3.4vw,32px);line-height:1.2}
 .promo .pt small{color:var(--muted);font-size:15px}
 .promo .go{background:var(--ticket);color:#1b0d12;font-weight:700;border-radius:10px;padding:9px 16px}
+.strip-head .more{color:var(--ticket);font-weight:700;text-decoration:none;font-size:15px}
+.strip-head .muted,.muted{color:var(--muted);font-size:14px}
+.pcard small[dir="ltr"]{opacity:.75}

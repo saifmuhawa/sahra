@@ -1,0 +1,22 @@
+{
+ "updated": "2026-11-27",
+ "note": "شو موجود بسينمات الإمارات وجاي قريباً. بيتحدّث يومياً من صفحات السينمات وأخبار الإمارات. تواريخ الإمارات.",
+ "sources": ["Gulf News (VOX UAE listings)", "tbreak.com", "Khaleej Times"],
+ "now": [
+  { "en": "Focker In-Law", "rd": "2026-11-26" },
+  { "en": "The Hunger Games: Sunrise on the Reaping", "rd": null },
+  { "en": "How to Rob a Bank", "rd": "2026-11-12" },
+  { "en": "Ebenezer: A Christmas Carol", "rd": "2026-11-12" },
+  { "en": "Hadoota", "ar": "هدوتة", "rd": null },
+  { "en": "Ramayana: Part One", "rd": "2026-11-05" },
+  { "en": "The Cat in the Hat", "rd": "2026-11-05" },
+  { "en": "Godzilla Minus Zero", "rd": "2026-11-05" },
+  { "en": "The Shawshank Redemption", "rd": "2026-11-05", "tag": "إعادة عرض" }
+ ],
+ "up": [
+  { "en": "Dune: Part Three", "rd": "2026-12-17" },
+  { "en": "Avengers: Doomsday", "rd": "2026-12-17" },
+  { "en": "King", "rd": "2026-12-24", "hint": "Shah Rukh Khan" },
+  { "en": "Jumanji: Open World", "rd": "2026-12-24" }
+ ]
+}

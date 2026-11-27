@@ -33,6 +33,7 @@
       <a href="anime.html" data-page="anime">خمّن الأنمي</a>
       <a href="series.html" data-page="series">خمّن المسلسل</a>
       <a href="music.html" data-page="music">أغاني الأفلام</a>
+      <a href="cinema.html" data-page="cinema">السينما</a>
       <a href="feedback.html" data-page="feedback">اقتراحاتك</a>
       <a href="support.html" data-page="support" class="nav-support">ادعمنا ♥</a>
     </div>
@@ -55,16 +56,16 @@
     <a class="card" href="music.html"><span class="hall-no">صالة ٤</span><h2>أغاني الأفلام</h2><p>اكتب اسم أي فيلم واسمع أغانيه وتريلره هون، أو افتحها على يوتيوب.</p><span class="go">دوّر على فيلم ←</span></a>
   </div>
   <section aria-labelledby="s-now">
-    <div class="strip-head"><h2 id="s-now">نزلت بالسينما مؤخراً</h2></div>
+    <div class="strip-head"><h2 id="s-now">شو موجود عندنا بالسينما</h2><a class="more" href="cinema.html">كل السينما ←</a></div>
     <div class="strip" id="strip-now"></div>
   </section>
   <section aria-labelledby="s-up">
     <div class="strip-head"><h2 id="s-up">جاي قريباً</h2></div>
     <div class="strip" id="strip-up"></div>
   </section>
-  <section aria-labelledby="s-trend">
-    <div class="strip-head"><h2 id="s-trend">الأكثر رواجاً اليوم</h2></div>
-    <div class="strip" id="strip-trend"></div>
+  <section aria-labelledby="s-top">
+    <div class="strip-head"><h2 id="s-top">الأكثر رواجاً: أعلى إيرادات <span id="top-year"></span></h2><a class="more" href="cinema.html">شباك التذاكر ←</a></div>
+    <div class="strip" id="strip-top"></div>
   </section>
 </main>
 <footer>
@@ -75,21 +76,10 @@
 </footer>
 <script src="curated.js"></script>
 <script src="common.js"></script>
+<script src="cinema.js"></script>
 <script>
 if (Date.now() > Date.parse("2026-12-20T00:00:00+04:00")) document.getElementById("promo")?.remove();
-function strip(id, list, sort) {
-  const box = document.getElementById(id);
-  let fs = FILMS.filter(f => (f.l || []).includes(list));
-  fs.sort(sort || ((a, b) => (b.pop || 0) - (a.pop || 0)));
-  fs = fs.slice(0, 20);
-  if (!fs.length) { box.closest("section").hidden = true; return; }
-  box.innerHTML = fs.map(f => `<a class="pcard" href="${imdbUrl(f)}" target="_blank" rel="noopener">${posterBox(f, "w185")}<span>${esc(titleAr(f))}</span><small>${list === "up" ? (f.nd || f.rd || "") : (f.rd || f.y || "")}</small></a>`).join("");
-}
-loadFilms().then(() => {
-  strip("strip-now", "now");
-  strip("strip-up", "up", (a, b) => (a.nd || a.rd || "").localeCompare(b.nd || b.rd || ""));
-  strip("strip-trend", "trend");
-});
+loadCinema(12);
 </script>
 </body>
 </html>

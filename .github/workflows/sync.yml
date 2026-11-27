@@ -29,6 +29,8 @@ jobs:
           SEED_FILE: data/films.json
           OUT_DIR: data
         run: cp data/films.json /tmp/seed.json && SEED_FILE=/tmp/seed.json node scripts/free-films.mjs
+      - name: Box office (Wikipedia)
+        run: node scripts/boxoffice.mjs || echo "box office failed, keeping old"
       - name: Commit if changed
         run: |
           git add -A data
