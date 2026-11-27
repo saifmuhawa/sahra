@@ -58,8 +58,25 @@ function withCors(res) {
   return r;
 }
 
-export default {
-  async fetch(req, env, ctx) {
+// ترويسات حماية على كل الردود: منع التأطير (Clickjacking)، منع تخمين نوع الملف،
+// سياسة إحالة آمنة، وتعطيل صلاحيات ما بنستعملها. CSP متساهل: بيمنع التأطير بس
+// وما بيكسر الخطوط وTurnstile ويوتيوب (السكربتات الداخلية تبقى شغّالة).
+const SEC = {
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=()",
+  "content-security-policy": "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+  "strict-transport-security": "max-age=31536000; includeSubDomains",
+};
+function withSecurity(res) {
+  if (res.status === 101 || res.webSocket) return res; // لا نلمس ردود WebSocket
+  const r = new Response(res.body, res);
+  for (const [k, v] of Object.entries(SEC)) if (!r.headers.has(k)) r.headers.set(k, v);
+  return r;
+}
+
+async function handle(req, env, ctx) {
     const u = new URL(req.url);
     // الدومين القديم أو www → الدومين الأساسي (لما يكون محدد)
     if (env.CANONICAL_HOST && u.hostname !== env.CANONICAL_HOST && !u.hostname.endsWith(".workers.dev") && u.hostname !== "localhost" && u.hostname !== "127.0.0.1") {
@@ -78,7 +95,14 @@ export default {
       if (path.startsWith("/auth/")) return await authRoute(req, env, path, u);
       return await apiRoute(path, u);
     } catch (e) {
-      return json({ error: String(e.message || e) }, 502, "no-store");
+      // التفصيل بالـ logs بس، والمستخدم بياخد رسالة عامة
+      console.error("api error", path, String(e && e.stack || e));
+      return json({ error: "server" }, 502, "no-store");
     }
+}
+
+export default {
+  async fetch(req, env, ctx) {
+    return withSecurity(await handle(req, env, ctx));
   },
 };
