@@ -72,6 +72,7 @@ function apply(st) {
   const prev = S;
   const changed = st.v !== lastV; S = st; lastV = st.v;
   if (prev && st.lastPass && st.lastPass.at !== prev.lastPass?.at) announcePass(st.lastPass);
+  if (prev && st.lastBot && st.lastBot.at !== prev.lastBot?.at) announceBot(st.lastBot);
   render(changed);
 }
 function roomGone() {
@@ -113,6 +114,18 @@ function announcePass(lp) {
   else toast("⏱️ خلص وقت " + teamName(lp.team) + "، الدور انتقل");
   if (role === "player" && S?.me && lp.team !== S.me.team) navigator.vibrate?.(200);
 }
+
+// ===== البوتات =====
+const BOT_LVL = {easy: "سهل", mid: "وسط", hard: "صعب"};
+let botLvl = "mid";
+function announceBot(b) {
+  const who = b.name + " (" + teamName(b.team) + ")";
+  if (b.act === "hint") toast(`${who} طلب تلميح 💡`);
+  else if (b.act === "guess") toast(`${who} عرفها! 🎯`);
+  else if (b.act === "pass") toast(`${who} مش متأكد… مرّر الدور`);
+}
+// الفريق بيلعب عنه البوت إذا فيه بوت وما في حدا من البشر أونلاين
+const botsPlay = t => { const ps = teamOf(t); return ps.some(p => p.bot) && !ps.some(p => !p.bot && p.on); };
 
 function render(changed) {
   if (role === "judge") return renderJudge(changed);
@@ -189,7 +202,7 @@ function scoreBar() {
 function turnCard(myTeam) {
   const t = S.turn, mine = myTeam === t;
   const head = myTeam == null ? `دور ${esc(teamName(t))}` : mine ? "دوركم! 🎤" : `دور ${esc(teamName(t))}`;
-  const sub = S.paused ? "⏸ الحكم وقّف الوقت" : myTeam == null ? "سؤال واحد للحكم قبل ما يخلص الوقت" : mine ? "اسألوا الحكم سؤال واحد قبل ما يخلص الوقت" : "استنوا، دوركم بعدهم";
+  const sub = S.paused ? "⏸ الحكم وقّف الوقت" : botsPlay(t) ? "🤖 البوت عم يفكّر…" : myTeam == null ? "سؤال واحد للحكم قبل ما يخلص الوقت" : mine ? "اسألوا الحكم سؤال واحد قبل ما يخلص الوقت" : "استنوا، دوركم بعدهم";
   return `<div class="turn ${TCLS[t]}${mine ? " mine" : ""}${S.paused ? " paused" : ""}">
     <div class="ring" data-ring><span class="cd" data-cd></span></div>
     <div class="turn-txt"><h2>${head}</h2><p>${sub}</p></div>
@@ -267,8 +280,10 @@ function finalHtml(myTeam) {
 }
 function teamBox(t, judge) {
   const ps = teamOf(t);
+  const bots = ps.filter(p => p.bot).length;
+  const addBot = judge && S.stage === "lobby" && bots < 2 ? `<button type="button" class="mini addbot" data-addbot="${t}">+ 🤖 بوت</button>` : "";
   return `<div class="team ${TCLS[t]}"><div class="thead"><b>${esc(teamName(t))}</b><span>${ps.length}</span></div>
-    ${ps.length ? ps.map(p => `<div class="pchip${p.on ? "" : " off"}"><span class="pn">${esc(p.name)}${!judge && S.me && p.id === S.me.id ? " (إنت)" : ""}</span>${judge ? `<span class="pbtns"><button type="button" class="mini" data-move="${p.id}" aria-label="انقل ${esc(p.name)} للفريق الثاني">⇄</button><button type="button" class="mini" data-kick="${p.id}" aria-label="طلّع ${esc(p.name)}">✕</button></span>` : ""}</div>`).join("") : `<p class="note">ما في حدا لسا</p>`}</div>`;
+    ${ps.length ? ps.map(p => `<div class="pchip${p.on ? "" : " off"}${p.bot ? " bot" : ""}"><span class="pn">${esc(p.name)}${p.bot ? ` <small>${BOT_LVL[p.lvl] || ""}</small>` : ""}${!judge && S.me && p.id === S.me.id ? " (إنت)" : ""}</span>${judge ? `<span class="pbtns"><button type="button" class="mini" data-move="${p.id}" aria-label="انقل ${esc(p.name)} للفريق الثاني">⇄</button><button type="button" class="mini" data-kick="${p.id}" aria-label="طلّع ${esc(p.name)}">✕</button></span>` : ""}</div>`).join("") : `<p class="note">ما في حدا لسا</p>`}${addBot}</div>`;
 }
 
 // ===== كرت الستوري =====
@@ -331,6 +346,12 @@ $("#l-teams").addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.dataset.move) await act("move", {pid: b.dataset.move}).catch(() => {});
   if (b.dataset.kick) await act("kick", {pid: b.dataset.kick}).catch(() => {});
+  if (b.dataset.addbot) await act("addbot", {team: +b.dataset.addbot, lvl: botLvl}).catch(() => toast("ما بتقدر تضيف أكثر من بوتين بكل فريق"));
+});
+$("#l-botlvl")?.addEventListener("click", e => {
+  const b = e.target.closest("[data-lvl]"); if (!b) return;
+  botLvl = b.dataset.lvl;
+  $("#l-botlvl").querySelectorAll("[data-lvl]").forEach(x => x.setAttribute("aria-pressed", x === b));
 });
 $("#l-sec").addEventListener("click", e => { const b = e.target.closest("[data-sec]"); if (b) act("turnsec", {sec: +b.dataset.sec}).catch(() => {}); });
 $("#l-shuffle").addEventListener("click", () => act("shuffle").catch(() => {}));

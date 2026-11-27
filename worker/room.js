@@ -11,6 +11,20 @@ const IDLE_MS = 6 * 3600e3;      // الغرفة بتنمسح بعد 6 ساعا�
 const HINT_GAP_MS = 1500;        // عشان ضغطتين ورا بعض ما يطلّعوا تلميحين
 const MAX_PLAYERS = 20;
 
+// ===== البوتات: قواعد ثابتة بدون ذكاء اصطناعي =====
+// البوت بيلعب بدور فريقه بس إذا ما في حدا من البشر بفريقه أونلاين:
+// بكل دور بيستنى شوي، بيطلب تلميح، ومن التلميح الثالث وطالع بيحاول يخمّن.
+// فرصته = مجموع وزن التلميحات اللي أخذها فريقه (السهلة أكثر) × مستواه. إذا عرفها بياخد النقطة، وإذا لأ بيمرّر.
+const MAX_BOTS_PER_TEAM = 2;
+const BOT_THINK_MS = 4000;
+const BOT_LEVELS = { easy: 0.6, mid: 1, hard: 1.5 };
+const HINT_WEIGHT = { hard: 0.05, mid: 0.1, easy: 0.2 };
+export function botChance(hintLvls, lvl) {
+  if (hintLvls.length < 3) return 0;
+  const sum = hintLvls.reduce((s, l) => s + (HINT_WEIGHT[l] || 0), 0);
+  return Math.min(0.95, sum * (BOT_LEVELS[lvl] || 1));
+}
+
 const reply = (obj, code = 200) => new Response(JSON.stringify(obj), { status: code, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
 
 export class Room extends DurableObject {
@@ -34,6 +48,7 @@ export class Room extends DurableObject {
     const r = this.r; if (!r) return;
     const times = [r.touched + IDLE_MS];
     if (r.stage === "play" && r.turnEnds && !r.paused) times.push(r.turnEnds);
+    if (r.stage === "play" && r.botAt && !r.paused) times.push(r.botAt);
     await this.ctx.storage.setAlarm(Math.min(...times));
   }
   online() {
@@ -41,6 +56,7 @@ export class Room extends DurableObject {
     for (const ws of this.ctx.getWebSockets()) for (const t of this.ctx.getTags(ws)) if (t.startsWith("p:")) on.add(t.slice(2));
     const now = Date.now();
     for (const [id, t] of this.seen) if (now - t < 20000) on.add(id);
+    for (const p of this.r?.players || []) if (p.bot) on.add(p.id); // البوت دايماً موجود
     return on;
   }
   broadcast() {
@@ -58,7 +74,8 @@ export class Room extends DurableObject {
     const film = r.film ? { t: r.film.t, id: r.film.id, en: r.film.en, ar: r.film.ar, orig: r.film.orig, y: r.film.y, p: r.film.p } : null;
     const out = {
       code: r.code, kind: r.kind, v: r.v, now: Date.now(), stage: r.stage,
-      players: r.players.map(p => ({ id: p.id, name: p.name, team: p.team, on: on.has(p.id) })),
+      players: r.players.map(p => ({ id: p.id, name: p.name, team: p.team, on: on.has(p.id), ...(p.bot ? { bot: true, lvl: p.lvl } : {}) })),
+      lastBot: r.lastBot || null,
       teams: r.teams, score: r.score, hintsTotal: r.hintsTotal, turnSec: r.turnSec,
       turn: r.turn, turnEnds: r.turnEnds, paused: r.paused, left: r.left, lastPass: r.lastPass,
       round: r.round, winner: r.winner, final: r.final, rounds: r.rounds,
@@ -103,7 +120,7 @@ export class Room extends DurableObject {
 
     if (p === "/ws") {
       if (req.headers.get("Upgrade") !== "websocket") return reply({ error: "ws" }, 426);
-      const me = r.players.find(x => x.id === pid);
+      const me = r.players.find(x => x.id === pid && !x.bot);
       if (!isJudge && !me) return reply({ error: "who" }, 403);
       const pair = new WebSocketPair();
       this.ctx.acceptWebSocket(pair[1], [isJudge ? "j" : "p:" + me.id]);
@@ -120,7 +137,7 @@ export class Room extends DurableObject {
     if (p === "/join") {
       const name = clean(b.name, 20);
       if (!name) return reply({ error: "name" }, 400);
-      const old = b.pid && r.players.find(x => x.id === b.pid);
+      const old = b.pid && r.players.find(x => x.id === b.pid && !x.bot);
       if (old) { old.name = name; await this.save(); return reply({ pid: old.id }); }
       if (r.players.length >= MAX_PLAYERS) return reply({ error: "full" }, 400);
       const cnt = [0, 1].map(t => r.players.filter(x => x.team === t).length);
@@ -130,7 +147,7 @@ export class Room extends DurableObject {
       return reply({ pid: pl.id });
     }
     if (p === "/leave") {
-      r.players = r.players.filter(x => x.id !== pid);
+      r.players = r.players.filter(x => x.id !== pid || x.bot);
       this.closeFor(pid);
       await this.save();
       return reply({ ok: true });
@@ -150,7 +167,7 @@ export class Room extends DurableObject {
   // فريق بيطلب تلميح: بيوصله التلميح الجاي (من الصعب للسهل) وبيوصل لفريقه بس
   async hint(pid) {
     const r = this.r;
-    const me = r.players.find(x => x.id === pid);
+    const me = r.players.find(x => x.id === pid && !x.bot);
     if (!me) return reply({ error: "who" }, 403);
     if (r.stage !== "play" || !r.hints.length) return reply({ error: "stage" }, 400);
     const t = me.team, now = Date.now();
@@ -166,8 +183,48 @@ export class Room extends DurableObject {
     const r = this.r;
     r.turn = team; r.paused = false; r.left = 0;
     r.turnEnds = Date.now() + r.turnSec * 1000;
+    r.botAt = this.botsPlay(team) ? Date.now() + BOT_THINK_MS : null;
+    r.botStep = 0;
   }
-  stopTimer() { const r = this.r; r.turnEnds = null; r.paused = false; r.left = 0; }
+  stopTimer() { const r = this.r; r.turnEnds = null; r.paused = false; r.left = 0; r.botAt = null; }
+
+  // ===== البوتات =====
+  // البوتات بتلعب عن الفريق إذا فيه بوت وما في حدا من البشر أونلاين
+  botsPlay(team, on = this.online()) {
+    const ps = this.r.players.filter(p => p.team === team);
+    return ps.some(p => p.bot) && !ps.some(p => !p.bot && on.has(p.id));
+  }
+  async botMove() {
+    const r = this.r, t = r.turn, now = Date.now();
+    const bot = r.players.find(p => p.team === t && p.bot);
+    r.botAt = null;
+    if (!bot || !this.botsPlay(t)) return;
+    const left = r.hints.findIndex((h, i) => !r.got[t].includes(i));
+    // أول خطوة بالدور: تلميح (البوت ما بيقدر يسأل الحكم، فالتلميح هو سؤاله)
+    if (r.botStep === 0 && left >= 0) {
+      r.got[t].push(left); r.hintsTotal[t]++; r.lastHintAt[t] = now;
+      r.lastBot = { id: bot.id, name: bot.name, team: t, act: "hint", at: now };
+      r.botStep = 1; r.botAt = now + BOT_THINK_MS;
+      return;
+    }
+    // تاني خطوة: يخمّن أو يمرّر
+    const p = botChance(r.got[t].map(i => r.hints[i]?.lvl), bot.lvl);
+    if (Math.random() < p) {
+      r.lastBot = { id: bot.id, name: bot.name, team: t, act: "guess", ok: true, text: r.film.ar || r.film.en, at: now };
+      this.reveal(t);
+    } else {
+      r.lastBot = { id: bot.id, name: bot.name, team: t, act: "pass", at: now };
+      r.lastPass = { team: t, why: "bot", at: now };
+      this.startTurn(1 - t);
+    }
+  }
+  reveal(w) {
+    const r = this.r;
+    if (w >= 0) r.score[w]++;
+    r.winner = w; r.stage = "reveal"; this.stopTimer();
+    r.rounds.push({ en: r.film.en, ar: r.film.ar, y: r.film.y, p: r.film.p, winner: w, hints: [r.got[0].length, r.got[1].length] });
+    if (r.rounds.length > 30) r.rounds = r.rounds.slice(-30);
+  }
 
   async act(b) {
     const r = this.r;
@@ -175,6 +232,16 @@ export class Room extends DurableObject {
     switch (b.type) {
       case "move": if (pl) pl.team = pl.team ? 0 : 1; break;
       case "kick": r.players = r.players.filter(x => x.id !== b.pid); this.closeFor(b.pid); break;
+      case "addbot": {
+        const t = b.team === 1 ? 1 : 0;
+        if (r.stage !== "lobby") return reply({ error: "stage" }, 400);
+        if (r.players.length >= MAX_PLAYERS) return reply({ error: "full" }, 400);
+        if (r.players.filter(x => x.team === t && x.bot).length >= MAX_BOTS_PER_TEAM) return reply({ error: "bots" }, 400);
+        const n = r.players.filter(x => x.bot).length + 1;
+        const lvl = BOT_LEVELS[b.lvl] ? b.lvl : "mid";
+        r.players.push({ id: "bot-" + rid(), name: "🤖 بوت " + n, team: t, bot: true, lvl });
+        break;
+      }
       case "shuffle": {
         const ps = r.players.slice().sort(() => Math.random() - 0.5);
         ps.forEach((x, i) => { x.team = i % 2; });
@@ -194,17 +261,12 @@ export class Room extends DurableObject {
       }
       // الحكم جاوب على سؤال الفريق → الدور للفريق الثاني
       case "pass": if (r.stage === "play") { r.lastPass = { team: r.turn, why: "judge", at: Date.now() }; this.startTurn(1 - r.turn); } break;
-      case "pause": if (r.stage === "play" && r.turnEnds && !r.paused) { r.left = Math.max(0, r.turnEnds - Date.now()); r.turnEnds = null; r.paused = true; } break;
-      case "resume": if (r.stage === "play" && r.paused) { r.turnEnds = Date.now() + (r.left || r.turnSec * 1000); r.paused = false; r.left = 0; } break;
-      case "reveal": {
-        if (!r.film) break;
-        const w = [0, 1].includes(b.winner) ? b.winner : -1;
-        if (w >= 0) r.score[w]++;
-        r.winner = w; r.stage = "reveal"; this.stopTimer();
-        r.rounds.push({ en: r.film.en, ar: r.film.ar, y: r.film.y, p: r.film.p, winner: w, hints: [r.got[0].length, r.got[1].length] });
-        if (r.rounds.length > 30) r.rounds = r.rounds.slice(-30);
-        break;
-      }
+      case "pause": if (r.stage === "play" && r.turnEnds && !r.paused) { r.left = Math.max(0, r.turnEnds - Date.now()); r.turnEnds = null; r.paused = true; r.botAt = null; } break;
+      case "resume": if (r.stage === "play" && r.paused) {
+        r.turnEnds = Date.now() + (r.left || r.turnSec * 1000); r.paused = false; r.left = 0;
+        if (this.botsPlay(r.turn)) r.botAt = Date.now() + BOT_THINK_MS;
+      } break;
+      case "reveal": if (r.film) this.reveal([0, 1].includes(b.winner) ? b.winner : -1); break;
       case "next": this.clearFilm(); r.stage = "pick"; break;
       case "end": {
         this.clearFilm();
@@ -224,7 +286,7 @@ export class Room extends DurableObject {
 
   clearFilm() {
     const r = this.r;
-    Object.assign(r, { film: null, hints: [], hintsSrc: null, hintsErr: null, filmToken: null, got: [[], []], winner: null, lastPass: null });
+    Object.assign(r, { film: null, hints: [], hintsSrc: null, hintsErr: null, filmToken: null, got: [[], []], winner: null, lastPass: null, lastBot: null });
     this.stopTimer();
   }
 
@@ -293,6 +355,11 @@ export class Room extends DurableObject {
       for (const ws of this.ctx.getWebSockets()) { try { ws.close(4000, "closed"); } catch {} }
       this.r = null;
       await this.ctx.storage.deleteAll();
+      return;
+    }
+    if (r.stage === "play" && r.botAt && !r.paused && now >= r.botAt - 100 && (!r.turnEnds || now < r.turnEnds - 100)) {
+      await this.botMove();
+      await this.save();
       return;
     }
     if (r.stage === "play" && r.turnEnds && !r.paused && now >= r.turnEnds - 100) {

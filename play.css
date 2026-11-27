@@ -46,6 +46,9 @@ textarea.inp{resize:vertical;line-height:1.6;font-size:16px}
 .pchip{display:flex;align-items:center;justify-content:space-between;gap:6px;background:var(--velvet-3);border-radius:12px;padding:6px 10px;font-weight:700}
 .pchip.off{opacity:.5}
 .pchip .pn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pchip.bot{background:transparent;border:1px dashed var(--line)}
+.pchip.bot small{font-weight:400;color:var(--muted);font-size:12px}
+.mini.addbot{width:100%;margin-top:6px;border-style:dashed;color:var(--muted);font-size:14px;padding:5px}
 .pbtns{display:flex;gap:4px;flex-shrink:0}
 .mini{border:1px solid var(--line);background:transparent;color:var(--cream);border-radius:8px;padding:2px 9px;cursor:pointer;font-size:15px}
 .mini:hover{border-color:var(--ticket)}

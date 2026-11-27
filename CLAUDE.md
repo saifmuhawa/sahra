@@ -20,6 +20,7 @@
   - الاختبار: `tests/auth.test.mjs` مع `wrangler dev --var DEV_MAIL_LINKS:1 --var ROOM_COINS:100 --var TURNSTILE_SITE_KEY:1x00000000000000000000AA` (بعد `wrangler d1 migrations apply sahra-db --local`).
 - **الألعاب:**
   - `game.html` (أفلام)، `anime.html`، `series.html`، `music.html` (أغاني الأفلام).
+  - **البوتات** (`worker/room.js`، بقواعد ثابتة): الحكم بيضيفهم من اللوبي (لحد 2 بكل فريق، سهل/وسط/صعب). البوت بيلعب عن فريقه إذا ما في حدا من البشر أونلاين: بكل دور بياخد تلميح، ومن التلميح الثالث بيحاول يخمّن (فرصته من وزن التلميحات × المستوى). إذا عرفها بياخد النقطة، وإلا بيمرّر. الاختبار `tests/bots.test.mjs`.
   - الكود المشترك: `play.js` و`play.css` و`common.js`، وكرت الاستوري `card.js`.
 
 ## مصادر البيانات (مجانية ومسموحة)
