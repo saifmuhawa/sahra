@@ -36,9 +36,9 @@
     "TURNSTILE_SITE_KEY": "0x4AAAAAAGVlwVme1FwbdW7T",
     // رابط Google Apps Script لمشاركات المسابقة (كان بصفحة contest.html، صار هون عشان البوتات ما تشوفه)
     "CONTEST_URL": "https://script.google.com/macros/s/AKfycbwLTQzPc1B6H1t-KEAMAG_4LPW78QijvmZKOgaLFqWrBBfKMePWNMNvwGOGli8ZD_rwMA/exec",
-    // الدفع عبر PayPal: "sandbox" للتجربة، "live" للنشر الحقيقي.
-    // PAYPAL_CLIENT_ID (عام، سيف بيحطه) و PAYPAL_SECRET (سري على Cloudflare). لحد ما ينحطّوا، الدفع "قريباً".
-    "PAYPAL_ENV": "sandbox"
+    // الدفع عبر PayPal: "sandbox" للتجربة، "live" للنشر الحقيقي (مفعّل 28/11).
+    // PAYPAL_CLIENT_ID (عام) و PAYPAL_SECRET (سري) محطوطين على Cloudflare كـSecrets.
+    "PAYPAL_ENV": "live"
   },
   // الدومين الخاص: Cloudflare بيربطه لحاله وقت النشر
   "routes": [
