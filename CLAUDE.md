@@ -40,7 +40,7 @@
 ## المسابقة
 - `contest.html`: الاستمارة بتبعت لسيرفرنا `/api/contest` (مش لـ Google مباشرة)، والسيرفر بيتأكد من Turnstile + يحدّ الطلبات لكل IP + يمسك الفخ، وبعدها بيمرّر لجدول Google. رابط الجدول بـ `CONTEST_URL` (var)، مش بالصفحة.
   - الكود `contestRoute` بـ `worker/index.js`، والاختبار `tests/contest.test.mjs` (بسيرفر وهمي، ما بيلمس الجدول الحقيقي).
-  - **ناقص لإغلاق الثغرة كاملة (خطوة Google من سيف):** حطّ سر `CONTEST_SECRET` بـ Cloudflare، وخلّي الـ Apps Script يرفض أي `doPost` ما فيه `wkey` بنفس القيمة. بدون هيك، بوت بيعرف رابط Google القديم بيقدر يبعت مباشرة (الرابط لسا موجود بـ `draw.html`).
+  - **الثغرة مغلقة (تأكّدنا 28/11):** `CONTEST_SECRET` محطوط بـ Cloudflare (السيرفر بيضيف `wkey` بكل طلب)، وبالـ Apps Script خاصية السكربت `CONTEST_SECRET` مضبوطة والـ`doPost` بيرفض أي طلب ما فيه نفس القيمة (`if (WKEY && d.wkey !== WKEY) return auth`). النشر الفعّال (الإصدار 3) بنفس رابط `CONTEST_URL`. فالطلبات المباشرة على رابط Google القديم (الموجود بـ`draw.html`) بتنرفض.
 - `draw.html`: قراءة المشاركات (محمية بكلمة سر بتتأكد من الـ Apps Script). لسا بتقرأ من Google مباشرة.
 
 ## قواعد
