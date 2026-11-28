@@ -60,7 +60,7 @@ export async function payRoute(req, env, path, u) {
 
   // إنشاء طلب دفع: السعر بيتحدّد بالسيرفر من رقم الباقة
   if (op === "/create") {
-    if (await limited(env, "pay:" + me.id, 20, 3600e3)) return reply({ error: "slow" }, 429);
+    if (await limited(env, "pay:" + me.id, 60, 3600e3)) return reply({ error: "slow" }, 429);
     const pk = packOf(b.pack);
     if (!pk) return reply({ error: "pack" }, 400);
     const r = await fetch(apiBase(env) + "/v2/checkout/orders", {
