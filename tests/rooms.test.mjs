@@ -24,12 +24,18 @@ const A2 = (await post("/room/join", { code, name: "عمر" })).j.pid;
 const B2 = (await post("/room/join", { code, name: "رند" })).j.pid;
 let st = await get(`/room/state?code=${code}&key=${key}`);
 ok(st.players.length === 4 && st.players.filter(p => p.team === 0).length === 2, "4 متسابقين بفريقين متساويين");
+// حالة الغرفة ما بتكشف معرّف اللاعب السري (pid)، بس uid عام للعرض
+ok(st.players.every(p => p.id === undefined && p.uid), "ما بينكشف pid اللاعب بحالة الغرفة");
+// ثغرة IDOR: لاعب ما بيقدر يطلّع لاعب ثاني — الـ uid العام ما بيصلح كـ pid
+const uidB = st.players.find(p => p.name === "ليث").uid;
+await post("/room/leave", { code, pid: uidB });
+ok((await get(`/room/state?code=${code}&key=${key}`)).players.length === 4, "محاولة تطليع لاعب بالـ uid العام ما بتشتغل");
 
 const J = await sock(`code=${code}&key=${key}`);
 const PA = await sock(`code=${code}&pid=${A}`);
 const PB = await sock(`code=${code}&pid=${B}`);
 await sleep(300);
-ok(J.last?.players.find(p => p.id === A)?.on, "الحكم بيشوف المتسابق أونلاين عن طريق WebSocket");
+ok(J.last?.players.find(p => p.name === "سيف")?.on, "الحكم بيشوف المتسابق أونلاين عن طريق WebSocket");
 const bad = await sock(`code=${code}&pid=nobody`).then(() => "open", () => "rejected");
 ok(bad === "rejected", "شخص مش بالغرفة ما بيقدر يتصل");
 ok((await post("/room/act", { code, key: "wrong", type: "start" })).status === 403, "بس الحكم بيقدر يتحكم");

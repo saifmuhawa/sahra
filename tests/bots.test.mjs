@@ -15,21 +15,22 @@ const act = (type, extra = {}) => post("/room/act", { code, key, type, ...extra 
 let st = (await act("addbot", { team: 1, lvl: "hard" })).j;
 const bot = st.players.find(p => p.bot);
 ok(bot && bot.team === 1 && bot.lvl === "hard" && bot.on, "الحكم ضاف بوت صعب للفريق الثاني، وهو أونلاين");
-const second = (await act("addbot", { team: 1 })).j.players.filter(p => p.bot).find(p => p.id !== bot.id);
+const second = (await act("addbot", { team: 1 })).j.players.filter(p => p.bot).find(p => p.uid !== bot.uid);
 ok((await act("addbot", { team: 1 })).status === 400, "ما في أكثر من بوتين بالفريق");
-st = (await act("kick", { pid: second.id })).j;
-ok(st.players.filter(p => p.bot).length === 1 && st.players.some(p => p.id === bot.id), "الحكم شال البوت الزيادة");
+st = (await act("kick", { uid: second.uid })).j;
+ok(st.players.filter(p => p.bot).length === 1 && st.players.some(p => p.uid === bot.uid), "الحكم شال البوت الزيادة");
 
 const A = (await post("/room/join", { code, name: "سيف" })).j.pid;
 st = await get(`/room/state?code=${code}&key=${key}`);
-ok(st.players.find(p => p.id === A)?.team === 0, "اللاعب دخل الفريق الأول (1 ضد البوت)");
-ok((await post("/room/hint", { code, pid: bot.id })).status === 403, "ما حدا بيقدر يطلب تلميح باسم البوت");
-ok((await post("/room/join", { code, name: "منتحل", pid: bot.id })).j.pid !== bot.id, "ما حدا بيقدر ياخد مكان البوت");
-await post("/room/leave", { code, pid: bot.id });
-ok((await get(`/room/state?code=${code}&key=${key}`)).players.some(p => p.id === bot.id), "ما حدا بيقدر يطلّع البوت غير الحكم");
+ok(st.players.find(p => p.name === "سيف")?.team === 0, "اللاعب دخل الفريق الأول (1 ضد البوت)");
+// معرّف اللاعب السري (pid) ما بينكشف بحالة الغرفة، فالـ uid العام ما ينفع كـ pid لطلب تلميح أو انتحال
+ok((await post("/room/hint", { code, pid: bot.uid })).status === 403, "ما حدا بيقدر يطلب تلميح باسم البوت");
+ok((await post("/room/join", { code, name: "منتحل", pid: bot.uid })).j.pid !== bot.uid, "ما حدا بيقدر ياخد مكان البوت");
+await post("/room/leave", { code, pid: bot.uid });
+ok((await get(`/room/state?code=${code}&key=${key}`)).players.some(p => p.uid === bot.uid), "ما حدا بيقدر يطلّع البوت غير الحكم");
 // المنتحل دخل كلاعب جديد: نطلّعه عشان الفرق تكون 1 ضد 1
 st = (await get(`/room/state?code=${code}&key=${key}`));
-for (const p of st.players.filter(p => !p.bot && p.id !== A)) await act("kick", { pid: p.id });
+for (const p of st.players.filter(p => !p.bot && p.name !== "سيف")) await act("kick", { uid: p.uid });
 
 ok((await act("start")).status === 200, "اللعبة بلّشت (لاعب ضد بوت)");
 st = (await act("film", { t: "movie", id: INCEPTION })).j;

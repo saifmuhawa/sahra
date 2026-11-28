@@ -172,7 +172,11 @@ async function openJoin(c) {
     if (st.kind !== KIND) { location.href = PAGE_OF(st.kind) + "?room=" + c; return; }
     code = c; $("#home-msg").textContent = "";
     const p = get(LS_P);
-    if (p && p.code === c && st.players.some(x => x.id === p.pid)) { role = "player"; pid = p.pid; show("s-player"); connect(); return; }
+    if (p && p.code === c) {
+      let mine = false;
+      try { mine = !!(await call("/room/state?code=" + c + "&pid=" + encodeURIComponent(p.pid))).me; } catch (e) {}
+      if (mine) { role = "player"; pid = p.pid; show("s-player"); connect(); return; }
+    }
     show("s-name"); $("#name-code").textContent = "غرفة " + c; $("#name-msg").textContent = ""; $("#name-in").value = p?.name || ""; $("#name-in").focus();
   } catch (e) { show("s-home"); $("#home-msg").textContent = e.status === 404 ? "ما في غرفة بهالكود. تأكد منه." : "ما قدرنا نوصل للسيرفر، جرّب كمان مرة."; }
 }
@@ -283,7 +287,7 @@ function teamBox(t, judge) {
   const bots = ps.filter(p => p.bot).length;
   const addBot = judge && S.stage === "lobby" && bots < 2 ? `<button type="button" class="mini addbot" data-addbot="${t}">+ 🤖 بوت</button>` : "";
   return `<div class="team ${TCLS[t]}"><div class="thead"><b>${esc(teamName(t))}</b><span>${ps.length}</span></div>
-    ${ps.length ? ps.map(p => `<div class="pchip${p.on ? "" : " off"}${p.bot ? " bot" : ""}"><span class="pn">${esc(p.name)}${p.bot ? ` <small>${BOT_LVL[p.lvl] || ""}</small>` : ""}${!judge && S.me && p.id === S.me.id ? " (إنت)" : ""}</span>${judge ? `<span class="pbtns"><button type="button" class="mini" data-move="${p.id}" aria-label="انقل ${esc(p.name)} للفريق الثاني">⇄</button><button type="button" class="mini" data-kick="${p.id}" aria-label="طلّع ${esc(p.name)}">✕</button></span>` : ""}</div>`).join("") : `<p class="note">ما في حدا لسا</p>`}${addBot}</div>`;
+    ${ps.length ? ps.map(p => `<div class="pchip${p.on ? "" : " off"}${p.bot ? " bot" : ""}"><span class="pn">${esc(p.name)}${p.bot ? ` <small>${BOT_LVL[p.lvl] || ""}</small>` : ""}${!judge && S.me && p.uid === S.me.uid ? " (إنت)" : ""}</span>${judge ? `<span class="pbtns"><button type="button" class="mini" data-move="${p.uid}" aria-label="انقل ${esc(p.name)} للفريق الثاني">⇄</button><button type="button" class="mini" data-kick="${p.uid}" aria-label="طلّع ${esc(p.name)}">✕</button></span>` : ""}</div>`).join("") : `<p class="note">ما في حدا لسا</p>`}${addBot}</div>`;
 }
 
 // ===== كرت الستوري =====
@@ -344,8 +348,8 @@ $("#j-close").addEventListener("click", () => {
 });
 $("#l-teams").addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
-  if (b.dataset.move) await act("move", {pid: b.dataset.move}).catch(() => {});
-  if (b.dataset.kick) await act("kick", {pid: b.dataset.kick}).catch(() => {});
+  if (b.dataset.move) await act("move", {uid: b.dataset.move}).catch(() => {});
+  if (b.dataset.kick) await act("kick", {uid: b.dataset.kick}).catch(() => {});
   if (b.dataset.addbot) await act("addbot", {team: +b.dataset.addbot, lvl: botLvl}).catch(() => toast("ما بتقدر تضيف أكثر من بوتين بكل فريق"));
 });
 $("#l-botlvl")?.addEventListener("click", e => {

@@ -74,7 +74,7 @@ export class Room extends DurableObject {
     const film = r.film ? { t: r.film.t, id: r.film.id, en: r.film.en, ar: r.film.ar, orig: r.film.orig, y: r.film.y, p: r.film.p } : null;
     const out = {
       code: r.code, kind: r.kind, v: r.v, now: Date.now(), stage: r.stage,
-      players: r.players.map(p => ({ id: p.id, name: p.name, team: p.team, on: on.has(p.id), ...(p.bot ? { bot: true, lvl: p.lvl } : {}) })),
+      players: r.players.map(p => ({ uid: p.uid, name: p.name, team: p.team, on: on.has(p.id), ...(p.bot ? { bot: true, lvl: p.lvl } : {}) })),
       lastBot: r.lastBot || null,
       teams: r.teams, score: r.score, hintsTotal: r.hintsTotal, turnSec: r.turnSec,
       turn: r.turn, turnEnds: r.turnEnds, paused: r.paused, left: r.left, lastPass: r.lastPass,
@@ -87,7 +87,7 @@ export class Room extends DurableObject {
         hints: r.hints.map((h, i) => ({ ...h, i, got: [0, 1].filter(t => r.got[t].includes(i)) })) });
     } else {
       const me = r.players.find(p => p.id === who);
-      out.me = me ? { id: me.id, name: me.name, team: me.team } : null;
+      out.me = me ? { uid: me.uid, name: me.name, team: me.team } : null;
       // التلميحات: كل فريق بيشوف تلميحاته بس
       out.myHints = me ? r.got[me.team].map(i => ({ i, lvl: r.hints[i]?.lvl, text: r.hints[i]?.text })) : [];
     }
@@ -141,7 +141,7 @@ export class Room extends DurableObject {
       if (old) { old.name = name; await this.save(); return reply({ pid: old.id }); }
       if (r.players.length >= MAX_PLAYERS) return reply({ error: "full" }, 400);
       const cnt = [0, 1].map(t => r.players.filter(x => x.team === t).length);
-      const pl = { id: rid(), name, team: cnt[0] <= cnt[1] ? 0 : 1 };
+      const pl = { id: rid(), uid: rid(), name, team: cnt[0] <= cnt[1] ? 0 : 1 };
       r.players.push(pl);
       await this.save();
       return reply({ pid: pl.id });
@@ -203,17 +203,17 @@ export class Room extends DurableObject {
     // أول خطوة بالدور: تلميح (البوت ما بيقدر يسأل الحكم، فالتلميح هو سؤاله)
     if (r.botStep === 0 && left >= 0) {
       r.got[t].push(left); r.hintsTotal[t]++; r.lastHintAt[t] = now;
-      r.lastBot = { id: bot.id, name: bot.name, team: t, act: "hint", at: now };
+      r.lastBot = { uid: bot.uid, name: bot.name, team: t, act: "hint", at: now };
       r.botStep = 1; r.botAt = now + BOT_THINK_MS;
       return;
     }
     // تاني خطوة: يخمّن أو يمرّر
     const p = botChance(r.got[t].map(i => r.hints[i]?.lvl), bot.lvl);
     if (Math.random() < p) {
-      r.lastBot = { id: bot.id, name: bot.name, team: t, act: "guess", ok: true, text: r.film.ar || r.film.en, at: now };
+      r.lastBot = { uid: bot.uid, name: bot.name, team: t, act: "guess", ok: true, text: r.film.ar || r.film.en, at: now };
       this.reveal(t);
     } else {
-      r.lastBot = { id: bot.id, name: bot.name, team: t, act: "pass", at: now };
+      r.lastBot = { uid: bot.uid, name: bot.name, team: t, act: "pass", at: now };
       r.lastPass = { team: t, why: "bot", at: now };
       this.startTurn(1 - t);
     }
@@ -228,10 +228,10 @@ export class Room extends DurableObject {
 
   async act(b) {
     const r = this.r;
-    const pl = r.players.find(x => x.id === b.pid);
+    const target = b.uid ? r.players.find(x => x.uid === b.uid) : null;
     switch (b.type) {
-      case "move": if (pl) pl.team = pl.team ? 0 : 1; break;
-      case "kick": r.players = r.players.filter(x => x.id !== b.pid); this.closeFor(b.pid); break;
+      case "move": if (target) target.team = target.team ? 0 : 1; break;
+      case "kick": if (target) { r.players = r.players.filter(x => x !== target); this.closeFor(target.id); } break;
       case "addbot": {
         const t = b.team === 1 ? 1 : 0;
         if (r.stage !== "lobby") return reply({ error: "stage" }, 400);
@@ -239,7 +239,7 @@ export class Room extends DurableObject {
         if (r.players.filter(x => x.team === t && x.bot).length >= MAX_BOTS_PER_TEAM) return reply({ error: "bots" }, 400);
         const n = r.players.filter(x => x.bot).length + 1;
         const lvl = BOT_LEVELS[b.lvl] ? b.lvl : "mid";
-        r.players.push({ id: "bot-" + rid(), name: "🤖 بوت " + n, team: t, bot: true, lvl });
+        r.players.push({ id: "bot-" + rid(), uid: rid(), name: "🤖 بوت " + n, team: t, bot: true, lvl });
         break;
       }
       case "shuffle": {
