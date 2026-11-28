@@ -335,7 +335,8 @@ export const json = (obj, code = 200, cache = "public, max-age=600") => new Resp
 export { alDetail, cleanAnime, tmDetail, wdDetail };
 export const filmItem = d => ({ id: d.id, q: d.q, imdb: d.imdb, en: d.en, ar: d.ar, y: d.y, rd: d.rd, rt: d.rt, g: d.g, lang: d.lang, pop: d.pop, p: d.p, ov: (d.ov || "").slice(0, 230), tr: d.tr, l: [] });
 export async function apiRoute(path, u) {
-  if (path === "/" || path === "/health") return json({ ok: true, key: !!KEY, ai: ["GROQ_API_KEY", "GEMINI_API_KEY", "ANTHROPIC_API_KEY"].filter(k => E[k]).map(k => k.split("_")[0].toLowerCase()), host: "cloudflare" }, 200, "no-store");
+  // رد عام بسيط (بدون تفاصيل عن المفاتيح أو مزوّدي الذكاء الاصطناعي أو البنية)
+  if (path === "/" || path === "/health") return json({ ok: true }, 200, "no-store");
   // بروكسي للبوسترات عشان كرت الستوري يقدر يرسمها على canvas بدون مشاكل CORS
   const im = path.match(/^\/img\/(w92|w154|w185|w342|w500|w780)\/([A-Za-z0-9_-]+\.(?:jpg|png|webp))$/);
   if (im) {
