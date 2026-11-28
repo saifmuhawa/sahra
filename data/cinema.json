@@ -1,22 +1,33 @@
 {
- "updated": "2026-11-27",
+ "updated": "2026-11-28",
  "note": "شو موجود بسينمات الإمارات وجاي قريباً. بيتحدّث يومياً من صفحات السينمات وأخبار الإمارات. تواريخ الإمارات.",
- "sources": ["Gulf News (VOX UAE listings)", "tbreak.com", "Khaleej Times"],
+ "sources": ["VOX Cinemas UAE", "Gulf News (VOX UAE listings)", "The National", "Khaleej Times", "tbreak.com"],
  "now": [
-  { "en": "Focker In-Law", "rd": "2026-11-26", "imdb": "tt34966140", "q": "Q135713425", "ar": "فوكر إن لو" },
-  { "en": "The Hunger Games: Sunrise on the Reaping", "rd": null, "imdb": "tt32558705", "q": "Q126390739", "ar": "مباريات الجوع: شروق الشمس في الحصاد" },
-  { "en": "How to Rob a Bank", "rd": "2026-11-12", "imdb": "tt35866986", "q": "Q134520822", "ar": "كيف تسرق مصرفًا" },
-  { "en": "Ebenezer: A Christmas Carol", "rd": "2026-11-12", "imdb": "tt38773219", "q": "Q136650058", "ar": "إبنزر" },
-  { "en": "Hadoota", "ar": "هدوتة", "rd": null },
-  { "en": "Ramayana: Part One", "rd": "2026-11-05" },
-  { "en": "The Cat in the Hat", "rd": "2026-11-05", "imdb": "tt2321555", "q": "Q122932991", "ar": "القط ذو القبعة" },
-  { "en": "Godzilla Minus Zero", "rd": "2026-11-05", "imdb": "tt34384661", "q": "Q136700760", "ar": "غودزيلا ناقص صفر" },
-  { "en": "The Shawshank Redemption", "rd": "2026-11-05", "tag": "إعادة عرض", "imdb": "tt0111161", "q": "Q172241", "ar": "الخلاص من شاوشانك" }
+  {"en": "Focker In-Law", "rd": "2026-11-26", "imdb": "tt34966140", "q": "Q135713425", "ar": "فوكر إن لو"},
+  {"en": "Hexed", "rd": "2026-11-26"},
+  {"en": "Paper Tiger", "rd": "2026-11-26"},
+  {"en": "Charbel", "rd": "2026-11-26", "hint": "فيلم لبناني"},
+  {"en": "Crypto", "rd": "2026-11-26", "hint": "فيلم عربي"},
+  {"en": "The Hunger Games: Sunrise on the Reaping", "rd": "2026-11-19", "imdb": "tt32558705", "q": "Q126390739", "ar": "مباريات الجوع: شروق الشمس في الحصاد"},
+  {"en": "How to Rob a Bank", "rd": "2026-11-12", "imdb": "tt35866986", "q": "Q134520822", "ar": "كيف تسرق مصرفًا"},
+  {"en": "Ebenezer: A Christmas Carol", "rd": "2026-11-12", "imdb": "tt38773219", "q": "Q136650058", "ar": "إبنزر"},
+  {"en": "Hadoota", "ar": "هدوتة", "rd": "2026-11-12"},
+  {"en": "Ramayana: Part One", "rd": "2026-11-05"},
+  {"en": "The Cat in the Hat", "rd": "2026-11-05", "imdb": "tt2321555", "q": "Q122932991", "ar": "القط ذو القبعة"},
+  {"en": "Godzilla Minus Zero", "rd": "2026-11-05", "imdb": "tt34384661", "q": "Q136700760", "ar": "غودزيلا ناقص صفر"}
  ],
  "up": [
-  { "en": "Dune: Part Three", "rd": "2026-12-17", "imdb": "tt31378509", "q": "Q124714245", "ar": "كثيب: الجزء الثالث" },
-  { "en": "Avengers: Doomsday", "rd": "2026-12-17", "imdb": "tt21357150", "q": "Q113244839", "ar": "المنتقمون: يوم القيامة" },
-  { "en": "King", "rd": "2026-12-24", "hint": "Shah Rukh Khan", "imdb": "tt28228084" },
-  { "en": "Jumanji: Open World", "rd": "2026-12-24", "imdb": "tt26735127", "q": "Q136766457", "ar": "جومانجي 4" }
+  {"en": "Dune: Part One", "rd": "2026-12-02", "tag": "إعادة عرض"},
+  {"en": "Dune: Part Two", "rd": "2026-12-02", "tag": "إعادة عرض"},
+  {"en": "Violent Night 2", "rd": "2026-12-03"},
+  {"en": "Spider-Man: Brand New Day", "rd": "2026-12-03", "tag": "نسخة موسّعة"},
+  {"en": "Home Alone", "rd": "2026-12-08", "tag": "إعادة عرض"},
+  {"en": "Avengers: Doomsday", "rd": "2026-12-16", "imdb": "tt21357150", "q": "Q113244839", "ar": "المنتقمون: يوم القيامة"},
+  {"en": "Dune: Part Three", "rd": "2026-12-17", "imdb": "tt31378509", "q": "Q124714245", "ar": "كثيب: الجزء الثالث"},
+  {"en": "King", "rd": "2026-12-24", "hint": "Shah Rukh Khan", "imdb": "tt28228084"},
+  {"en": "Jumanji: Open World", "rd": "2026-12-24", "imdb": "tt26735127", "q": "Q136766457", "ar": "جومانجي 4"},
+  {"en": "The Angry Birds Movie 3", "rd": "2026-12-24"},
+  {"en": "Children of Blood and Bone", "rd": "2027-01-14"},
+  {"en": "The Beekeeper 2", "rd": "2027-01-14"}
  ]
 }
