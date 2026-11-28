@@ -43,6 +43,8 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.2;text-wrap:ba
 .nav-login:hover,.nav-login[aria-current="page"]{border-color:var(--ticket);color:var(--ticket)}
 .nav-play{background:var(--seat);color:#fff}
 .nav-play:hover{filter:brightness(1.1)}
+.nav-coins{color:#f3c53f;border:1px solid rgba(243,197,63,.4)}
+.nav-coins:hover,.nav-coins[aria-current="page"]{border-color:#f3c53f;background:rgba(243,197,63,.12)}
 /* الجوال: الشعار والزر بسطر، والروابط بسطر تحتهم بينسحب يمين ويسار */
 @media (max-width:900px){
   .nav-in{gap:8px 10px}
