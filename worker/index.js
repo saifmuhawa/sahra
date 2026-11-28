@@ -1,6 +1,7 @@
 // نقطة الدخول على Cloudflare: الصفحات الثابتة من assets، والـAPI تحت /api، وغرف اللعب بـ Durable Objects
 import { init, apiRoute, json } from "./api.js";
 import { authRoute, currentUser, spend, humanOk, limited } from "./auth.js";
+import { payRoute } from "./pay.js";
 export { Room } from "./room.js";
 export { Poll } from "./poll.js";
 
@@ -117,6 +118,7 @@ async function handle(req, env, ctx) {
       if (path.startsWith("/room/")) return await roomRoute(req, env, path, u);
       if (path.startsWith("/poll/")) return await pollRoute(req, env, path, u);
       if (path.startsWith("/auth/")) return await authRoute(req, env, path, u);
+      if (path.startsWith("/pay/")) return await payRoute(req, env, path, u);
       if (path === "/contest") return await contestRoute(req, env, u);
       return await apiRoute(path, u);
     } catch (e) {

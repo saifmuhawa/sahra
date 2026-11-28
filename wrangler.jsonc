@@ -35,7 +35,10 @@
     // Turnstile (مربع "مش روبوت") على التسجيل والدخول: المفتاح العام. السري بـ TURNSTILE_SECRET
     "TURNSTILE_SITE_KEY": "0x4AAAAAAGVlwVme1FwbdW7T",
     // رابط Google Apps Script لمشاركات المسابقة (كان بصفحة contest.html، صار هون عشان البوتات ما تشوفه)
-    "CONTEST_URL": "https://script.google.com/macros/s/AKfycbwLTQzPc1B6H1t-KEAMAG_4LPW78QijvmZKOgaLFqWrBBfKMePWNMNvwGOGli8ZD_rwMA/exec"
+    "CONTEST_URL": "https://script.google.com/macros/s/AKfycbwLTQzPc1B6H1t-KEAMAG_4LPW78QijvmZKOgaLFqWrBBfKMePWNMNvwGOGli8ZD_rwMA/exec",
+    // الدفع عبر PayPal: "sandbox" للتجربة، "live" للنشر الحقيقي.
+    // PAYPAL_CLIENT_ID (عام، سيف بيحطه) و PAYPAL_SECRET (سري على Cloudflare). لحد ما ينحطّوا، الدفع "قريباً".
+    "PAYPAL_ENV": "sandbox"
   },
   // الدومين الخاص: Cloudflare بيربطه لحاله وقت النشر
   "routes": [

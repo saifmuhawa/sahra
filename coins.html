@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اشحن رصيدك | سهرة فيلم</title>
+<meta name="description" content="اشترِ عملات سهرة فيلم عشان تعمل غرف وتدخل التحديات.">
+<link rel="canonical" href="https://sahrafilm.com/coins.html">
+<meta property="og:site_name" content="سهرة فيلم">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_AE">
+<meta property="og:title" content="اشحن رصيدك | سهرة فيلم">
+<meta property="og:description" content="اشترِ عملات سهرة فيلم عشان تعمل غرف وتدخل التحديات.">
+<meta property="og:url" content="https://sahrafilm.com/coins.html">
+<meta property="og:image" content="https://sahrafilm.com/og.png">
+<meta name="theme-color" content="#170a0f">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .coins-head { text-align: center; }
+  .bal { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 8px 16px; margin-top: 10px; font-weight: 700; }
+  .bal b { color: #f3c53f; font-size: 1.15em; }
+  .packs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin: 22px 0; }
+  .pack { position: relative; text-align: center; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)); border: 2px solid rgba(255,255,255,.12); border-radius: 16px; padding: 22px 14px 18px; cursor: pointer; transition: border-color .15s, transform .1s; }
+  .pack:hover { transform: translateY(-2px); }
+  .pack.sel { border-color: #f3c53f; box-shadow: 0 0 0 3px rgba(243,197,63,.18); }
+  .pack .coins { font-family: "Lalezar", sans-serif; font-size: 2.1rem; color: #f3c53f; line-height: 1; }
+  .pack .coins small { font-size: .5em; color: #e8dccb; margin-inline-start: 4px; }
+  .pack .price { font-size: 1.25rem; font-weight: 700; margin-top: 8px; }
+  .pack .save { display: inline-block; margin-top: 6px; font-size: .8rem; color: #8fe39a; }
+  .pack .badge { position: absolute; top: -11px; inset-inline-start: 50%; transform: translateX(50%); background: #c8323c; color: #fff; font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .pay-area { max-width: 420px; margin: 0 auto; }
+  #paypal-buttons { margin-top: 10px; min-height: 48px; }
+  .pay-note { text-align: center; color: #b9a89c; font-size: .9rem; margin-top: 14px; }
+  .pay-msg { text-align: center; margin: 16px auto; max-width: 480px; padding: 12px 16px; border-radius: 12px; }
+  .pay-msg.ok { background: rgba(60,180,90,.15); border: 1px solid rgba(60,180,90,.4); }
+  .pay-msg.warn { background: rgba(200,60,60,.14); border: 1px solid rgba(200,60,60,.4); }
+  .soon-box, .login-box { text-align: center; max-width: 460px; margin: 20px auto; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 26px 20px; }
+</style>
+</head>
+<body data-page="coins">
+<nav class="nav" aria-label="أقسام الموقع">
+  <div class="nav-in">
+    <a class="logo" href="index.html"><span class="dot" aria-hidden="true"></span>سهرة <b>فيلم</b></a>
+    <div class="nav-links">
+      <a href="index.html" data-page="index">الرئيسية</a>
+      <a href="index.html#games" data-page="game anime series music">الألعاب</a>
+      <a href="index.html#worlds">العوالم</a>
+      <a href="cinema.html" data-page="cinema">السينما</a>
+      <span class="nav-soon" aria-disabled="true">التطبيق <small>قريباً</small></span>
+      <a href="index.html#contact" data-page="feedback support" class="nav-contact">تواصل معنا</a>
+    </div>
+    <div class="nav-cta">
+      <a href="login.html" data-page="login" class="nav-login">دخول</a>
+      <a href="music.html" class="nav-play">العب مجاناً</a>
+    </div>
+  </div>
+</nav>
+<main class="wrap">
+  <header class="page-head coins-head">
+    <h1>اشحن رصيدك</h1>
+    <p>العملات بتخليك تعمل غرف وتدخل التحديات. الشراء آمن عن طريق PayPal.</p>
+    <div id="bal" hidden class="bal">رصيدك: <b id="bal-n">0</b> عملة</div>
+  </header>
+
+  <div id="pay-msg" hidden class="pay-msg"></div>
+
+  <!-- لسا مش مسجّل دخول -->
+  <section id="need-login" hidden class="login-box">
+    <p>عشان تشحن رصيدك لازم تسجّل دخول الأول.</p>
+    <p><a class="bigbtn gold" href="login.html?next=coins.html">تسجيل الدخول</a></p>
+  </section>
+
+  <!-- الدفع لسا ما اشتغل -->
+  <section id="soon" hidden class="soon-box">
+    <h2>الدفع قريباً 🔜</h2>
+    <p>عم نجهّز الدفع عن طريق PayPal. تابعنا، رح يشتغل قريب.</p>
+  </section>
+
+  <!-- الباقات -->
+  <section id="shop" hidden aria-label="باقات العملات">
+    <div class="packs" id="packs"></div>
+    <div class="pay-area">
+      <div id="paypal-buttons"></div>
+      <p class="pay-note">اختَر باقة وبعدها اضغط زر PayPal. الدفع بالدولار الأمريكي.<br>شراء العملات نهائي حسب <a href="refund.html">سياسة الاسترجاع</a>.</p>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>سهرة فيلم · فكرة وإعداد saiflex</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const api = (p, opt) => fetch("/api" + p, Object.assign({ headers: { "content-type": "text/plain" } }, opt)).then(async r => ({ status: r.status, j: await r.json().catch(() => ({})) }));
+let selected = null, cfg = null;
+
+function msg(text, kind) {
+  const el = $("#pay-msg"); el.textContent = text; el.className = "pay-msg " + (kind || ""); el.hidden = false;
+  if (kind === "ok") el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function renderPacks() {
+  const base = parseFloat(cfg.packs[0].price) / cfg.packs[0].coins; // سعر العملة بأرخص باقة صغيرة
+  $("#packs").innerHTML = cfg.packs.map(p => {
+    const per = parseFloat(p.price) / p.coins;
+    const save = Math.round((1 - per / base) * 100);
+    return `<button type="button" class="pack" data-pack="${p.id}">
+      ${p.badge ? `<span class="badge">${p.badge}</span>` : ""}
+      <div class="coins">${p.coins}<small>عملة</small></div>
+      <div class="price">$${p.price}</div>
+      ${save >= 3 ? `<span class="save">وفّر ${save}%</span>` : ""}
+    </button>`;
+  }).join("");
+  document.querySelectorAll(".pack").forEach(b => b.addEventListener("click", () => {
+    selected = b.dataset.pack;
+    document.querySelectorAll(".pack").forEach(x => x.classList.toggle("sel", x === b));
+    $("#pay-msg").hidden = true;
+  }));
+}
+
+function mountButtons() {
+  const s = document.createElement("script");
+  s.src = "https://www.paypal.com/sdk/js?client-id=" + encodeURIComponent(cfg.clientId) + "&currency=" + cfg.currency + "&intent=capture";
+  s.onload = () => {
+    if (!window.paypal) return;
+    paypal.Buttons({
+      style: { color: "gold", shape: "pill", label: "pay" },
+      onClick: (d, actions) => selected ? actions.resolve() : (msg("اختَر باقة الأول.", "warn"), actions.reject()),
+      createOrder: async () => {
+        const { j } = await api("/pay/create", { method: "POST", body: JSON.stringify({ pack: selected }) });
+        if (!j.id) throw new Error(j.error || "create");
+        return j.id;
+      },
+      onApprove: async (data) => {
+        const { j } = await api("/pay/capture", { method: "POST", body: JSON.stringify({ orderID: data.orderID }) });
+        if (!j.ok) { msg("صار خطأ بالدفع. إذا انخصم منك شي تواصل معنا.", "warn"); return; }
+        $("#bal-n").textContent = j.coins; $("#bal").hidden = false;
+        msg("تمام! انضافلك " + j.added + " عملة. رصيدك صار " + j.coins + " 🎉", "ok");
+        selected = null; document.querySelectorAll(".pack").forEach(x => x.classList.remove("sel"));
+      },
+      onError: () => msg("ما قدرنا نكمّل الدفع، جرّب كمان مرة.", "warn"),
+    }).render("#paypal-buttons");
+  };
+  document.head.appendChild(s);
+}
+
+(async () => {
+  const me = (await api("/auth/me")).j;
+  if (!me.user) { $("#need-login").hidden = false; return; }
+  $("#bal-n").textContent = me.coins ?? 0; $("#bal").hidden = false;
+  cfg = (await api("/pay/config")).j;
+  if (!cfg.ready || !cfg.clientId) { $("#soon").hidden = false; return; }
+  $("#shop").hidden = false;
+  renderPacks();
+  mountButtons();
+})();
+})();
+</script>
+<script src="common.js"></script>
+</body>
+</html>
