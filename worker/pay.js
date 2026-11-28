@@ -28,7 +28,7 @@ let tok = { v: null, exp: 0 };
 async function token(env) {
   const now = Date.now();
   if (tok.v && now < tok.exp) return tok.v;
-  const auth = btoa(env.PAYPAL_CLIENT_ID + ":" + env.PAYPAL_SECRET);
+  const auth = btoa(String(env.PAYPAL_CLIENT_ID).trim() + ":" + String(env.PAYPAL_SECRET).trim());
   const r = await fetch(apiBase(env) + "/v1/oauth2/token", {
     method: "POST",
     headers: { authorization: "Basic " + auth, "content-type": "application/x-www-form-urlencoded" },
