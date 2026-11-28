@@ -13,13 +13,13 @@
   },
   "durable_objects": {
     "bindings": [
-      { "name": "ROOMS", "class_name": "Room" },
-      { "name": "POLLS", "class_name": "Poll" }
+      { "name": "ROOMS", "class_name": "Room" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["Room"] },
-    { "tag": "v2", "new_sqlite_classes": ["Poll"] }
+    { "tag": "v2", "new_sqlite_classes": ["Poll"] },
+    { "tag": "v3", "deleted_classes": ["Poll"] }
   ],
   // الحسابات والعملات (المرحلة ٢)
   "d1_databases": [

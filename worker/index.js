@@ -3,7 +3,6 @@ import { init, apiRoute, json } from "./api.js";
 import { authRoute, currentUser, spend, humanOk, limited } from "./auth.js";
 import { payRoute } from "./pay.js";
 export { Room } from "./room.js";
-export { Poll } from "./poll.js";
 
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-max-age": "86400" };
 const roomStub = (env, code) => env.ROOMS.get(env.ROOMS.idFromName("room-" + code));
@@ -39,18 +38,6 @@ async function roomRoute(req, env, path, u) {
   const target = "https://room" + op + u.search;
   if (op === "/ws") return roomStub(env, code).fetch(new Request(target, req));
   const res = await roomStub(env, code).fetch(target, { method: req.method, body, headers: { "content-type": "application/json" } });
-  return withCors(res);
-}
-// تصويت عرض ECO 201: /api/poll/vote و /api/poll/state و /api/poll/ws ، والجلسة بـ ?s=
-async function pollRoute(req, env, path, u) {
-  const op = path.slice("/poll".length);
-  const s = (u.searchParams.get("s") || "class").toLowerCase();
-  if (!/^[a-z0-9-]{1,24}$/.test(s)) return json({ error: "session" }, 400, "no-store");
-  if (!["/vote", "/state", "/ws"].includes(op)) return json({ error: "not found" }, 404, "no-store");
-  const stub = env.POLLS.get(env.POLLS.idFromName("eco201-" + s));
-  if (op === "/ws") return stub.fetch(new Request("https://poll/ws", req));
-  const body = req.method === "POST" ? await req.text() : undefined;
-  const res = await stub.fetch("https://poll" + op, { method: req.method, body, headers: { "content-type": "application/json" } });
   return withCors(res);
 }
 function withCors(res) {
@@ -109,14 +96,12 @@ async function handle(req, env, ctx) {
       return Response.redirect(u.toString(), 301);
     }
     if (u.pathname === "/") { u.pathname = "/index.html"; return env.ASSETS.fetch(new Request(u, req)); }
-    if (u.pathname === "/eco201" || u.pathname === "/eco201/") { u.pathname = "/eco201/index.html"; return env.ASSETS.fetch(new Request(u, req)); }
     if (!u.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     init(env);
     const path = u.pathname.slice(4) || "/";
     try {
       if (path.startsWith("/room/")) return await roomRoute(req, env, path, u);
-      if (path.startsWith("/poll/")) return await pollRoute(req, env, path, u);
       if (path.startsWith("/auth/")) return await authRoute(req, env, path, u);
       if (path.startsWith("/pay/")) return await payRoute(req, env, path, u);
       if (path === "/contest") return await contestRoute(req, env, u);

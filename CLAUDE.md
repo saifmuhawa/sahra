@@ -7,7 +7,6 @@
 ## البنية
 - **Cloudflare Workers + static assets.** الإعدادات بـ `wrangler.jsonc`، والمدخل `worker/index.js`.
   - Durable Object اسمه `Room` (`worker/room.js`): غرف الألعاب، WebSocket، مؤقت الدور 30 ثانية، وتلميحات خاصة لكل فريق.
-  - في كمان binding اسمه `POLLS` لاستطلاع `/eco201`. هاد إله جلسة ثانية، لا تلمسه.
 - **النشر:** Workers Builds مربوط بـ GitHub. أي push على `main` بينشر لحاله. التغييرات بـ `data/**` ما بتعمل build.
 - **مفاتيح سرية** موجودة بـ Cloudflare، وسيف هو اللي حطها: `GEMINI_API_KEY`، `TVDB_API_KEY`، `TMDB_API_KEY` (ما عاد مستخدم).
   - لا تطبع ولا تنسخ أي مفتاح.
